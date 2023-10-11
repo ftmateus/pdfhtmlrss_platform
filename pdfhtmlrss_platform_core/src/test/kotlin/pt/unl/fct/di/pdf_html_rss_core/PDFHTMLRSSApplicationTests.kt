@@ -1,4 +1,4 @@
-package pt.unl.fct.di.titanium_sparrow_core
+package pt.unl.fct.di.pdf_html_rss_core
 
 
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import pt.unl.fct.di.pdf_html_rss_core.services.PDFConversionService
 import java.io.FileInputStream
 import java.math.BigInteger
 import java.security.KeyPair
@@ -17,7 +18,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 
 @SpringBootTest
-class TitaniumSparrowCoreApplicationTests {
+class PDFHTMLRSSApplicationTests {
 
 	val keyPair = KeyPair(
 		PSRSSPublicKey(BigInteger("7249349928048807500024891411067629370056303429447255270046802991880425543412906735607605108373982421012500888307062421310001762155422489671132976679912849")),

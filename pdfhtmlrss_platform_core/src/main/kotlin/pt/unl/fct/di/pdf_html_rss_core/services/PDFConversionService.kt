@@ -1,4 +1,4 @@
-package pt.unl.fct.di.titanium_sparrow_core
+package pt.unl.fct.di.pdf_html_rss_core.services
 
 import com.itextpdf.text.Document
 import com.itextpdf.text.pdf.PdfWriter

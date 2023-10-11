@@ -1,11 +1,11 @@
-package pt.unl.fct.di.titanium_sparrow_core
+package pt.unl.fct.di.pdf_html_rss_core
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class TitaniumSparrowCoreApplication
+class PDFHTMLRSSApplication
 
 fun main(args: Array<String>) {
-	runApplication<TitaniumSparrowCoreApplication>(*args)
+	runApplication<PDFHTMLRSSApplication>(*args)
 }
