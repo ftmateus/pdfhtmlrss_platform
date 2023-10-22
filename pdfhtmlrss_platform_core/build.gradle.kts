@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	id("org.springframework.boot") version "3.1.4"
+	id("org.springframework.boot") version "2.7.16"
 	id("io.spring.dependency-management") version "1.1.3"
 	//id("org.graalvm.buildtools.native") version "0.9.27"
 	kotlin("jvm") version "1.8.22"
@@ -12,7 +12,7 @@ group = "pt.unl.fct.di"
 version = "0.0.1-SNAPSHOT"
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
 configurations {
@@ -49,12 +49,14 @@ dependencies {
 	implementation("com.itextpdf.tool:xmlworker:5.5.10")
 	implementation("org.apache.poi:poi-ooxml:3.15")
 	implementation("org.apache.poi:poi-scratchpad:3.15")
+	implementation("org.apache.santuario:xmlsec:2.0.8")
+
 }
 
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
 		freeCompilerArgs += "-Xjsr305=strict"
-		jvmTarget = "17"
+		jvmTarget = "1.8"
 	}
 }
 

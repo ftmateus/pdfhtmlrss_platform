@@ -12,13 +12,27 @@ import java.nio.charset.StandardCharsets
 @Service
 class PDFConversionService {
 
-    fun generateHTMLFromPDF(filename : String) : Unit {
-        val pdf : PDDocument = PDDocument.load(File(filename));
-        val output : Writer = PrintWriter("$filename.html", StandardCharsets.UTF_8.toString());
-        val pdfDomTree = PDFDomTree();
-        pdfDomTree.writeText(pdf, output)
+    fun generateHTMLFromPDF(filePath : String, destination : String = "$filePath.html") : Unit {
+        val file = File(filePath);
+        val pdf : PDDocument = PDDocument.load(file);
+        val output : Writer = PrintWriter(destination, StandardCharsets.UTF_8.toString());
+        output.use {
+            val pdfDomTree = PDFDomTree()
+            pdfDomTree.writeText(pdf, output)
+            pdfDomTree
+        }
+        replaceInvalidCharacters(destination);
+    }
 
-        output.close();
+    private fun replaceInvalidCharacters(htmlFilePath : String)
+    {
+        val html = File(htmlFilePath)
+        var content = String(html.readBytes())
+        content = content.replace("&nbsp;", "&#160;")
+        val out = FileOutputStream(htmlFilePath)
+        out.use {
+            out.write(content.toByteArray(StandardCharsets.UTF_8))
+        }
     }
 
     fun generatePDFFromHTML(filename : String) {
@@ -26,7 +40,7 @@ class PDFConversionService {
         val writer : PdfWriter = PdfWriter.getInstance(document, FileOutputStream("html.pdf"));
         document.open();
         XMLWorkerHelper.getInstance()
-            .parseXHtml(writer, document, FileInputStream(filename));
+            .parseXHtml(writer, document, FileInputStream(filename), StandardCharsets.UTF_8)
         document.close();
     }
 }
