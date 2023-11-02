@@ -1,0 +1,6 @@
+[submodule "xmlrss"]
+	path = xmlrss
+	url = https://github.com/ftmateus/xmlrss.git
+[submodule "Pdf2Dom"]
+	path = Pdf2Dom
+	url = https://github.com/ftmateus/Pdf2Dom.git

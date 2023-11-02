@@ -18,8 +18,16 @@ class PDFConversionService {
         val output : Writer = PrintWriter(destination, StandardCharsets.UTF_8.toString());
         output.use {
             val pdfDomTree = PDFDomTree()
+            pdfDomTree.startDocument(pdf);
+//            val doctype = pdfDomTree.document.doctype
+//            pdfDomTree.document.implementation.createDocumentType(
+//                "html",
+//                "-//W3C//DTD XHTML 1.0 Strict//EN",
+//                "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
+//            )
+//            pdfDomTree.document.implementation.cre
             pdfDomTree.writeText(pdf, output)
-            pdfDomTree
+//            doctype.textContent
         }
         replaceInvalidCharacters(destination);
     }

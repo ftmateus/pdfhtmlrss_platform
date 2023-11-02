@@ -3,6 +3,7 @@ package pt.unl.fct.di.pdf_html_rss_core
 
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.RedactableXMLSignature
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.assertDoesNotThrow
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.w3c.dom.Document
+import org.w3c.dom.Element
 import pt.unl.fct.di.pdf_html_rss_core.services.PDFConversionService
 import java.io.File
 import java.io.FileInputStream
@@ -18,6 +20,10 @@ import java.security.KeyPairGenerator
 import java.security.Security
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.TransformerException
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
 
 
 @SpringBootTest
@@ -85,7 +91,39 @@ class PDFHTMLRSSApplicationTests {
 		sig.setDocument(FileInputStream(filename));
 
 //		sig.addSignSelector("#xpointer(/2/1)", false)
-		sig.addSignSelector("#xpointer(id('a1'))", false)
+		sig.addSignSelector("#xpointer(id('redact'))", false)
+
+		val document = sig.sign()
+
+//		sig.initRedact(keyPair.public);
+//		sig.setDocument(document);
+//
+//		sig.addRedactSelector("#xpointer(id('redact'))");
+//
+//		sig.redact()
+		val sigElem = document.getElementsByTagName("Signature").item(0) as Element;
+//		sigElem.setAttribute("style", "display : none")
+
+		val test = document.getElementById("redact");
+		test.textContent = "BOO"
+//		test.parentNode.removeChild(test)
+
+		printDocument(document)
+
+		sig.initVerify(keyPair.public)
+		sig.setDocument(document)
+
+		assertFalse(sig.verify())
+
+	}
+
+	@Throws(TransformerException::class)
+	protected fun printDocument(document: Document?) {
+		val tf = TransformerFactory.newInstance()
+		val trans = tf.newTransformer()
+		//        trans.setOutputProperty(OutputKeys.INDENT, "yes");
+//        trans.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+		trans.transform(DOMSource(document), StreamResult(System.out))
 	}
 
 }
