@@ -43,12 +43,17 @@ class PDFConversionService {
         }
     }
 
-    fun generatePDFFromHTML(filename : String) {
+    fun generatePDFFromHTML(file : File, destination: String = "${file.absolutePath}.pdf") {
+        if(file.extension != "html" && file.extension != "xml")
+            return;
         val document : Document = Document();
-        val writer : PdfWriter = PdfWriter.getInstance(document, FileOutputStream("html.pdf"));
+        val writer : PdfWriter = PdfWriter.getInstance(
+            document,
+            FileOutputStream(File(destination))
+        );
         document.open();
         XMLWorkerHelper.getInstance()
-            .parseXHtml(writer, document, FileInputStream(filename), StandardCharsets.UTF_8)
+            .parseXHtml(writer, document, FileInputStream(file), StandardCharsets.UTF_8)
         document.close();
     }
 }

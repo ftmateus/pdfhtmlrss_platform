@@ -8,43 +8,45 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.io.TempDir
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import pt.unl.fct.di.pdf_html_rss_core.services.PDFConversionService
+import pt.unl.fct.di.pdf_html_rss_core.services.RedactableSignaturesService
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.OutputStream
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.Security
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerException
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
+//import org.junit.jupiter.api.io.TempDir;
+
 
 @SpringBootTest
 class PDFHTMLRSSApplicationTests {
 
-//	val keyPair = KeyPair(
-//		PSRSSPublicKey(BigInteger("7249349928048807500024891411067629370056303429447255270046802991880425543412906735607605108373982421012500888307062421310001762155422489671132976679912849")),
-//		PSRSSPrivateKey(BigInteger("7249349928048807500024891411067629370056303429447255270046802991880425543412734960638035580933850038621738468566657503090109097536944629352405060890801636"))
-//	);
+//	@TempDir()
+//	lateinit var tempDir : File;
 
-	val keyPair: KeyPair = run {
-		val keyGen = KeyPairGenerator.getInstance("GLRSSwithRSAandBPA")
-		keyGen.initialize(512)
-		keyGen.generateKeyPair()
-	};
 
 	@Autowired
-	var pdfConversionService: PDFConversionService? = null;
+	lateinit var pdfConversionService: PDFConversionService;
+
+	@Autowired
+	lateinit var redactableSignaturesService: RedactableSignaturesService;
 
 	companion object {
-
 		@BeforeAll
 		@JvmStatic
 		fun before() {
@@ -55,10 +57,14 @@ class PDFHTMLRSSApplicationTests {
 		}
 	}
 
+	@Test fun generateHTMLFromPDFTest1() {
+		pdfConversionService.generatePDFFromHTML(File("src/test/resources/simple.html"));
+	}
+
 	@Test fun generateHTMLFromPDFTest() {
 		val dstFile = File("testfiles/QS2324-assignment1-v1.0.pdf.html");
 
-		pdfConversionService?.generateHTMLFromPDF(
+		pdfConversionService.generateHTMLFromPDF(
 			"src/test/resources/QS2324-assignment1-v1.0.pdf",
 			dstFile.absolutePath
 		)
@@ -77,53 +83,86 @@ class PDFHTMLRSSApplicationTests {
 	}
 
 	@Test fun generatePDFFromHTMLTest() {
-		pdfConversionService?.generatePDFFromHTML("testfiles/clip.html");
+		pdfConversionService.generatePDFFromHTML(File("testfiles/clip.html"));
 	}
 
 	@Test fun test2() {
-		val filename = "src/test/resources/simple.html"
-//		val filename = "src/test/resources/vehicles.xml"
+		val file = File("src/test/resources/simple.html")
 
-		val sig = RedactableXMLSignature.getInstance("GLRSSwithRSAandBPA");
+		val document = let {
+			DocumentBuilderFactory
+				.newInstance()
+				.newDocumentBuilder()
+				.parse(file)
+		}
 
-		sig.initSign(keyPair);
+		val redactedDoc = redactableSignaturesService.signAndRedactDocument(
+			document,
+			redactSelectors = listOf(
+				"#xpointer(id('redact'))",
+//				"#xpointer(id('image'))"
+			)
+		);
 
-		sig.setDocument(FileInputStream(filename));
+		printDocument(redactedDoc)
+		val redactedDocFile = File("testfiles/${file.nameWithoutExtension}_signed.${file.extension}");
+		writeDocumentToFile(redactedDoc, redactedDocFile)
 
-//		sig.addSignSelector("#xpointer(/2/1)", false)
-		sig.addSignSelector("#xpointer(id('redact'))", false)
+		assertTrue(redactableSignaturesService.verifyDocument(redactedDoc));
 
-		val document = sig.sign()
+		pdfConversionService.generatePDFFromHTML(redactedDocFile);
+		pdfConversionService.generatePDFFromHTML(file, "testfiles/${file.nameWithoutExtension}.${file.extension}.pdf");
 
-//		sig.initRedact(keyPair.public);
-//		sig.setDocument(document);
-//
-//		sig.addRedactSelector("#xpointer(id('redact'))");
-//
-//		sig.redact()
-		val sigElem = document.getElementsByTagName("Signature").item(0) as Element;
-//		sigElem.setAttribute("style", "display : none")
+	}
 
-		val test = document.getElementById("redact");
-		test.textContent = "BOO"
-//		test.parentNode.removeChild(test)
+	@Test fun test3() {
+		val file = File("src/test/resources/simple.html")
 
-		printDocument(document)
+		val document = let {
+			DocumentBuilderFactory
+				.newInstance()
+				.newDocumentBuilder()
+				.parse(file)
+		}
 
-		sig.initVerify(keyPair.public)
-		sig.setDocument(document)
+		val signedDoc = redactableSignaturesService.signDocument(
+			document,
+			redactSelectors = listOf(
+				"#xpointer(id('redact'))",
+				"#xpointer(id('image'))"
+			)
+		);
 
-		assertFalse(sig.verify())
+		val redactedDoc = redactableSignaturesService.redactDocument(
+			signedDoc,
+			redactSelectors = listOf(
+				"#xpointer(id('redact'))",
+			)
+		)
 
+		printDocument(redactedDoc)
+		val redactedDocFile = File("testfiles/${file.nameWithoutExtension}_signed.${file.extension}");
+		writeDocumentToFile(redactedDoc, redactedDocFile)
+
+		assertTrue(redactableSignaturesService.verifyDocument(redactedDoc));
 	}
 
 	@Throws(TransformerException::class)
 	protected fun printDocument(document: Document?) {
+		writeDocumentToStream(document, System.out)
+	}
+
+	@Throws(TransformerException::class)
+	protected fun writeDocumentToFile(document: Document?, file : File) {
+		writeDocumentToStream(document, FileOutputStream(file))
+	}
+
+	protected fun writeDocumentToStream(document: Document?, io : OutputStream) {
 		val tf = TransformerFactory.newInstance()
 		val trans = tf.newTransformer()
-		//        trans.setOutputProperty(OutputKeys.INDENT, "yes");
-//        trans.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-		trans.transform(DOMSource(document), StreamResult(System.out))
+		trans.setOutputProperty(OutputKeys.INDENT, "yes");
+        trans.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "5");
+		trans.transform(DOMSource(document), StreamResult(io))
 	}
 
 }

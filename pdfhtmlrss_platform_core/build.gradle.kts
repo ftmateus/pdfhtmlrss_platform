@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	id("org.springframework.boot") version "2.7.16"
 	id("io.spring.dependency-management") version "1.1.3"
+//	id("pdfhtmlrss_platform.xmlrss")
 	//id("org.graalvm.buildtools.native") version "0.9.27"
 	kotlin("jvm") version "1.8.22"
 	kotlin("plugin.spring") version "1.8.22"
@@ -14,6 +15,12 @@ version = "0.0.1-SNAPSHOT"
 java {
 	sourceCompatibility = JavaVersion.VERSION_1_8
 }
+
+tasks.register<Wrapper>("wrapper") {
+	gradleVersion = "5.6.4"
+}
+tasks.register("prepareKotlinBuildScriptModel"){}
+
 
 configurations {
 	compileOnly {
@@ -30,7 +37,7 @@ repositories {
 
 dependencies {
 	implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-
+//	implementation(project(":xmlrss"))
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -50,6 +57,7 @@ dependencies {
 	implementation("org.apache.poi:poi-ooxml:3.15")
 	implementation("org.apache.poi:poi-scratchpad:3.15")
 	implementation("org.apache.santuario:xmlsec:2.0.8")
+	implementation("org.bouncycastle:bcprov-jdk18on:1.76")
 
 }
 
