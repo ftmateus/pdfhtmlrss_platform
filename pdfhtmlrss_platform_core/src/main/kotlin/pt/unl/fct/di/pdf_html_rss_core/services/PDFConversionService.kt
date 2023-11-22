@@ -12,7 +12,40 @@ import java.nio.charset.StandardCharsets
 @Service
 class PDFConversionService {
 
-    fun generateHTMLFromPDF(filePath : String, destination : String = "$filePath.html") : Unit {
+
+    fun generateHTMLFromPDF(fileData : ByteArray) : ByteArray
+    {
+        val pdf = PDDocument.load(fileData);
+        val output = ByteArrayOutputStream()
+        val printWriter = PrintWriter(
+            output,
+            false
+        );
+
+
+        printWriter.use {
+            val pdfDomTree = PDFDomTree()
+            pdfDomTree.startDocument(pdf);
+//            val doctype = pdfDomTree.document.doctype
+//            pdfDomTree.document.implementation.createDocumentType(
+//                "html",
+//                "-//W3C//DTD XHTML 1.0 Strict//EN",
+//                "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
+//            )
+//            pdfDomTree.document.implementation.cre
+            pdfDomTree.writeText(pdf, printWriter)
+//            doctype.textContent
+        }
+
+        return replaceInvalidCharacters(output.toByteArray())
+    }
+
+    fun generateHTMLFromPDF(filePath : String, destination : String = "$filePath.html") {
+        val pdfBytes = generateHTMLFromPDF(File(filePath).readBytes());
+        FileOutputStream(File(destination)).write(pdfBytes)
+    }
+
+    fun generateHTMLFromPDFOld(filePath : String, destination : String = "$filePath.html") : Unit {
         val file = File(filePath);
         val pdf : PDDocument = PDDocument.load(file);
         val output : Writer = PrintWriter(destination, StandardCharsets.UTF_8.toString());
@@ -30,6 +63,12 @@ class PDFConversionService {
 //            doctype.textContent
         }
         replaceInvalidCharacters(destination);
+    }
+
+    private fun replaceInvalidCharacters(bytes : ByteArray) : ByteArray
+    {
+        val content = String(bytes).replace("&nbsp;", "&#160;")
+        return content.toByteArray()
     }
 
     private fun replaceInvalidCharacters(htmlFilePath : String)
