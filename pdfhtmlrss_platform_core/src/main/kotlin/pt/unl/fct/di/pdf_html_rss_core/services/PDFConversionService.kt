@@ -5,12 +5,18 @@ import com.itextpdf.text.pdf.PdfWriter
 import com.itextpdf.tool.xml.XMLWorkerHelper
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.fit.pdfdom.PDFDomTree
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.xhtmlrenderer.layout.SharedContext
+import org.xhtmlrenderer.pdf.ITextRenderer
 import java.io.*
 import java.nio.charset.StandardCharsets
 
 @Service
 class PDFConversionService {
+
+    @Autowired
+    lateinit var domService: DOMService;
 
 
     fun generateHTMLFromPDF(fileData : ByteArray) : ByteArray
@@ -45,26 +51,6 @@ class PDFConversionService {
         FileOutputStream(File(destination)).write(pdfBytes)
     }
 
-    fun generateHTMLFromPDFOld(filePath : String, destination : String = "$filePath.html") : Unit {
-        val file = File(filePath);
-        val pdf : PDDocument = PDDocument.load(file);
-        val output : Writer = PrintWriter(destination, StandardCharsets.UTF_8.toString());
-        output.use {
-            val pdfDomTree = PDFDomTree()
-            pdfDomTree.startDocument(pdf);
-//            val doctype = pdfDomTree.document.doctype
-//            pdfDomTree.document.implementation.createDocumentType(
-//                "html",
-//                "-//W3C//DTD XHTML 1.0 Strict//EN",
-//                "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
-//            )
-//            pdfDomTree.document.implementation.cre
-            pdfDomTree.writeText(pdf, output)
-//            doctype.textContent
-        }
-        replaceInvalidCharacters(destination);
-    }
-
     private fun replaceInvalidCharacters(bytes : ByteArray) : ByteArray
     {
         val content = String(bytes).replace("&nbsp;", "&#160;")
@@ -82,7 +68,41 @@ class PDFConversionService {
         }
     }
 
-    fun generatePDFFromHTML(file : File, destination: String = "${file.absolutePath}.pdf") {
+    fun generatePDFFromHTML(domDoc : org.w3c.dom.Document) : ByteArray
+    {
+        ByteArrayOutputStream().use { out ->
+            val renderer = ITextRenderer()
+            val sharedContext: SharedContext = renderer.getSharedContext()
+            sharedContext.setPrint(true)
+            sharedContext.setInteractive(false)
+            renderer.setDocument(domDoc, "")
+            renderer.layout()
+            renderer.createPDF(out)
+            return out.toByteArray()
+        }
+    }
+
+    fun generatePDFFromHTMLOld(domDoc : org.w3c.dom.Document) : ByteArray {
+        val pdfDoc : com.itextpdf.text.Document = Document();
+
+        val pdfOut = ByteArrayOutputStream();
+
+        val writer : PdfWriter = PdfWriter.getInstance(
+            pdfDoc,
+            pdfOut
+        );
+
+        val domDocBytes = domService.convertDomDocumentToByteArray(domDoc);
+
+        pdfDoc.open();
+        XMLWorkerHelper.getInstance()
+            .parseXHtml(writer, pdfDoc, ByteArrayInputStream(domDocBytes), StandardCharsets.UTF_8)
+        pdfDoc.close();
+
+        return pdfOut.toByteArray();
+    }
+
+    fun generatePDFFromHTMLOld(file : File, destination: String = "${file.absolutePath}.pdf") {
         if(file.extension != "html" && file.extension != "xml")
             return;
         val document : Document = Document();

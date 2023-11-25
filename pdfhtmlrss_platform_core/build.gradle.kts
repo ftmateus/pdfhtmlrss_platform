@@ -59,6 +59,9 @@ dependencies {
 	implementation("org.apache.santuario:xmlsec:2.0.8")
 	implementation("org.bouncycastle:bcprov-jdk18on:1.76")
 
+	implementation("org.jsoup:jsoup:1.16.2")
+	implementation("org.xhtmlrenderer:flying-saucer-pdf-openpdf:9.3.1")
+
 }
 
 tasks.withType<KotlinCompile> {

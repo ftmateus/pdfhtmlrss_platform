@@ -2,33 +2,21 @@ package pt.unl.fct.di.pdf_html_rss_core
 
 
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
-import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.RedactableXMLSignature
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.w3c.dom.Document
-import org.w3c.dom.Element
+import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.PDFConversionService
 import pt.unl.fct.di.pdf_html_rss_core.services.RedactableSignaturesService
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.OutputStream
-import java.security.KeyPair
-import java.security.KeyPairGenerator
 import java.security.Security
-import javax.xml.parsers.DocumentBuilder
-import javax.xml.parsers.DocumentBuilderFactory
-import javax.xml.transform.OutputKeys
-import javax.xml.transform.TransformerException
-import javax.xml.transform.TransformerFactory
-import javax.xml.transform.dom.DOMSource
-import javax.xml.transform.stream.StreamResult
 
 //import org.junit.jupiter.api.io.TempDir;
 
@@ -39,12 +27,24 @@ class PDFHTMLRSSApplicationTests {
 //	@TempDir()
 //	lateinit var tempDir : File;
 
+	val temporaryFolder = let {
+		val systemTmpDirPath = System.getProperty("java.io.tmpdir");
+		val tmpDirPath = "$systemTmpDirPath\\pdfrss";
+		
+		File(tmpDirPath).apply {
+			this.mkdir();
+		}
+	}
+
 
 	@Autowired
 	lateinit var pdfConversionService: PDFConversionService;
 
 	@Autowired
 	lateinit var redactableSignaturesService: RedactableSignaturesService;
+
+	@Autowired
+	lateinit var domService: DOMService;
 
 	companion object {
 		@BeforeAll
@@ -57,44 +57,55 @@ class PDFHTMLRSSApplicationTests {
 		}
 	}
 
-	@Test fun generateHTMLFromPDFTest1() {
-		pdfConversionService.generatePDFFromHTML(File("src/test/resources/simple.html"));
+	@ParameterizedTest
+	//TODO more html files
+	@ValueSource(strings = [
+		"src/test/resources/simple.html"
+	])
+	fun generatePDFFromHTMLTest(htmlFilePath : String) {
+		val htmlFile = File(htmlFilePath)
+		assumeTrue(htmlFile.exists())
+		val pdfFile = File("${temporaryFolder.path}/${htmlFile.name}.pdf");
+
+		pdfConversionService.generatePDFFromHTML(htmlFile, pdfFile.path);
+
+		assertTrue(pdfFile.exists())
+		assertTrue(pdfFile.length() > 0)
 	}
 
-	@Test fun generateHTMLFromPDFTest() {
-		val dstFile = File("testfiles/QS2324-assignment1-v1.0.pdf.html");
+	@ParameterizedTest
+	//TODO
+	@ValueSource(strings = [
+		"src/test/resources/QS2324-assignment1-v1.0.pdf",
+		"D:\\Francisco\\Downloads\\sibsforwardpaymentsolutionssa_fr_M2023-2410.pdf",
+		"D:\\Francisco\\Downloads\\BoardingPass.pdf",
+		"D:\\Francisco\\Downloads\\Declaracao 99_IRS.pdf",
+		"D:\\Francisco\\Downloads\\Profile.pdf"
+	])
+	fun generateHTMLFromPDFTest(pdfFilePath : String) {
+		val pdfFile = File(pdfFilePath)
+		assumeTrue(pdfFile.exists());
+
+		val htmlFile = File("${temporaryFolder.path}/${pdfFile.name}.html");
 
 		pdfConversionService.generateHTMLFromPDF(
-			"src/test/resources/QS2324-assignment1-v1.0.pdf",
-			dstFile.absolutePath
+			pdfFilePath,
+			htmlFile.absolutePath
 		)
 
-		assertTrue(dstFile.exists())
-		assertTrue(dstFile.length() > 0)
+		assertTrue(htmlFile.exists())
+		assertTrue(htmlFile.length() > 0)
 
-		val dbFactory: DocumentBuilderFactory = DocumentBuilderFactory.newInstance()
-		//https://github.com/qzind/tray/commit/c04b510515246954a5a26475ae46434b7f127437
-		dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-		val dBuilder: DocumentBuilder = dbFactory.newDocumentBuilder()
-
-		assertDoesNotThrow { val doc: Document = dBuilder.parse(dstFile) }
-
-//		val sig = RedactableXMLSignature.getInstance("XMLPSRSSwithPSA");
+		assertDoesNotThrow {
+			val doc = domService.parseDocument(FileInputStream(htmlFile))
+		}
 	}
 
-	@Test fun generatePDFFromHTMLTest() {
-		pdfConversionService.generatePDFFromHTML(File("testfiles/clip.html"));
-	}
-
-	@Test fun test2() {
+	@Test
+	fun test2() {
 		val file = File("src/test/resources/simple.html")
 
-		val document = let {
-			DocumentBuilderFactory
-				.newInstance()
-				.newDocumentBuilder()
-				.parse(file)
-		}
+		val document = domService.parseDocument(FileInputStream(file))
 
 		val redactedDoc = redactableSignaturesService.signAndRedactDocument(
 			document,
@@ -104,26 +115,21 @@ class PDFHTMLRSSApplicationTests {
 			)
 		);
 
-		printDocument(redactedDoc)
-		val redactedDocFile = File("testfiles/${file.nameWithoutExtension}_signed.${file.extension}");
-		writeDocumentToFile(redactedDoc, redactedDocFile)
+		domService.printDocument(redactedDoc)
+		val redactedDocFile = File("${temporaryFolder.path}/${file.nameWithoutExtension}_signed.${file.extension}");
+		domService.writeDocumentToFile(redactedDoc, redactedDocFile)
 
 		assertTrue(redactableSignaturesService.verifyDocument(redactedDoc));
 
 		pdfConversionService.generatePDFFromHTML(redactedDocFile);
-		pdfConversionService.generatePDFFromHTML(file, "testfiles/${file.nameWithoutExtension}.${file.extension}.pdf");
+		pdfConversionService.generatePDFFromHTML(file, "${temporaryFolder.path}/${file.nameWithoutExtension}.${file.extension}.pdf");
 
 	}
 
 	@Test fun test3() {
 		val file = File("src/test/resources/simple.html")
 
-		val document = let {
-			DocumentBuilderFactory
-				.newInstance()
-				.newDocumentBuilder()
-				.parse(file)
-		}
+		val document = domService.parseDocument(FileInputStream(file))
 
 		val signedDoc = redactableSignaturesService.signDocument(
 			document,
@@ -140,29 +146,10 @@ class PDFHTMLRSSApplicationTests {
 			)
 		)
 
-		printDocument(redactedDoc)
-		val redactedDocFile = File("testfiles/${file.nameWithoutExtension}_signed.${file.extension}");
-		writeDocumentToFile(redactedDoc, redactedDocFile)
+		domService.printDocument(redactedDoc)
+		val redactedDocFile = File("${temporaryFolder.path}/${file.nameWithoutExtension}_signed.${file.extension}");
+		domService.writeDocumentToFile(redactedDoc, redactedDocFile)
 
 		assertTrue(redactableSignaturesService.verifyDocument(redactedDoc));
 	}
-
-	@Throws(TransformerException::class)
-	protected fun printDocument(document: Document?) {
-		writeDocumentToStream(document, System.out)
-	}
-
-	@Throws(TransformerException::class)
-	protected fun writeDocumentToFile(document: Document?, file : File) {
-		writeDocumentToStream(document, FileOutputStream(file))
-	}
-
-	protected fun writeDocumentToStream(document: Document?, io : OutputStream) {
-		val tf = TransformerFactory.newInstance()
-		val trans = tf.newTransformer()
-		trans.setOutputProperty(OutputKeys.INDENT, "yes");
-        trans.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "5");
-		trans.transform(DOMSource(document), StreamResult(io))
-	}
-
 }
