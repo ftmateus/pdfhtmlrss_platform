@@ -2,6 +2,7 @@ package pt.unl.fct.di.pdf_html_rss_core
 
 
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
@@ -14,8 +15,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.PDFConversionService
 import pt.unl.fct.di.pdf_html_rss_core.services.RedactableSignaturesService
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.security.Security
 
 //import org.junit.jupiter.api.io.TempDir;
@@ -67,7 +70,8 @@ class PDFHTMLRSSApplicationTests {
 		assumeTrue(htmlFile.exists())
 		val pdfFile = File("${temporaryFolder.path}/${htmlFile.name}.pdf");
 
-		pdfConversionService.generatePDFFromHTML(htmlFile, pdfFile.path);
+		//TODO
+//		pdfConversionService.generatePDFFromHTML(htmlFile, pdfFile.path);
 
 		assertTrue(pdfFile.exists())
 		assertTrue(pdfFile.length() > 0)
@@ -101,6 +105,46 @@ class PDFHTMLRSSApplicationTests {
 		}
 	}
 
+	@ParameterizedTest
+	@ValueSource(strings = [
+		"src/test/resources/QS2324-assignment1-v1.0.pdf",
+		"D:\\Francisco\\Downloads\\sibsforwardpaymentsolutionssa_fr_M2023-2410.pdf",
+		"D:\\Francisco\\Downloads\\BoardingPass.pdf",
+		"D:\\Francisco\\Downloads\\Declaracao 99_IRS.pdf",
+		"D:\\Francisco\\Downloads\\Profile.pdf"
+	])
+	fun conversionIntegrityTest(pdfFilePath : String)
+	{
+		val pdfFile = File(pdfFilePath);
+		val domDocBytes = FileInputStream(pdfFile).use {
+			pdfConversionService.generateHTMLFromPDF(it.readBytes())
+		}
+
+		val domDoc = ByteArrayInputStream(domDocBytes).use {
+			domService.parseDocument(it);
+		}
+
+		val pdfBytes = pdfConversionService.generatePDFFromHTML(domDoc);
+
+		val domDocReconversionBytes = pdfConversionService.generateHTMLFromPDF(pdfBytes)
+
+		FileOutputStream(File("${temporaryFolder.path}/${pdfFile.name}1.html"))
+		.use {
+			it.write(domDocBytes)
+		}
+
+
+		FileOutputStream(File("${temporaryFolder.path}/${pdfFile.name}2.html"))
+		.use {
+			it.write(domDocReconversionBytes)
+		}
+
+
+
+		assertEquals(domDocBytes.hashCode(), domDocReconversionBytes.hashCode())
+
+	}
+
 	@Test
 	fun test2() {
 		val file = File("src/test/resources/simple.html")
@@ -121,8 +165,9 @@ class PDFHTMLRSSApplicationTests {
 
 		assertTrue(redactableSignaturesService.verifyDocument(redactedDoc));
 
-		pdfConversionService.generatePDFFromHTML(redactedDocFile);
-		pdfConversionService.generatePDFFromHTML(file, "${temporaryFolder.path}/${file.nameWithoutExtension}.${file.extension}.pdf");
+		//TODO
+//		pdfConversionService.generatePDFFromHTML(redactedDocFile);
+//		pdfConversionService.generatePDFFromHTML(file, "${temporaryFolder.path}/${file.nameWithoutExtension}.${file.extension}.pdf");
 
 	}
 

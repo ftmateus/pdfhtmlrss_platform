@@ -72,12 +72,15 @@ class PDFConversionService {
     {
         ByteArrayOutputStream().use { out ->
             val renderer = ITextRenderer()
-            val sharedContext: SharedContext = renderer.getSharedContext()
-            sharedContext.setPrint(true)
-            sharedContext.setInteractive(false)
-            renderer.setDocument(domDoc, "")
-            renderer.layout()
-            renderer.createPDF(out)
+            renderer.sharedContext.apply {
+                this.setPrint(true)
+                this.isInteractive = false
+            }
+            with(renderer) {
+                this.setDocument(domDoc, "")
+                this.layout()
+                this.createPDF(out)
+            }
             return out.toByteArray()
         }
     }
