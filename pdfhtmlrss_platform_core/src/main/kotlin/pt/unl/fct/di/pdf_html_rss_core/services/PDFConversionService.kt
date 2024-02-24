@@ -7,10 +7,11 @@ import org.apache.pdfbox.pdmodel.PDDocument
 import org.fit.pdfdom.PDFDomTree
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import org.xhtmlrenderer.layout.SharedContext
 import org.xhtmlrenderer.pdf.ITextRenderer
 import java.io.*
+import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import kotlin.io.encoding.encodingWith
 
 @Service
 class PDFConversionService {
@@ -18,36 +19,43 @@ class PDFConversionService {
     @Autowired
     lateinit var domService: DOMService;
 
+    fun generateHTMLFromPDFLinux(fileData: ByteArray) : ByteArray {
+        val pdfToHtmlProcess = ProcessBuilder()
+            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "-", "-")
+            .redirectInput(ProcessBuilder.Redirect.PIPE)
+            .start();
 
-    fun generateHTMLFromPDF(fileData : ByteArray) : ByteArray
+        pdfToHtmlProcess.outputStream.use {
+            it.write(fileData);
+        }
+
+        return pdfToHtmlProcess.inputStream.use {
+            it.readBytes();
+        }
+    }
+
+    @Deprecated("")
+    fun generateHTMLFromPDFApachePDF(fileData : ByteArray) : ByteArray
     {
         val pdf = PDDocument.load(fileData);
         val output = ByteArrayOutputStream()
         val printWriter = PrintWriter(
             output,
-            false
+            false, StandardCharsets.ISO_8859_1
         );
 
 
         printWriter.use {
             val pdfDomTree = PDFDomTree()
             pdfDomTree.startDocument(pdf);
-//            val doctype = pdfDomTree.document.doctype
-//            pdfDomTree.document.implementation.createDocumentType(
-//                "html",
-//                "-//W3C//DTD XHTML 1.0 Strict//EN",
-//                "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
-//            )
-//            pdfDomTree.document.implementation.cre
             pdfDomTree.writeText(pdf, printWriter)
-//            doctype.textContent
         }
 
         return replaceInvalidCharacters(output.toByteArray())
     }
 
     fun generateHTMLFromPDF(filePath : String, destination : String = "$filePath.html") {
-        val pdfBytes = generateHTMLFromPDF(File(filePath).readBytes());
+        val pdfBytes = generateHTMLFromPDFLinux(File(filePath).readBytes());
         FileOutputStream(File(destination)).write(pdfBytes)
     }
 
@@ -80,6 +88,7 @@ class PDFConversionService {
                 this.setDocument(domDoc, "")
                 this.layout()
                 this.createPDF(out)
+                this.finishPDF()
             }
             return out.toByteArray()
         }

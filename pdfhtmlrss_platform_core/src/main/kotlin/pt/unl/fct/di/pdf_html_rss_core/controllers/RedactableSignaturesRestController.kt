@@ -58,7 +58,7 @@ class RedactableSignaturesRestController {
 
         val docBytes : ByteArray = when (file.contentType?.let { MediaType.valueOf(it) }) {
             MediaType.APPLICATION_PDF  -> {
-                pdfConversionService.generateHTMLFromPDF(file.bytes);
+                pdfConversionService.generateHTMLFromPDFLinux(file.bytes);
             }
             //TODO
             MediaType.TEXT_XML,

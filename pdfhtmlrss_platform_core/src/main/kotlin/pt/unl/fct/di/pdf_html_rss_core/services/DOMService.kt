@@ -17,10 +17,10 @@ class DOMService {
 //    val documentBuilderFactory = DocumentBuilderFactory.newInstance()
     val documentBuilder: DocumentBuilder = let {
         val dbFactory = DocumentBuilderFactory
-            .newInstance();
+            .newInstance()
 
         //https://github.com/qzind/tray/commit/c04b510515246954a5a26475ae46434b7f127437
-        dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+//        dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 
         dbFactory.newDocumentBuilder();
     }

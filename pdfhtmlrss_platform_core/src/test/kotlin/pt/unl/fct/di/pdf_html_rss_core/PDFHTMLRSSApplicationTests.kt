@@ -9,6 +9,9 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -20,6 +23,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.security.Security
+import java.util.stream.Stream
 
 //import org.junit.jupiter.api.io.TempDir;
 
@@ -32,7 +36,7 @@ class PDFHTMLRSSApplicationTests {
 
 	val temporaryFolder = let {
 		val systemTmpDirPath = System.getProperty("java.io.tmpdir");
-		val tmpDirPath = "$systemTmpDirPath\\pdfrss";
+		val tmpDirPath = "$systemTmpDirPath${File.separator}pdfrss";
 		
 		File(tmpDirPath).apply {
 			this.mkdir();
@@ -56,7 +60,19 @@ class PDFHTMLRSSApplicationTests {
 			val provider = WPProvider();
 //			Security.addProvider(provider);
 			Security.insertProviderAt(provider, 1)
+		}
 
+		@JvmStatic
+		fun pdfTestFiles(): Stream<Arguments> {
+			return Stream.of(
+				Arguments.of("src/test/resources/QS2324-assignment1-v1.0.pdf"),
+				Arguments.of("D:\\Francisco\\Downloads\\sibsforwardpaymentsolutionssa_fr_M2023-2410.pdf"),
+				Arguments.of("D:\\Francisco\\Downloads\\BoardingPass.pdf"),
+				Arguments.of("D:\\Francisco\\Downloads\\Declaracao 99_IRS.pdf"),
+				Arguments.of("D:\\Francisco\\Downloads\\Profile.pdf"),
+				Arguments.of("/home/tazdevil/invoice.pdf"),
+				Arguments.of("/home/tazdevil/FiberGateway-Manual-Utilizador-V4.0-3.PDF")
+			);
 		}
 	}
 
@@ -78,14 +94,7 @@ class PDFHTMLRSSApplicationTests {
 	}
 
 	@ParameterizedTest
-	//TODO
-	@ValueSource(strings = [
-		"src/test/resources/QS2324-assignment1-v1.0.pdf",
-		"D:\\Francisco\\Downloads\\sibsforwardpaymentsolutionssa_fr_M2023-2410.pdf",
-		"D:\\Francisco\\Downloads\\BoardingPass.pdf",
-		"D:\\Francisco\\Downloads\\Declaracao 99_IRS.pdf",
-		"D:\\Francisco\\Downloads\\Profile.pdf"
-	])
+	@MethodSource(value = ["pdfTestFiles"])
 	fun generateHTMLFromPDFTest(pdfFilePath : String) {
 		val pdfFile = File(pdfFilePath)
 		assumeTrue(pdfFile.exists());
@@ -106,18 +115,14 @@ class PDFHTMLRSSApplicationTests {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = [
-		"src/test/resources/QS2324-assignment1-v1.0.pdf",
-		"D:\\Francisco\\Downloads\\sibsforwardpaymentsolutionssa_fr_M2023-2410.pdf",
-		"D:\\Francisco\\Downloads\\BoardingPass.pdf",
-		"D:\\Francisco\\Downloads\\Declaracao 99_IRS.pdf",
-		"D:\\Francisco\\Downloads\\Profile.pdf"
-	])
+	@MethodSource(value = ["pdfTestFiles"])
 	fun conversionIntegrityTest(pdfFilePath : String)
 	{
 		val pdfFile = File(pdfFilePath);
+		assumeTrue(pdfFile.exists());
+
 		val domDocBytes = FileInputStream(pdfFile).use {
-			pdfConversionService.generateHTMLFromPDF(it.readBytes())
+			pdfConversionService.generateHTMLFromPDFLinux(it.readBytes())
 		}
 
 		val domDoc = ByteArrayInputStream(domDocBytes).use {
@@ -126,7 +131,12 @@ class PDFHTMLRSSApplicationTests {
 
 		val pdfBytes = pdfConversionService.generatePDFFromHTML(domDoc);
 
-		val domDocReconversionBytes = pdfConversionService.generateHTMLFromPDF(pdfBytes)
+		val domDocReconversionBytes = pdfConversionService.generateHTMLFromPDFLinux(pdfBytes)
+
+		FileOutputStream("${temporaryFolder.path}/${pdfFile.name}.pdf")
+		.use {
+			it.write(pdfBytes)
+		}
 
 		FileOutputStream(File("${temporaryFolder.path}/${pdfFile.name}1.html"))
 		.use {
@@ -139,9 +149,7 @@ class PDFHTMLRSSApplicationTests {
 			it.write(domDocReconversionBytes)
 		}
 
-
-
-		assertEquals(domDocBytes.hashCode(), domDocReconversionBytes.hashCode())
+		assertEquals(domDocBytes, domDocReconversionBytes)
 
 	}
 
