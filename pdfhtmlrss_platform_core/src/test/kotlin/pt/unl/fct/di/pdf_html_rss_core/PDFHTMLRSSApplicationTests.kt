@@ -64,15 +64,25 @@ class PDFHTMLRSSApplicationTests {
 
 		@JvmStatic
 		fun pdfTestFiles(): Stream<Arguments> {
-			return Stream.of(
-				Arguments.of("src/test/resources/QS2324-assignment1-v1.0.pdf"),
-				Arguments.of("D:\\Francisco\\Downloads\\sibsforwardpaymentsolutionssa_fr_M2023-2410.pdf"),
-				Arguments.of("D:\\Francisco\\Downloads\\BoardingPass.pdf"),
-				Arguments.of("D:\\Francisco\\Downloads\\Declaracao 99_IRS.pdf"),
-				Arguments.of("D:\\Francisco\\Downloads\\Profile.pdf"),
-				Arguments.of("/home/tazdevil/invoice.pdf"),
-				Arguments.of("/home/tazdevil/FiberGateway-Manual-Utilizador-V4.0-3.PDF")
-			);
+			return File("./testfiles/").listFiles()?.map {
+				Arguments.of(it.toString())
+			}?.stream() ?: Stream.empty();
+//			return Files.walk(Paths.get("./testfiles/")).map {
+//				Arguments.of(it.toString())
+//			}
+
+//			return Stream.of(
+
+//				Arguments.of("./testfiles/cm2223-1-EN.pdf"),
+//				Arguments.of("src/test/resources/QS2324-assignment1-v1.0.pdf"),
+//				Arguments.of("D:\\Francisco\\Downloads\\sibsforwardpaymentsolutionssa_fr_M2023-2410.pdf"),
+//				Arguments.of("D:\\Francisco\\Downloads\\BoardingPass.pdf"),
+//				Arguments.of("D:\\Francisco\\Downloads\\Declaracao 99_IRS.pdf"),
+//				Arguments.of("D:\\Francisco\\Downloads\\Profile.pdf"),
+//				Arguments.of("/home/tazdevil/invoice.pdf"),
+//				Arguments.of("/home/tazdevil/FiberGateway-Manual-Utilizador-V4.0-3.PDF"),
+//				Arguments.of("/home/ftmateus/recibo_candidatura.pdf"),
+//			);
 		}
 	}
 
