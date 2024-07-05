@@ -11,11 +11,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.createTemporaryTestFolder
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
-import pt.unl.fct.di.pdf_html_rss_core.services.PDFConversionService
+import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
-import java.io.IOException
 
 
 @SpringBootTest
@@ -23,7 +22,7 @@ class FileConversionTests {
     val temporaryFolder = createTemporaryTestFolder();
 
     @Autowired
-    lateinit var pdfConversionService: PDFConversionService;
+    lateinit var pdfConversionService: FileConversionService;
 
     @Autowired
     lateinit var domService: DOMService;

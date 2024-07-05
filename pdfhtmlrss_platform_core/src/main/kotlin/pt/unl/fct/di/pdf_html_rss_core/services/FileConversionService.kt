@@ -9,12 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.xhtmlrenderer.pdf.ITextRenderer
 import java.io.*
-import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
-import kotlin.io.encoding.encodingWith
 
 @Service
-class PDFConversionService {
+class FileConversionService {
 
     @Autowired
     lateinit var domService: DOMService;

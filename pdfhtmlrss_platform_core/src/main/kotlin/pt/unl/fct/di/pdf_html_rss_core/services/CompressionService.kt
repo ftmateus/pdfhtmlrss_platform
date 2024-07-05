@@ -13,35 +13,42 @@ class CompressionService {
         val gis = GZIPInputStream(compressedData);
         val fos = ByteArrayOutputStream();
 
-        val buffer = ByteArray(1024)
-        var len: Int
-        while ((gis.read(buffer).also { len = it }) != -1) {
-            fos.write(buffer, 0, len)
-        }
-
-        return fos.toByteArray().also {
+        try {
+            val buffer = ByteArray(1024)
+            var len: Int
+            while ((gis.read(buffer).also { len = it }) != -1) {
+                fos.write(buffer, 0, len)
+            }
+            return fos.toByteArray().also {
+                assert(it.isNotEmpty())
+            };
+        } finally {
             compressedData.close()
             gis.close()
             fos.close()
-        };
+        }
     }
 
     fun compressGZip(rawData : InputStream): ByteArray {
         val out = ByteArrayOutputStream();
         val gzipos = GZIPOutputStream(out);
 
-        val buffer = ByteArray(1024)
-        var len: Int
-        while ((rawData.read(buffer).also { len = it }) != -1) {
-            gzipos.write(buffer, 0, len)
-        }
+        try {
+            val buffer = ByteArray(1024)
+            var len: Int
+            while ((rawData.read(buffer).also { len = it }) != -1) {
+                gzipos.write(buffer, 0, len)
+            }
 
-        //should be closed before return
-        gzipos.close()
+            gzipos.finish()
 
-        return out.toByteArray().also {
-            rawData.close()
+            return out.toByteArray().also {
+                assert(it.isNotEmpty())
+            }
+        } finally {
+            rawData.close();
             out.close();
+            gzipos.close()
         }
     }
 }

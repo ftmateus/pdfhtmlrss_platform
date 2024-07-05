@@ -1,6 +1,5 @@
 package pt.unl.fct.di.pdf_html_rss_core
 
-import org.bouncycastle.internal.asn1.cms.CMSObjectIdentifiers.compressedData
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -9,9 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.createTemporaryTestFolder
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
 import pt.unl.fct.di.pdf_html_rss_core.services.CompressionService
-import pt.unl.fct.di.pdf_html_rss_core.services.PDFConversionService
 import java.io.File
-import java.io.FileOutputStream
 
 @SpringBootTest
 class CompressionTests {

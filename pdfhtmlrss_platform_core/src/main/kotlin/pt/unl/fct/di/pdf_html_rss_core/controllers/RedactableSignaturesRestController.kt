@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
-import pt.unl.fct.di.pdf_html_rss_core.services.PDFConversionService
+import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
 import pt.unl.fct.di.pdf_html_rss_core.services.RedactableSignaturesService
 import java.io.*
 
@@ -32,7 +32,7 @@ class RedactableSignaturesRestController {
     lateinit var redactableSignaturesService: RedactableSignaturesService
 
     @Autowired
-    lateinit var pdfConversionService: PDFConversionService
+    lateinit var pdfConversionService: FileConversionService
 
     @Autowired
     lateinit var domService: DOMService;
