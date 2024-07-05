@@ -3,6 +3,7 @@
 HELP.md
 .gradle
 build/
+pdfhtmlrss_platform_core/*.hprof
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/

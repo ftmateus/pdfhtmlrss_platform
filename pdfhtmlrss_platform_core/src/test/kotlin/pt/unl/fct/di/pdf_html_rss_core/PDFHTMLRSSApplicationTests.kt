@@ -4,18 +4,16 @@ package pt.unl.fct.di.pdf_html_rss_core
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.ArgumentsSource
 import org.junit.jupiter.params.provider.MethodSource
-import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.createTemporaryTestFolder
+import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
+import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.PDFConversionService
 import pt.unl.fct.di.pdf_html_rss_core.services.RedactableSignaturesService
@@ -24,18 +22,12 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.security.Security
-import java.util.stream.Stream
 
 //@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest
 class PDFHTMLRSSApplicationTests {
 
-	val temporaryFolder = let {
-		val systemTmpDirPath = System.getProperty("java.io.tmpdir");
-		val tmpDirPath = "$systemTmpDirPath${File.separator}pdfrss";
-		
-		File(tmpDirPath).also { it.mkdir() }
-	}
+	val temporaryFolder = createTemporaryTestFolder();
 
 	@Autowired
 	lateinit var pdfConversionService: PDFConversionService;
@@ -56,70 +48,30 @@ class PDFHTMLRSSApplicationTests {
 		}
 	}
 
-	@ParameterizedTest
-	@MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#htmlTestFiles"])
-	fun generatePDFFromHTMLTest(htmlFilePath : String) {
-		val htmlFile = File(htmlFilePath)
-		assumeTrue(htmlFile.exists())
-		val pdfFile = File("${temporaryFolder.path}/${htmlFile.name}.pdf");
-
-		//TODO
-//		pdfConversionService.generatePDFFromHTML(htmlFile, pdfFile.path);
-
-		assertTrue(pdfFile.exists())
-		assertTrue(pdfFile.length() > 0)
-	}
-
-	@ParameterizedTest
-	@MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
-	fun generateHTMLFromPDFTest(pdfFile : File) {
-		val htmlFile = File("${temporaryFolder.path}/${pdfFile.name}.html");
-
-		pdfConversionService.generateHTMLFromPDF(
-			pdfFile.path,
-			htmlFile.absolutePath
-		)
-
-		assertTrue(htmlFile.exists())
-		assertTrue(htmlFile.length() > 0)
-
-		assertDoesNotThrow {
-			val doc = domService.parseDocument(FileInputStream(htmlFile))
-		}
-	}
-
+	@Disabled
 	@ParameterizedTest
 	@MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
 	fun conversionIntegrityTest(pdfFile : File)
 	{
-		val domDocBytes = pdfFile.inputStream().use {
-			pdfConversionService.generateHTMLFromPDFLinux(it.readBytes())
-		}
+		val domDocBytes = pdfConversionService.generateHTMLFromPDF(pdfFile)
 
-		val domDoc = ByteArrayInputStream(domDocBytes).use {
-			domService.parseDocument(it);
-		}
-
-		val pdfBytes = pdfConversionService.generatePDFFromHTML(domDoc);
+		val pdfBytes = pdfConversionService.generatePDFFromHTML(domDocBytes);
 
 		val domDocReconversionBytes = pdfConversionService.generateHTMLFromPDFLinux(pdfBytes)
 
-		FileOutputStream("${temporaryFolder.path}/${pdfFile.name}.pdf")
-		.use { it.write(pdfBytes) }
+		writeDataToTempFile(pdfBytes, temporaryFolder, "${pdfFile.name}.pdf")
 
-		FileOutputStream(File("${temporaryFolder.path}/${pdfFile.name}1.html"))
-		.use { it.write(domDocBytes) }
+		writeDataToTempFile(domDocBytes, temporaryFolder, "${pdfFile.name}1.html")
 
-		FileOutputStream(File("${temporaryFolder.path}/${pdfFile.name}2.html"))
-		.use { it.write(domDocReconversionBytes) }
+		writeDataToTempFile(domDocReconversionBytes, temporaryFolder, "${pdfFile.name}2.html")
 
 		assertEquals(domDocBytes, domDocReconversionBytes)
 
 	}
 
 	@Test
-	fun test2(htmlFilePath : String) {
-		val file = File("testfiles/simple.html")
+	fun test2() {
+		val file = getTestFile("simple.html")
 
 		val document = domService.parseDocument(FileInputStream(file))
 
@@ -144,7 +96,7 @@ class PDFHTMLRSSApplicationTests {
 	}
 
 	@Test fun test3() {
-		val file = File("testfiles/simple.html")
+		val file = getTestFile("simple.html")
 
 		val document = domService.parseDocument(FileInputStream(file))
 

@@ -54,6 +54,10 @@ class PDFConversionService {
         return replaceInvalidCharacters(output.toByteArray())
     }
 
+    fun generateHTMLFromPDF(pdfFile : File) : ByteArray {
+        return generateHTMLFromPDFLinux(pdfFile.readBytes())
+    }
+
     fun generateHTMLFromPDF(filePath : String, destination : String = "$filePath.html") {
         val pdfBytes = generateHTMLFromPDFLinux(File(filePath).readBytes());
         FileOutputStream(File(destination)).write(pdfBytes)
@@ -74,6 +78,19 @@ class PDFConversionService {
         out.use {
             out.write(content.toByteArray(StandardCharsets.UTF_8))
         }
+    }
+
+    fun generatePDFFromHTML(domDocData : ByteArray) : ByteArray  {
+        val parsedDoc : org.w3c.dom.Document = ByteArrayInputStream(domDocData).use {
+            domService.parseDocument(it)
+        }
+
+        return generatePDFFromHTML(parsedDoc);
+    }
+
+    fun generatePDFFromHTML(domDoc : File) : ByteArray {
+        val parsedDoc : org.w3c.dom.Document  = domService.parseDocument(domDoc);
+        return generatePDFFromHTML(parsedDoc);
     }
 
     fun generatePDFFromHTML(domDoc : org.w3c.dom.Document) : ByteArray

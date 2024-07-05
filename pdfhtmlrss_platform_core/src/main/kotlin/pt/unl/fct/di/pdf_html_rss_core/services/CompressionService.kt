@@ -36,6 +36,7 @@ class CompressionService {
             gzipos.write(buffer, 0, len)
         }
 
+        //should be closed before return
         gzipos.close()
 
         return out.toByteArray().also {
