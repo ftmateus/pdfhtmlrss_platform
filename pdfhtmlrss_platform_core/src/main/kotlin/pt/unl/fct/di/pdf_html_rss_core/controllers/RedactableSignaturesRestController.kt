@@ -12,7 +12,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
-import pt.unl.fct.di.pdf_html_rss_core.services.RedactableSignaturesService
+import pt.unl.fct.di.pdf_html_rss_core.services.XHTMLRedactableSignatureService
 import java.io.*
 
 
@@ -30,7 +30,7 @@ class RedactableSignaturesRestController {
     );
 
     @Autowired
-    lateinit var redactableSignaturesService: RedactableSignaturesService
+    lateinit var redactableSignaturesService: XHTMLRedactableSignatureService
 
     @Autowired
     lateinit var pdfConversionService: FileConversionService

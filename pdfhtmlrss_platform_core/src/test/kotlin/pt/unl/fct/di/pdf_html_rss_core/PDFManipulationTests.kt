@@ -8,8 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.createTemporaryTestFolder
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
-import pt.unl.fct.di.pdf_html_rss_core.services.PDFService
-import java.io.File
+import pt.unl.fct.di.pdf_html_rss_core.services.PDFManipulationService
 
 @SpringBootTest
 class PDFManipulationTests {
@@ -17,7 +16,7 @@ class PDFManipulationTests {
     val temporaryFolder = createTemporaryTestFolder();
 
     @Autowired
-    lateinit var pdfService: PDFService;
+    lateinit var pdfManipulationService: PDFManipulationService;
 
     @ParameterizedTest
     @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
@@ -37,7 +36,7 @@ class PDFManipulationTests {
             "Test2.txt" to "BOOOOO".toByteArray()
         )
 
-        val newPdfData = pdfService.addByteArrayAttachmentsToPdf(pdfFile, attachments);
+        val newPdfData = pdfManipulationService.addByteArrayAttachmentsToPdf(pdfFile, attachments);
 
         writeDataToTempFile(newPdfData, temporaryFolder, "${pdfFile.name}_attachments.pdf")
 

@@ -8,6 +8,8 @@ class PDFFileWrapper : Closeable {
 
     private var inputStream : BufferedInputStream;
 
+    val file : File?;
+
     private var data : ByteArray? = null;
     val name : String;
     private var fetchedMetadata = false;
@@ -24,17 +26,20 @@ class PDFFileWrapper : Closeable {
         private set;
 
     constructor(file: File, name: String? = null) {
+        this.file = file;
         this.name = name ?: file.nameWithoutExtension;
 
         this.inputStream = BufferedInputStream(FileInputStream(file));
     }
 
     constructor(name : String, byteArray: ByteArray) {
+        this.file = null;
         this.name = name
         this.inputStream = BufferedInputStream(ByteArrayInputStream(byteArray));
     }
 
     constructor(name : String, inputStream: InputStream) {
+        this.file = null;
         this.name = name
         this.inputStream = BufferedInputStream(inputStream);
     }
@@ -98,4 +103,6 @@ class PDFFileWrapper : Closeable {
     override fun close() {
         this.inputStream.close()
     }
+
+    override fun toString() = name
 }

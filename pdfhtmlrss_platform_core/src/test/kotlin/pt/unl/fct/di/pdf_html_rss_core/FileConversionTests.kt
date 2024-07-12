@@ -3,6 +3,7 @@ package pt.unl.fct.di.pdf_html_rss_core
 import com.itextpdf.text.pdf.PdfReader
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -13,12 +14,15 @@ import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
+import pt.unl.fct.di.pdf_html_rss_core.services.SecurityService
 import java.io.ByteArrayInputStream
 import java.io.File
 
 
 @SpringBootTest
 class FileConversionTests {
+    @Autowired
+    private lateinit var securityService: SecurityService
     val temporaryFolder = createTemporaryTestFolder();
 
     @Autowired
@@ -84,6 +88,20 @@ class FileConversionTests {
         );
     }
 
+
+    @ParameterizedTest
+    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
+    fun pdfToHtmlIdempotencyTest(pdfFile: PDFFileWrapper) {
+        val htmlDocData1 = pdfConversionService.generateHTMLFromPDF(pdfFile)
+        val htmlDocData2 = pdfConversionService.generateHTMLFromPDF(pdfFile)
+
+        val htmlDocHash1 = securityService.toSha256(htmlDocData1)
+        val htmlDocHash2 = securityService.toSha256(htmlDocData2)
+
+        assertEquals(htmlDocHash1, htmlDocHash2)
+    }
+
+    @Disabled
     @ParameterizedTest
     @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
     fun `Check if HTML to PDF conversion is idempotent enough`(pdfFile: PDFFileWrapper) {

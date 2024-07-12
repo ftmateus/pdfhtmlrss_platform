@@ -8,7 +8,7 @@ import java.io.*
 
 
 @Service
-class PDFService {
+class PDFManipulationService {
     fun addFileAttachmentsToPdf(pdf : PDFFileWrapper, attachments : Map<String, File>): ByteArray {
         return addAttachmentsToPdf(
             pdf,

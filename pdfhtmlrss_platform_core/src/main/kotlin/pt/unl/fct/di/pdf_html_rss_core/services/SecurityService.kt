@@ -84,4 +84,15 @@ class SecurityService {
         val keySpec = PKCS8EncodedKeySpec(encoded)
         return keyFactory.generatePrivate(keySpec) as PrivateKey
     }
+
+    fun toSha256(data : ByteArray) : String {
+        return MessageDigest.getInstance("SHA-256")
+            .digest(data)
+            .fold(StringBuilder()) { sb, it -> sb.append("%02x".format(it)) }
+            .toString()
+    }
+
+    fun verifySha256(data : ByteArray, hash : String) : Boolean {
+        return toSha256(data) == hash;
+    }
 }

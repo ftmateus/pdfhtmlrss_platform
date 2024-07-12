@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.createTemporaryTestFolder
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
+import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.CompressionService
 import java.io.File
 
@@ -26,8 +27,8 @@ class CompressionTests {
 
     @ParameterizedTest
     @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
-    fun compressPDFFilesGZip(pdfFile : File) {
-        _genericGZipCompressionTest(pdfFile);
+    fun compressPDFFilesGZip(pdfFile : PDFFileWrapper) {
+        _genericGZipCompressionTest(pdfFile.file!!);
     }
 
     fun _genericGZipCompressionTest(file : File) {

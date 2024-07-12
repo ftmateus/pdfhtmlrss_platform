@@ -10,13 +10,12 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.w3c.dom.Document
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.createTemporaryTestFolder
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
-import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
-import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
-import pt.unl.fct.di.pdf_html_rss_core.services.RedactableSignaturesService
+import pt.unl.fct.di.pdf_html_rss_core.services.*
 import java.io.File
 import java.io.FileInputStream
 import java.security.Security
@@ -25,16 +24,24 @@ import java.security.Security
 @SpringBootTest
 class PDFHTMLRSSApplicationTests {
 
+	@Autowired
+	private lateinit var compressionService: CompressionService
+
+	@Autowired
+	private lateinit var securityService: SecurityService
 	val temporaryFolder = createTemporaryTestFolder();
 
 	@Autowired
 	lateinit var fileConversionService: FileConversionService;
 
 	@Autowired
-	lateinit var redactableSignaturesService: RedactableSignaturesService;
+	lateinit var redactableSignaturesService: XHTMLRedactableSignatureService;
 
 	@Autowired
 	lateinit var domService: DOMService;
+
+	@Autowired
+	lateinit var pdfManipulationService : PDFManipulationService;
 
 	companion object {
 		@BeforeAll
@@ -121,5 +128,59 @@ class PDFHTMLRSSApplicationTests {
 		domService.writeDocumentToFile(redactedDoc, redactedDocFile)
 
 		assertTrue(redactableSignaturesService.verifyDocument(redactedDoc));
+	}
+
+	@Test
+	fun sha256Test() {
+		val file = getTestFile("simple.html")
+		val fileData = FileInputStream(file).use {it.readBytes()}
+
+		val hash = securityService.toSha256(fileData)
+		assertTrue(securityService.verifySha256(fileData, hash))
+	}
+
+	@Test
+	fun xPointerTest() {
+		val pdfFile = PDFFileWrapper(
+			getTestFile("invoice_example.pdf")
+		);
+
+		val htmlData = fileConversionService.generateHTMLFromPDF(pdfFile);
+
+		val htmlDom = htmlData.inputStream().use {
+			domService.parseDocument(it);
+		}
+
+		val signedDocument = redactableSignaturesService.signDocument(htmlDom,
+			redactSelectors = listOf(
+				"/html/body/div/a/p[1]"
+			)
+		);
+	}
+
+	@ParameterizedTest
+	@MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
+	fun integrationTest(pdfFile : PDFFileWrapper) {
+		val htmlData = fileConversionService.generateHTMLFromPDF(pdfFile);
+
+		val htmlDom = htmlData.inputStream().use {
+		 	domService.parseDocument(it);
+		}
+
+		val signedDocument = redactableSignaturesService.signAndRedactDocument(htmlDom);
+
+		val signedDocumentData = domService.convertDomDocumentToByteArray(signedDocument);
+
+		val compressedSignedDoc = signedDocumentData.inputStream().use {
+			 compressionService.compressGZip(it);
+		}
+
+		val pdfNew = PDFFileWrapper(pdfFile.name, pdfFile.getData());
+
+		val pdf = pdfManipulationService.addAttachmentsToPdf(pdfNew, mapOf(
+			"SigTest.html.gz" to compressedSignedDoc.inputStream()
+		))
+
+		writeDataToTempFile(pdf, temporaryFolder, "${pdfFile.name}.pdf")
 	}
 }
