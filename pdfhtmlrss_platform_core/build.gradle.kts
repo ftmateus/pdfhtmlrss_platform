@@ -36,8 +36,8 @@ repositories {
 }
 
 dependencies {
-	implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-//	implementation(project(":xmlrss"))
+//	implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+	implementation(project(":xmlrss"))
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
