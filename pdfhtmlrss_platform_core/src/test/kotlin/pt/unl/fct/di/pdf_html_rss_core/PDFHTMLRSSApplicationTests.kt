@@ -1,7 +1,5 @@
 package pt.unl.fct.di.pdf_html_rss_core
 
-import com.itextpdf.text.pdf.PdfReader
-import com.itextpdf.text.pdf.PdfStamper
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -15,12 +13,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.createTemporaryTestFolder
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
+import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
-import pt.unl.fct.di.pdf_html_rss_core.services.PDFService
 import pt.unl.fct.di.pdf_html_rss_core.services.RedactableSignaturesService
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.security.Security
@@ -33,9 +29,6 @@ class PDFHTMLRSSApplicationTests {
 
 	@Autowired
 	lateinit var fileConversionService: FileConversionService;
-
-	@Autowired
-	lateinit var pdfService: PDFService;
 
 	@Autowired
 	lateinit var redactableSignaturesService: RedactableSignaturesService;
@@ -56,15 +49,15 @@ class PDFHTMLRSSApplicationTests {
 	@Disabled
 	@ParameterizedTest
 	@MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
-	fun conversionIntegrityTest(pdfFile : File)
+	fun conversionIntegrityTest(pdfFile : PDFFileWrapper)
 	{
-		val domDocBytes = fileConversionService.generateHTMLFromPDF(pdfFile)
+		val domDocBytes = fileConversionService.generateHTMLFromPDF(pdfFile);
 
 		val pdfBytes = fileConversionService.generatePDFFromHTML(domDocBytes);
 
 		val domDocReconversionBytes = fileConversionService.generateHTMLFromPDFLinux(pdfBytes)
 
-		writeDataToTempFile(pdfBytes, temporaryFolder, "${pdfFile.name}.pdf")
+		writeDataToTempFile(pdfFile.getData(), temporaryFolder, "${pdfFile.name}.pdf")
 
 		writeDataToTempFile(domDocBytes, temporaryFolder, "${pdfFile.name}1.html")
 
@@ -99,7 +92,6 @@ class PDFHTMLRSSApplicationTests {
 		//TODO
 //		pdfConversionService.generatePDFFromHTML(redactedDocFile);
 //		pdfConversionService.generatePDFFromHTML(file, "${temporaryFolder.path}/${file.nameWithoutExtension}.${file.extension}.pdf");
-
 	}
 
 	@Test fun test3() {
@@ -129,20 +121,5 @@ class PDFHTMLRSSApplicationTests {
 		domService.writeDocumentToFile(redactedDoc, redactedDocFile)
 
 		assertTrue(redactableSignaturesService.verifyDocument(redactedDoc));
-	}
-
-	@ParameterizedTest
-	@MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
-	fun pdfAttachments(pdfFile : File) {
-		val attachments = mapOf(
-			"Test1.txt" to "Hello World".toByteArray(),
-		)
-		val parsedPdf = pdfFile.inputStream().use {
-			PdfReader(it);
-		}
-
-		val newPdfData = pdfService.addByteArrayAttachmentsToPdf(parsedPdf, attachments);
-
-		writeDataToTempFile(newPdfData, temporaryFolder, "${pdfFile.nameWithoutExtension}_attachments.pdf")
 	}
 }

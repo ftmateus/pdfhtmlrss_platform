@@ -27,10 +27,10 @@ class DOMService {
 
     fun convertDomDocumentToByteArray(document : Document) : ByteArray
     {
-        val out = ByteArrayOutputStream();
-        writeDocumentToStream(document, out);
-
-        return out.toByteArray();
+        ByteArrayOutputStream().use {
+            writeDocumentToStream(document, it);
+            return it.toByteArray();
+        }
     }
 
     @Throws(TransformerException::class)
@@ -40,15 +40,17 @@ class DOMService {
 
     @Throws(TransformerException::class)
     fun writeDocumentToFile(document: Document, file : File) {
-        writeDocumentToStream(document, FileOutputStream(file))
+        FileOutputStream(file).use {
+            writeDocumentToStream(document, it)
+        }
     }
 
-    fun writeDocumentToStream(document: Document, io : OutputStream) {
+    fun writeDocumentToStream(document: Document, out : OutputStream) {
         val tf = TransformerFactory.newInstance()
         val trans = tf.newTransformer()
         trans.setOutputProperty(OutputKeys.INDENT, "yes");
         trans.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "5");
-        trans.transform(DOMSource(document), StreamResult(io))
+        trans.transform(DOMSource(document), StreamResult(out))
     }
 
     fun parseDocument(inputStream : InputStream) : Document {
@@ -56,6 +58,8 @@ class DOMService {
     }
 
     fun parseDocument(file : File) : Document {
-        return parseDocument(FileInputStream(file))
+        FileInputStream(file).use {
+            return parseDocument(it)
+        }
     }
 }

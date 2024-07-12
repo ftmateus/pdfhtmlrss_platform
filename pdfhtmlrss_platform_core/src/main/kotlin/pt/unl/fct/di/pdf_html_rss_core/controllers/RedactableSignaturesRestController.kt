@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
+import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
 import pt.unl.fct.di.pdf_html_rss_core.services.RedactableSignaturesService
@@ -58,7 +59,7 @@ class RedactableSignaturesRestController {
 
         val docBytes : ByteArray = when (file.contentType?.let { MediaType.valueOf(it) }) {
             MediaType.APPLICATION_PDF  -> {
-                pdfConversionService.generateHTMLFromPDFLinux(file.bytes);
+                pdfConversionService.generateHTMLFromPDFLinux(PDFFileWrapper("", file.bytes));
             }
             //TODO
             MediaType.TEXT_XML,
@@ -76,8 +77,8 @@ class RedactableSignaturesRestController {
         val resource = InputStreamResource(
             when(type) {
                 MediaType.APPLICATION_PDF -> {
-                    val pdfBytes = pdfConversionService.generatePDFFromHTML(signedDoc);
-                    ByteArrayInputStream(pdfBytes)
+                    val pdf = pdfConversionService.generatePDFFromHTML(signedDoc);
+                    ByteArrayInputStream(pdf.getData())
                 }
                 MediaType.TEXT_XML,
                 MediaType.TEXT_HTML -> {

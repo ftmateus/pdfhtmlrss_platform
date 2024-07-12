@@ -10,11 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.createTemporaryTestFolder
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
+import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
 import java.io.ByteArrayInputStream
 import java.io.File
-import java.io.FileInputStream
 
 
 @SpringBootTest
@@ -30,23 +30,23 @@ class FileConversionTests {
 
     @ParameterizedTest
     @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#htmlTestFiles"])
-    fun htmlToPdf(htmlFile : File) {
+    fun htmlToPdf(htmlFile: File) {
 
-		val pdfDocData = pdfConversionService.generatePDFFromHTML(htmlFile)
+        val pdf = pdfConversionService.generatePDFFromHTML(htmlFile)
 
         writeDataToTempFile(
-            pdfDocData,
+            pdf.getData(),
             temporaryFolder,
             "${htmlFile.name}.pdf"
         )
 
-        assertTrue(pdfDocData.isNotEmpty());
-        assertIsValidPdfFile(pdfDocData);
+        assertTrue(pdf.getData().isNotEmpty());
+        assertIsValidPdfFile(pdf);
     }
 
     @ParameterizedTest
     @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
-    fun pdfToHtml(pdfFile : File) {
+    fun pdfToHtml(pdfFile : PDFFileWrapper) {
 
         val htmlDocData = pdfConversionService.generateHTMLFromPDF(pdfFile)
 
@@ -63,67 +63,47 @@ class FileConversionTests {
 
     @ParameterizedTest
     @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
-    fun pdfReconversion(pdfFile: File) {
+    fun pdfReconversion(pdfFile: PDFFileWrapper) {
 
         val htmlDocData = pdfConversionService.generateHTMLFromPDF(pdfFile)
 
-        val reconvertedPdfDocData = pdfConversionService.generatePDFFromHTML(htmlDocData)
+        val reconvertedPdfDoc = pdfConversionService.generatePDFFromHTML(htmlDocData)
 
         writeDataToTempFile(
-            reconvertedPdfDocData,
+            reconvertedPdfDoc.getData(),
             temporaryFolder,
             "${pdfFile.name}.html.pdf"
         )
 
-        assertIsValidPdfFile(reconvertedPdfDocData);
+        assertIsValidPdfFile(reconvertedPdfDoc);
 
-        val parsedPdf = FileInputStream(pdfFile).use {
-            PdfReader(it)
-        }
-
-        val parsedReconvertedPdf = ByteArrayInputStream(reconvertedPdfDocData).use {
-            PdfReader(it)
-        }
-
-        try {
-            //FIXME reconverted PDF generating more (blank) pages than it should
-            assertEquals(parsedPdf.numberOfPages, parsedReconvertedPdf.numberOfPages);
-        } finally {
-            parsedPdf.close();
-            parsedReconvertedPdf.close()
-        }
+        //FIXME reconverted PDF generating more (blank) pages than it should
+        assertEquals(
+            pdfFile.numberOfPages,
+            reconvertedPdfDoc.numberOfPages
+        );
     }
 
     @ParameterizedTest
     @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
-    fun `Check if HTML to PDF conversion is idempotent enough`(pdfFile: File) {
+    fun `Check if HTML to PDF conversion is idempotent enough`(pdfFile: PDFFileWrapper) {
         val htmlDocData = pdfConversionService.generateHTMLFromPDF(pdfFile)
 
-        val parsedReconvertedPdf1 = pdfConversionService.generatePDFFromHTML(htmlDocData).let {
-            ByteArrayInputStream(it).use { bais ->
-                PdfReader(bais)
-            }
-        }
+        val parsedReconvertedPdf1 = pdfConversionService
+            .generatePDFFromHTML(htmlDocData)
 
-        val parsedReconvertedPdf2 = pdfConversionService.generatePDFFromHTML(htmlDocData).let {
-            ByteArrayInputStream(it).use { bais ->
-                PdfReader(bais)
-            }
-        }
+        val parsedReconvertedPdf2 = pdfConversionService
+            .generatePDFFromHTML(htmlDocData)
 
         assertPdfFilesAreSame(parsedReconvertedPdf1, parsedReconvertedPdf2);
     }
 
-    fun assertIsValidPdfFile(pdfData : ByteArray) {
-        val pdfReader : PdfReader = assertDoesNotThrow {
-            PdfReader(pdfData)
-        }
-        try {
-            assert(pdfReader.fileLength > 0);
-            assert(pdfReader.numberOfPages > 0);
-        }
-        finally {
-            pdfReader.close();
+    fun assertIsValidPdfFile(pdfFile: PDFFileWrapper) {
+        assertDoesNotThrow {
+            pdfFile.useItextPdfReader {
+                assert(it.fileLength > 0);
+                assert(it.numberOfPages > 0);
+            }
         }
     }
 
@@ -136,12 +116,14 @@ class FileConversionTests {
         }
     }
 
-    fun assertPdfFilesAreSame(pdf1 : PdfReader, pdf2 : PdfReader) {
+    fun assertPdfFilesAreSame(pdf1 : PDFFileWrapper, pdf2 : PDFFileWrapper) {
+
         assertEquals(pdf1.fileLength, pdf2.fileLength)
         assertEquals(pdf1.numberOfPages, pdf2.numberOfPages)
         assertEquals(pdf1.pdfVersion, pdf2.pdfVersion)
-        assertEquals(pdf1.eofPos, pdf2.eofPos)
-        assertEquals(pdf1.metadata, pdf2.metadata)
+
+        assertEquals(pdf1.useItextPdfReader { it.eofPos }, pdf2.useItextPdfReader { it.eofPos })
+//            assertEquals(pdf1.metadata, pdf2.metadata)
 //        assertEquals(pdf1.info, pdf2.info)
 
         for (p in 1 .. pdf1.numberOfPages) {

@@ -2,6 +2,7 @@ package pt.unl.fct.di.pdf_html_rss_core
 
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.params.provider.Arguments
+import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import java.io.File
 import java.io.FileOutputStream
 import java.util.stream.Stream
@@ -25,7 +26,7 @@ class TestUtils {
                 ?.filter { it.extension == "pdf" }
                 ?.sortedBy { it.totalSpace }
                 ?.asReversed()
-                ?.map { Arguments.of(it) }
+                ?.map { Arguments.of(PDFFileWrapper(it)) }
                 ?.stream() ?: Stream.empty();
         }
 

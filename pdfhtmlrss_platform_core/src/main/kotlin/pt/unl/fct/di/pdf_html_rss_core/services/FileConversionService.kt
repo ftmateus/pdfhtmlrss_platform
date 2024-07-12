@@ -8,6 +8,7 @@ import org.fit.pdfdom.PDFDomTree
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.xhtmlrenderer.pdf.ITextRenderer
+import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import java.io.*
 import java.nio.charset.StandardCharsets
 
@@ -17,19 +18,19 @@ class FileConversionService {
     @Autowired
     lateinit var domService: DOMService;
 
-    fun generateHTMLFromPDFLinux(fileData: ByteArray) : ByteArray {
+    fun generateHTMLFromPDFLinux(pdf: PDFFileWrapper) : ByteArray {
         val pdfToHtmlProcess = ProcessBuilder()
             .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "-", "-")
             .redirectInput(ProcessBuilder.Redirect.PIPE)
             .start();
 
         pdfToHtmlProcess.outputStream.use {
-            it.write(fileData);
+            it.write(pdf.getData());
         }
 
         return pdfToHtmlProcess.inputStream.use {
             it.readBytes();
-        }
+        }.also { assert(it.isNotEmpty()) }
     }
 
     @Deprecated("")
@@ -52,14 +53,14 @@ class FileConversionService {
         return replaceInvalidCharacters(output.toByteArray())
     }
 
-    fun generateHTMLFromPDF(pdfFile : File) : ByteArray {
-        return generateHTMLFromPDFLinux(pdfFile.readBytes())
+    fun generateHTMLFromPDF(pdfFile : PDFFileWrapper) : ByteArray {
+        return generateHTMLFromPDFLinux(pdfFile)
     }
 
-    fun generateHTMLFromPDF(filePath : String, destination : String = "$filePath.html") {
-        val pdfBytes = generateHTMLFromPDFLinux(File(filePath).readBytes());
-        FileOutputStream(File(destination)).write(pdfBytes)
-    }
+//    fun generateHTMLFromPDF(filePath : String, destination : String = "$filePath.html") {
+//        val pdf = generateHTMLFromPDFLinux(File(filePath).readBytes());
+//        FileOutputStream(File(destination)).write(pdfBytes)
+//    }
 
     private fun replaceInvalidCharacters(bytes : ByteArray) : ByteArray
     {
@@ -72,13 +73,12 @@ class FileConversionService {
         val html = File(htmlFilePath)
         var content = String(html.readBytes())
         content = content.replace("&nbsp;", "&#160;")
-        val out = FileOutputStream(htmlFilePath)
-        out.use {
-            out.write(content.toByteArray(StandardCharsets.UTF_8))
+        FileOutputStream(htmlFilePath).use {
+            it.write(content.toByteArray(StandardCharsets.UTF_8))
         }
     }
 
-    fun generatePDFFromHTML(domDocData : ByteArray) : ByteArray  {
+    fun generatePDFFromHTML(domDocData : ByteArray) : PDFFileWrapper  {
         val parsedDoc : org.w3c.dom.Document = ByteArrayInputStream(domDocData).use {
             domService.parseDocument(it)
         }
@@ -86,12 +86,12 @@ class FileConversionService {
         return generatePDFFromHTML(parsedDoc);
     }
 
-    fun generatePDFFromHTML(domDoc : File) : ByteArray {
+    fun generatePDFFromHTML(domDoc : File) : PDFFileWrapper {
         val parsedDoc : org.w3c.dom.Document  = domService.parseDocument(domDoc);
         return generatePDFFromHTML(parsedDoc);
     }
 
-    fun generatePDFFromHTML(domDoc : org.w3c.dom.Document) : ByteArray
+    fun generatePDFFromHTML(domDoc : org.w3c.dom.Document) : PDFFileWrapper
     {
         ByteArrayOutputStream().use { out ->
             val renderer = ITextRenderer()
@@ -105,7 +105,7 @@ class FileConversionService {
                 this.createPDF(out)
                 this.finishPDF()
             }
-            return out.toByteArray()
+            return PDFFileWrapper("", out.toByteArray())
         }
     }
 

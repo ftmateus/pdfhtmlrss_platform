@@ -53,11 +53,13 @@ dependencies {
 	implementation("org.apache.pdfbox:pdfbox-tools:2.0.25")
 	implementation("net.sf.cssbox:pdf2dom:2.0.1")
 	implementation("com.itextpdf:itextpdf:5.5.10")
+	implementation("com.itextpdf:itext7-core:7.1.15")
 	implementation("com.itextpdf.tool:xmlworker:5.5.10")
 	implementation("org.apache.poi:poi-ooxml:3.15")
 	implementation("org.apache.poi:poi-scratchpad:3.15")
 	implementation("org.apache.santuario:xmlsec:2.0.8")
 	implementation("org.bouncycastle:bcprov-jdk18on:1.76")
+//	implementation("com.e-iceblue:spire.pdf:10.6.2")
 
 	implementation("org.jsoup:jsoup:1.16.2")
 	implementation("org.xhtmlrenderer:flying-saucer-pdf-openpdf:9.3.1")
