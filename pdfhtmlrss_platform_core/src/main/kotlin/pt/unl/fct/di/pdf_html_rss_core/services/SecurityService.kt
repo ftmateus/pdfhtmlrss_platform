@@ -1,5 +1,6 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
+import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
 import org.springframework.stereotype.Service
 import java.io.*
 import java.nio.charset.Charset
@@ -11,11 +12,15 @@ import java.util.*
 
 
 @Service
-class SecurityService {
+class SecurityService() {
+
+    init {
+        Security.insertProviderAt(WPProvider(), 1)
+    }
 
     val keyPair : KeyPair = let {
         val serializedFile = File("keyPair.ser");
-        if(File("keyPair.ser").exists()) {
+        if(serializedFile.exists()) {
             readSerializedKeyPair(serializedFile)
         } else {
             val keyPair = generateKeyPair();
@@ -29,6 +34,7 @@ class SecurityService {
 
     fun generateKeyPair(): KeyPair {
         val keyGen = KeyPairGenerator.getInstance("GSRSSwithRSAandBPA")
+        //TODO change key size
         keyGen.initialize(1024)
         return keyGen.generateKeyPair()
     }
@@ -86,6 +92,7 @@ class SecurityService {
     }
 
     fun toSha256(data : ByteArray) : String {
+        //TODO improve performance?
         return MessageDigest.getInstance("SHA-256")
             .digest(data)
             .fold(StringBuilder()) { sb, it -> sb.append("%02x".format(it)) }

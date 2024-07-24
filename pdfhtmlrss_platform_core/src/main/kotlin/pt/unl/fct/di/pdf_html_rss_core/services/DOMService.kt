@@ -1,7 +1,10 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
+import org.w3c.dom.Node
+import org.w3c.dom.NodeList
 import java.io.*
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
@@ -10,20 +13,23 @@ import javax.xml.transform.TransformerException
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
+import javax.xml.xpath.XPathConstants
+import javax.xml.xpath.XPathFactory
 
 @Service
 class DOMService {
 
-//    val documentBuilderFactory = DocumentBuilderFactory.newInstance()
-    val documentBuilder: DocumentBuilder = let {
-        val dbFactory = DocumentBuilderFactory
-            .newInstance()
+    companion object {
+        val HTML_META_DATE_XPATH = let {
+            val xPath = XPathFactory.newInstance().newXPath()
 
-        //https://github.com/qzind/tray/commit/c04b510515246954a5a26475ae46434b7f127437
-//        dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-
-        dbFactory.newDocumentBuilder();
+            xPath.compile("/html/head/meta[@name='date']")
+        }
     }
+
+    //    val documentBuilderFactory = DocumentBuilderFactory.newInstance()
+    @Autowired
+    lateinit var documentBuilder: DocumentBuilder;
 
     fun convertDomDocumentToByteArray(document : Document) : ByteArray
     {
@@ -61,5 +67,12 @@ class DOMService {
         FileInputStream(file).use {
             return parseDocument(it)
         }
+    }
+
+    fun removeDateMetaHtmlElement(domDoc : Document) {
+
+        val metaElem = HTML_META_DATE_XPATH.evaluate(domDoc, XPathConstants.NODE) as Node?
+
+        metaElem?.parentNode?.removeChild(metaElem)
     }
 }

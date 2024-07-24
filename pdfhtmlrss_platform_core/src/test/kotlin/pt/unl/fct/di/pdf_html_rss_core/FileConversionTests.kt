@@ -4,12 +4,14 @@ import com.itextpdf.text.pdf.PdfReader
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.createTemporaryTestFolder
+import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
@@ -94,6 +96,23 @@ class FileConversionTests {
     fun pdfToHtmlIdempotencyTest(pdfFile: PDFFileWrapper) {
         val htmlDocData1 = pdfConversionService.generateHTMLFromPDF(pdfFile)
         val htmlDocData2 = pdfConversionService.generateHTMLFromPDF(pdfFile)
+
+        val htmlDocHash1 = securityService.toSha256(htmlDocData1)
+        val htmlDocHash2 = securityService.toSha256(htmlDocData2)
+
+        assertEquals(htmlDocHash1, htmlDocHash2)
+    }
+
+    @Test
+    fun pdfToHtmlIdempotencyTestWithAttachment() {
+        val pdfWithoutAttachment = getTestFile("invoice_example.pdf")
+        val pdfWithAttachment = getTestFile("invoice_example_with_attachment.pdf")
+
+        val htmlDocData1 = pdfConversionService.generateHTMLFromPDF(PDFFileWrapper(pdfWithoutAttachment))
+        val htmlDocData2 = pdfConversionService.generateHTMLFromPDF(PDFFileWrapper(pdfWithAttachment))
+
+        writeDataToTempFile(htmlDocData1, temporaryFolder, "${pdfWithoutAttachment.name}.html")
+        writeDataToTempFile(htmlDocData2, temporaryFolder, "${pdfWithAttachment.name}.html")
 
         val htmlDocHash1 = securityService.toSha256(htmlDocData1)
         val htmlDocHash2 = securityService.toSha256(htmlDocData2)

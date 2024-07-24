@@ -9,6 +9,5 @@ import java.security.Security
 class PDFHTMLRSSApplication
 
 fun main(args: Array<String>) {
-	Security.addProvider(WPProvider());
 	runApplication<PDFHTMLRSSApplication>(*args)
 }

@@ -20,6 +20,7 @@ class FileConversionService {
 
     fun generateHTMLFromPDFLinux(pdf: PDFFileWrapper) : ByteArray {
         val pdfToHtmlProcess = ProcessBuilder()
+//            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "/dev/stdin", "/dev/stdout")
             .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "-", "-")
             .redirectInput(ProcessBuilder.Redirect.PIPE)
             .start();
@@ -28,9 +29,13 @@ class FileConversionService {
             it.write(pdf.getData());
         }
 
-        return pdfToHtmlProcess.inputStream.use {
-            it.readBytes();
-        }.also { assert(it.isNotEmpty()) }
+
+        // TODO improve performance?
+        val domDoc = domService.parseDocument(pdfToHtmlProcess.inputStream)
+
+        domService.removeDateMetaHtmlElement(domDoc)
+
+        return domService.convertDomDocumentToByteArray(domDoc)
     }
 
     @Deprecated("")

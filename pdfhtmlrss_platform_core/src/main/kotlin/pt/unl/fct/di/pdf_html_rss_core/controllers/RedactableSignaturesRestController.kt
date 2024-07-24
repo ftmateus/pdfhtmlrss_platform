@@ -12,6 +12,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
+import pt.unl.fct.di.pdf_html_rss_core.services.PDFManipulationService
 import pt.unl.fct.di.pdf_html_rss_core.services.XHTMLRedactableSignatureService
 import java.io.*
 
@@ -33,6 +34,9 @@ class RedactableSignaturesRestController {
     lateinit var redactableSignaturesService: XHTMLRedactableSignatureService
 
     @Autowired
+    lateinit var pdfManipulationService: PDFManipulationService;
+
+    @Autowired
     lateinit var pdfConversionService: FileConversionService
 
     @Autowired
@@ -40,7 +44,7 @@ class RedactableSignaturesRestController {
 
     @GetMapping(value = ["/test"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun testApi() : String {
-        return "Hello World";
+        return "Hello World\n";
     }
 
     @PostMapping("/sign")
@@ -57,19 +61,21 @@ class RedactableSignaturesRestController {
         if(SUPPORTED_UPLOAD_MIME_TYPES.none { it == type })
             throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
 
-        val docBytes : ByteArray = when (file.contentType?.let { MediaType.valueOf(it) }) {
-            MediaType.APPLICATION_PDF  -> {
-                pdfConversionService.generateHTMLFromPDFLinux(PDFFileWrapper("", file.bytes));
-            }
-            //TODO
-            MediaType.TEXT_XML,
-            MediaType.TEXT_HTML -> file.bytes
-            else -> throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+//        val docBytes : ByteArray = when (file.contentType?.let { MediaType.valueOf(it) }) {
+//            MediaType.APPLICATION_PDF  -> {
+//                pdfConversionService.generateHTMLFromPDFLinux(PDFFileWrapper("", file.bytes));
+//            }
+//            //TODO
+//            MediaType.TEXT_XML,
+//            MediaType.TEXT_HTML -> file.bytes
+//            else -> throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+//        }
+
+        val docBytes : ByteArray = file.inputStream.use {
+            it.readBytes()
         }
 
-        val document = domService.parseDocument(ByteArrayInputStream(docBytes));
-
-        val signedDoc = redactableSignaturesService.signDocument(document)
+//        val document = domService.parseDocument(ByteArrayInputStream(docBytes));
 
 //        val pdf = pdfConversionService.f
 //        return "redirect:/"
@@ -77,15 +83,22 @@ class RedactableSignaturesRestController {
         val resource = InputStreamResource(
             when(type) {
                 MediaType.APPLICATION_PDF -> {
-                    val pdf = pdfConversionService.generatePDFFromHTML(signedDoc);
-                    ByteArrayInputStream(pdf.getData())
+                    val signedDoc = pdfManipulationService
+                        .signPdfFileRedactableSignature(PDFFileWrapper(file.name, docBytes))
+
+                    ByteArrayInputStream(signedDoc.getData())
                 }
                 MediaType.TEXT_XML,
                 MediaType.TEXT_HTML -> {
-                    val docBytes = domService.convertDomDocumentToByteArray(signedDoc)
-                    ByteArrayInputStream(docBytes);
+                    val domDoc = docBytes.inputStream().use {
+                         domService.parseDocument(it)
+                    }
+
+                    val signedDoc = redactableSignaturesService.signDocument(domDoc)
+
+                    ByteArrayInputStream(domService.convertDomDocumentToByteArray(signedDoc));
                 }
-                else -> throw AssertionError();
+                else -> throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
             }
         );
 
