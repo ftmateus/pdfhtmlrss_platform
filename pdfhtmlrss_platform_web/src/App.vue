@@ -5,6 +5,11 @@
 
 <script>
 import HelloWorld from './components/HelloWorld.vue'
+import * as api from "@/api";
+
+api.testApi()
+    .then(res => res.text())
+    .then(t => console.log(t))
 
 export default {
   name: 'App',

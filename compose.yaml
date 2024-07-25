@@ -1,14 +1,27 @@
 services:
-    pdfhtmlrss-web:
-      build: pdfhtmlrss_platform_web
-      ports:
-        - 8080:80
-    pdfhtmlrss-backend:
+    web:
+        build: pdfhtmlrss_platform_web
+        ports:
+          - 8080:80
+        hostname:
+          frontend
+        networks:
+          frontend:
+          backend:
+        depends_on:
+          - backend
+    backend:
         build:
           pdfhtmlrss_platform_core
         ports:
           - 8081:8080
-#networks:
-#  frontend:
-#
-#  backend:
+        hostname:
+          backend
+        networks:
+          backend:
+networks:
+  frontend:
+    internal: false
+  backend:
+    driver: bridge
+    internal: true
