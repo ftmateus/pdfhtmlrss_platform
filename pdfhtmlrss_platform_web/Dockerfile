@@ -2,7 +2,10 @@ FROM node:lts-alpine as build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
-COPY . .
+COPY ./babel.config.js ./babel.config.js
+COPY ./tsconfig.json ./tsconfig.json
+COPY ./public ./public
+COPY ./src ./src
 RUN npm run build
 
 FROM nginx
