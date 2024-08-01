@@ -15,8 +15,6 @@ class W3CCacheEntityResolver : EntityResolver {
     @Autowired
     lateinit var temporaryFolder : File;
 
-    val w3cSchemaFilesPool : MutableMap<String, ByteArray> = mutableMapOf();
-
     @Throws(SAXException::class, IOException::class)
     override fun resolveEntity(publicId: String?, systemId: String): InputSource? {
         var systemIdUrl : URL? = URL(systemId)

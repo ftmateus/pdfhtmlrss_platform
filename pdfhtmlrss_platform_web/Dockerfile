@@ -1,9 +1,9 @@
 FROM node:lts-alpine as build
 WORKDIR /app
-COPY package*.json ./
+COPY package*.json .
 RUN npm install
-COPY ./babel.config.js ./babel.config.js
-COPY ./tsconfig.json ./tsconfig.json
+COPY ./babel.config.js .
+COPY ./tsconfig.json .
 COPY ./public ./public
 COPY ./src ./src
 RUN npm run build

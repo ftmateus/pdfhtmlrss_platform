@@ -12,7 +12,7 @@ services:
           - backend
     backend:
         build:
-          pdfhtmlrss_platform_core
+          dockerfile: ./backend.Dockerfile
 #        ports:
 #          - 8081:8080
         hostname:
@@ -26,4 +26,4 @@ networks:
     internal: false
   backend:
     driver: bridge
-    internal: true
+    internal: false
