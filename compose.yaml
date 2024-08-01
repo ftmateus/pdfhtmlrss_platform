@@ -17,6 +17,8 @@ services:
 #          - 8081:8080
         hostname:
           backend
+        tmpfs:
+          - /tmp/pdfrss
         networks:
           backend:
 networks:

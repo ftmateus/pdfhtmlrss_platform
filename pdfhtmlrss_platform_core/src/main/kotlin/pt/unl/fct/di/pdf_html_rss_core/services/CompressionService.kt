@@ -3,6 +3,7 @@ package pt.unl.fct.di.pdf_html_rss_core.services
 import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.io.OutputStream
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
