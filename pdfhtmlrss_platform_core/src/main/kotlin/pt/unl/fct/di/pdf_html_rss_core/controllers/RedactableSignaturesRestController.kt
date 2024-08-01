@@ -47,38 +47,37 @@ class RedactableSignaturesRestController {
         return "Hello World\n";
     }
 
+    //TODO post or get?
+    @PostMapping("/verify")
+    fun verifyDocument(
+        @RequestParam("file") file: MultipartFile,
+        @RequestParam("type") type: MediaType,
+    ) : Boolean {
+        //TODO extract function
+        if(SUPPORTED_UPLOAD_MIME_TYPES.none { it == type })
+            throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+
+        val docBytes : ByteArray = file.inputStream.use {
+            it.readBytes()
+        }
+
+        return false;
+    }
+
     @PostMapping("/sign")
     fun signDocument(
         @RequestParam("file") file: MultipartFile,
         @RequestParam("type") type : MediaType,
         redirectAttributes: RedirectAttributes
     ): ResponseEntity<InputStreamResource> {
-//        redirectAttributes.addFlashAttribute(
-//            "message",
-//            "You successfully uploaded " + file.originalFilename + "!"
-//        )
+
         //TODO extract function
         if(SUPPORTED_UPLOAD_MIME_TYPES.none { it == type })
             throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
 
-//        val docBytes : ByteArray = when (file.contentType?.let { MediaType.valueOf(it) }) {
-//            MediaType.APPLICATION_PDF  -> {
-//                pdfConversionService.generateHTMLFromPDFLinux(PDFFileWrapper("", file.bytes));
-//            }
-//            //TODO
-//            MediaType.TEXT_XML,
-//            MediaType.TEXT_HTML -> file.bytes
-//            else -> throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
-//        }
-
         val docBytes : ByteArray = file.inputStream.use {
             it.readBytes()
         }
-
-//        val document = domService.parseDocument(ByteArrayInputStream(docBytes));
-
-//        val pdf = pdfConversionService.f
-//        return "redirect:/"
 
         val resource = InputStreamResource(
             when(type) {
@@ -103,11 +102,8 @@ class RedactableSignaturesRestController {
         );
 
         return ResponseEntity.ok()
-//            .headers(headers)
-//            .contentLength(doc.size)
             .contentType(type)
-            .body<InputStreamResource>(resource)
-//        return Base64.getEncoder().encodeToString(doc);
+            .body(resource)
     }
 
 

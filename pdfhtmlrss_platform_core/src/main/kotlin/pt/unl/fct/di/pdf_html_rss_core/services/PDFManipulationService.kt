@@ -64,7 +64,6 @@ class PDFManipulationService {
             };
         }
         finally {
-            pdf.close()
             out.close()
             attachments.forEach { (_, a) ->  a.close()}
         }
@@ -117,7 +116,7 @@ class PDFManipulationService {
             domService.parseDocument(it);
         }
 
-        val signatureDom = xhtmlRedactableSignaturesService.signAndRedactDocument(htmlDom);
+        val signatureDom = xhtmlRedactableSignaturesService.signDocumentWithSeparatedSignature(htmlDom);
 
         val signedDocumentData = domService.convertDomDocumentToByteArray(signatureDom);
 

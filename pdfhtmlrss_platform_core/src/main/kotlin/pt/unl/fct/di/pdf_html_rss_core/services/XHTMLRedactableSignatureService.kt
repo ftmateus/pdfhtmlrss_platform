@@ -48,6 +48,22 @@ class XHTMLRedactableSignatureService {
         for (selector in redactSelectors)
             rss.addSignSelector(selector, true)
 
+        return rss.sign();
+    }
+
+    fun signDocumentWithSeparatedSignature(
+        doc: Document,
+        redactSelectors: List<String> = emptyList()
+//        signSelectors: List<String> = emptyList(),
+    ) : Document {
+        val rss = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
+
+        rss.initSign(securityService.keyPair);
+        rss.setDocument(doc)
+
+        for (selector in redactSelectors)
+            rss.addSignSelector(selector, true)
+
         return rss.signSeparate();
     }
 

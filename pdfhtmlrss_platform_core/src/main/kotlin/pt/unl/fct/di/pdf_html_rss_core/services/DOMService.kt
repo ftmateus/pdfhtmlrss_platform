@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 import org.w3c.dom.Node
-import org.w3c.dom.NodeList
 import java.io.*
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
@@ -27,10 +26,21 @@ class DOMService {
         }
     }
 
+    @Autowired
+    lateinit var w3CCacheEntityResolver: W3CCacheEntityResolver;
+
     //    val documentBuilderFactory = DocumentBuilderFactory.newInstance()
     @Autowired
-    lateinit var documentBuilder: DocumentBuilder;
+    lateinit var documentBuilderFactory: DocumentBuilderFactory;
 
+    private fun createDocumentBuilder(): DocumentBuilder {
+        return documentBuilderFactory.newDocumentBuilder()
+            .also {
+                it.setEntityResolver(w3CCacheEntityResolver)
+            }
+    }
+
+    @Deprecated("Use input stream implementation")
     fun convertDomDocumentToByteArray(document : Document) : ByteArray
     {
         ByteArrayOutputStream().use {
@@ -60,10 +70,13 @@ class DOMService {
     }
 
     fun parseDocument(inputStream : InputStream) : Document {
+        val documentBuilder = createDocumentBuilder();
         return documentBuilder.parse(inputStream);
     }
 
     fun parseDocument(file : File) : Document {
+//        return W3CDom()
+//            .fromJsoup(Jsoup.parse(file));
         FileInputStream(file).use {
             return parseDocument(it)
         }

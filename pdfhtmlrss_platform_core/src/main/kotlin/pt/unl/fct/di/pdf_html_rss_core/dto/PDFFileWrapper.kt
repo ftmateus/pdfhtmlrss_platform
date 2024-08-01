@@ -2,13 +2,15 @@ package pt.unl.fct.di.pdf_html_rss_core.dto
 
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.PdfStamper
+import org.springframework.core.io.ByteArrayResource
+import org.springframework.core.io.FileSystemResource
+import org.springframework.core.io.InputStreamResource
+import org.springframework.core.io.Resource
 import java.io.*
 
-class PDFFileWrapper : Closeable {
+class PDFFileWrapper {
 
-    private var inputStream : BufferedInputStream;
-
-    val file : File?;
+    val resource : Resource
 
     private var data : ByteArray? = null;
     val name : String;
@@ -25,29 +27,33 @@ class PDFFileWrapper : Closeable {
         get() = getMetadataProperty({ this.pdfVersion }, field);
         private set;
 
-    constructor(file: File, name: String? = null) {
-        this.file = file;
-        this.name = name ?: file.nameWithoutExtension;
+    constructor(resource: Resource, name: String? = null) {
+        this.resource = resource;
+        this.name = name ?: resource.filename ?: "";
+    }
 
-        this.inputStream = BufferedInputStream(FileInputStream(file));
+    constructor(file: File, name: String? = null) {
+        this.resource = FileSystemResource(file);
+        this.name = name ?: file.nameWithoutExtension;
     }
 
     constructor(name : String, byteArray: ByteArray) {
-        this.file = null;
+        this.resource = ByteArrayResource(byteArray);
         this.name = name
-        this.inputStream = BufferedInputStream(ByteArrayInputStream(byteArray));
     }
 
     constructor(name : String, inputStream: InputStream) {
-        this.file = null;
+        this.resource = InputStreamResource(inputStream);
         this.name = name
-        this.inputStream = BufferedInputStream(inputStream);
+    }
+
+    fun getInputStream() : InputStream {
+        return resource.inputStream
     }
 
     fun getData() : ByteArray {
-        return data ?: inputStream.readBytes().also {
-            data = it;
-            inputStream.close()
+        return data ?: resource.inputStream.use {
+            it.readBytes();
         }
     }
 
@@ -98,10 +104,6 @@ class PDFFileWrapper : Closeable {
         }
 
         return actualField;
-    }
-
-    override fun close() {
-        this.inputStream.close()
     }
 
     override fun toString() = name

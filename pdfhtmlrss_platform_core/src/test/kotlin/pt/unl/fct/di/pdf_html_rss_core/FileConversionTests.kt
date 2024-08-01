@@ -10,7 +10,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.createTemporaryTestFolder
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
@@ -25,7 +24,9 @@ import java.io.File
 class FileConversionTests {
     @Autowired
     private lateinit var securityService: SecurityService
-    val temporaryFolder = createTemporaryTestFolder();
+
+    @Autowired
+    lateinit var temporaryFolder : File;
 
     @Autowired
     lateinit var pdfConversionService: FileConversionService;
@@ -41,17 +42,20 @@ class FileConversionTests {
         val pdf = pdfConversionService.generatePDFFromHTML(htmlFile)
 
         writeDataToTempFile(
-            pdf.getData(),
             temporaryFolder,
             "${htmlFile.name}.pdf"
-        )
+        ) { out ->
+            pdf.getInputStream().use {
+                it.copyTo(out)
+            }
+        }
 
         assertTrue(pdf.getData().isNotEmpty());
         assertIsValidPdfFile(pdf);
     }
 
     @ParameterizedTest
-    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
+    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#smallPdfTestFiles"])
     fun pdfToHtml(pdfFile : PDFFileWrapper) {
 
         val htmlDocData = pdfConversionService.generateHTMLFromPDF(pdfFile)
@@ -68,7 +72,7 @@ class FileConversionTests {
     }
 
     @ParameterizedTest
-    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
+    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#smallPdfTestFiles"])
     fun pdfReconversion(pdfFile: PDFFileWrapper) {
 
         val htmlDocData = pdfConversionService.generateHTMLFromPDF(pdfFile)
@@ -92,7 +96,7 @@ class FileConversionTests {
 
 
     @ParameterizedTest
-    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
+    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#smallPdfTestFiles"])
     fun pdfToHtmlIdempotencyTest(pdfFile: PDFFileWrapper) {
         val htmlDocData1 = pdfConversionService.generateHTMLFromPDF(pdfFile)
         val htmlDocData2 = pdfConversionService.generateHTMLFromPDF(pdfFile)
@@ -122,7 +126,7 @@ class FileConversionTests {
 
     @Disabled
     @ParameterizedTest
-    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
+    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#smallPdfTestFiles"])
     fun `Check if HTML to PDF conversion is idempotent enough`(pdfFile: PDFFileWrapper) {
         val htmlDocData = pdfConversionService.generateHTMLFromPDF(pdfFile)
 
