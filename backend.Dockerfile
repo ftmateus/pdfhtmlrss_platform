@@ -3,9 +3,9 @@ WORKDIR /home/gradle/src
 COPY --chown=gradle:gradle ./settings.gradle.kts settings.gradle.kts
 COPY --chown=gradle:gradle ./xmlrss/build.gradle xmlrss/build.gradle
 COPY --chown=gradle:gradle ./pdfhtmlrss_platform_core/build.gradle.kts pdfhtmlrss_platform_core/build.gradle.kts
-RUN gradle build --refresh-dependencies --no-daemon
-COPY --chown=gradle:gradle ./xmlrss/src xmlrss/src
-COPY --chown=gradle:gradle ./pdfhtmlrss_platform_core/src pdfhtmlrss_platform_core/src
+#RUN gradle build --refresh-dependencies --no-daemon
+COPY --chown=gradle:gradle ./xmlrss/src/main xmlrss/src/main
+COPY --chown=gradle:gradle ./pdfhtmlrss_platform_core/src/main pdfhtmlrss_platform_core/src/main
 RUN gradle build -x test --no-daemon
 
 #FROM ubuntu:24.04

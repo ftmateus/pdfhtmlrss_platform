@@ -1,20 +1,18 @@
 package pt.unl.fct.di.pdf_html_rss_core
 
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
+import org.springframework.boot.jdbc.DataSourceBuilder
+import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Scope
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer
-import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer.ExpressionInterceptUrlRegistry
 import org.springframework.security.web.SecurityFilterChain
 import java.io.File
-import java.security.Security
-import javax.xml.XMLConstants
-import javax.xml.parsers.DocumentBuilder
+import javax.servlet.annotation.WebServlet
+import javax.sql.DataSource
 import javax.xml.parsers.DocumentBuilderFactory
-import javax.xml.validation.SchemaFactory
 
 
 @Configuration
@@ -67,4 +65,11 @@ class Config {
             it.mkdir()
         }
     }
+
+//    @Bean
+//    fun h2servletRegistration(): ServletRegistrationBean<*> {
+//        val registration: ServletRegistrationBean<*> = ServletRegistrationBean(WebServlet())
+//        registration.addUrlMappings("/console/*")
+//        return registration
+//    }
 }
