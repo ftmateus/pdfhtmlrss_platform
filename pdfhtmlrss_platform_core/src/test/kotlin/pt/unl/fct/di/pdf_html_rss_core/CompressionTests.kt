@@ -5,16 +5,16 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.CompressionService
+import pt.unl.fct.di.pdf_html_rss_core.services.TemporaryFilesService
 import java.io.File
 
 @SpringBootTest
 class CompressionTests {
 
     @Autowired
-    lateinit var temporaryFolder : File;
+    lateinit var temporaryFilesService: TemporaryFilesService
 
     @Autowired
     lateinit var compressionService: CompressionService;
@@ -35,14 +35,24 @@ class CompressionTests {
         val originalData = file.readBytes();
 
         val compressedData = compressionService.compressGZip(file.inputStream())
-        writeDataToTempFile(compressedData, temporaryFolder, "${file.name}.gzip")
+
+        temporaryFilesService.writeToTempFile(
+            compressedData.inputStream(),
+            "${file.name}.gzip",
+            deleteAutomatically = false
+        )
 
         val compressionRatio = compressedData.size.toFloat()/originalData.size.toFloat();
 
         assert(compressionRatio < 1.0);
 
         val decompressedData = compressionService.decompressGZip(compressedData.inputStream());
-        writeDataToTempFile(decompressedData, temporaryFolder, "${file.name}.gzip.${file.extension}")
+
+        temporaryFilesService.writeToTempFile(
+            decompressedData.inputStream(),
+            "${file.name}.gzip.${file.extension}",
+            deleteAutomatically = false
+        )
 
         assertEquals(originalData.size, decompressedData.size);
         assertEquals(originalData.toList(), decompressedData.toList());

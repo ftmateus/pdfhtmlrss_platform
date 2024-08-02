@@ -1,6 +1,9 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.io.*
 import java.nio.charset.Charset
@@ -9,42 +12,62 @@ import java.security.*
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
+import javax.annotation.PostConstruct
 
 
 @Service
 class SecurityService() {
 
-    init {
-        Security.insertProviderAt(WPProvider(), 1)
-    }
+    var logger: Logger = LoggerFactory.getLogger(SecurityService::class.java)
 
-    val keyPair : KeyPair = let {
-        val serializedFile = File("keyPair.ser");
-        if(serializedFile.exists()) {
-            readSerializedKeyPair(serializedFile)
-        } else {
-            val keyPair = generateKeyPair();
-            serializeKeyPair(keyPair, serializedFile);
-            keyPair;
-        }
-    };
+    @Autowired
+    private lateinit var temporaryFilesService: TemporaryFilesService
+
+    @Autowired
+    private lateinit var wpProvider: WPProvider
+
+    lateinit var keyPair : KeyPair;
 
     val publicKey : PublicKey get() = keyPair.public;
     val privateKey : PrivateKey get() = keyPair.private;
 
+    @PostConstruct
+    private fun afterBeanInitialization() {
+        Security.insertProviderAt(wpProvider, 1)
+        keyPair = getSerializedKeyPair()
+    }
+
+    private fun getSerializedKeyPair() : KeyPair {
+        val serializedFile : File? = temporaryFilesService.getTempFile("keyPair.ser");
+        if(serializedFile != null) {
+            return readSerializedKeyPair(serializedFile)
+        }
+        logger.info("Key pair not found, generating new one...")
+
+        return generateKeyPair().also { kp ->
+            temporaryFilesService.writeToTempFile(
+                "keyPair.ser",
+                deleteAutomatically = false
+            ) { out ->
+                serializeKeyPair(kp, out)
+            }
+        }
+    }
+
     fun generateKeyPair(): KeyPair {
         val keyGen = KeyPairGenerator.getInstance("GSRSSwithRSAandBPA")
-        //TODO change key size
+        //TODO change key size. Key generation is too slow...
         keyGen.initialize(1024)
         return keyGen.generateKeyPair()
     }
 
     @Throws(IOException::class)
-    private fun serializeKeyPair(keyPair: KeyPair, file : File) {
-        ObjectOutputStream(FileOutputStream(file))
-        .use { out ->
-            out.writeObject(keyPair.public)
-            out.writeObject(keyPair.private)
+    private fun serializeKeyPair(keyPair: KeyPair, outputStream: OutputStream) {
+        outputStream.use {
+            ObjectOutputStream(it).use { out ->
+                out.writeObject(keyPair.public)
+                out.writeObject(keyPair.private)
+            }
         }
     }
 
@@ -89,6 +112,29 @@ class SecurityService() {
         val keyFactory = KeyFactory.getInstance("RSA")
         val keySpec = PKCS8EncodedKeySpec(encoded)
         return keyFactory.generatePrivate(keySpec) as PrivateKey
+    }
+
+    private fun toGenericHash(hashAlgorithm : String, stream : InputStream) : String {
+        val hash = MessageDigest.getInstance(hashAlgorithm)
+        val buffer : ByteArray = ByteArray(4096)
+        stream.use {
+            do {
+                val bytesAvailable = it.available()
+                it.read(buffer)
+                hash.update(buffer, 0, bytesAvailable)
+            } while (bytesAvailable != -1)
+        }
+        return hash.digest()
+            .fold(StringBuilder()) { sb, it -> sb.append("%02x".format(it)) }
+            .toString()
+    }
+
+    fun toSha1(stream : InputStream) : String {
+        return toGenericHash("SHA-1", stream);
+    }
+
+    fun toSha256(stream : InputStream) : String {
+        return toGenericHash("SHA-256", stream);
     }
 
     fun toSha256(data : ByteArray) : String {

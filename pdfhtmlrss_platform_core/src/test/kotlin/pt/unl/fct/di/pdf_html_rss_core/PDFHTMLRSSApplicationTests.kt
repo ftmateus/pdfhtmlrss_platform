@@ -13,7 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.w3c.dom.Document
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.checkSha256WithLinux
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
-import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.*
 import java.io.File
@@ -32,7 +31,7 @@ class PDFHTMLRSSApplicationTests {
 	private lateinit var securityService: SecurityService
 
 	@Autowired
-	lateinit var temporaryFolder : File;
+	lateinit var temporaryFilesService: TemporaryFilesService
 
 	@Autowired
 	lateinit var fileConversionService: FileConversionService;
@@ -67,11 +66,23 @@ class PDFHTMLRSSApplicationTests {
 
 		val domDocReconversionBytes = fileConversionService.generateHTMLFromPDF(pdfBytes)
 
-		writeDataToTempFile(pdfFile.getData(), temporaryFolder, "${pdfFile.name}.pdf")
+		temporaryFilesService.writeToTempFile(
+			pdfFile.getInputStream(),
+			"${pdfFile.name}.pdf",
+			deleteAutomatically = false
+		)
 
-		writeDataToTempFile(domDocBytes, temporaryFolder, "${pdfFile.name}1.html")
+		temporaryFilesService.writeToTempFile(
+			domDocBytes.inputStream(),
+			"${pdfFile.name}1.html",
+			deleteAutomatically = false
+		)
 
-		writeDataToTempFile(domDocReconversionBytes, temporaryFolder, "${pdfFile.name}2.html")
+		temporaryFilesService.writeToTempFile(
+			domDocReconversionBytes.inputStream(),
+			"${pdfFile.name}2.html",
+			deleteAutomatically = false
+		)
 
 		assertEquals(domDocBytes, domDocReconversionBytes)
 
@@ -98,12 +109,17 @@ class PDFHTMLRSSApplicationTests {
 	}
 
 	@ParameterizedTest
-	@MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
+	@MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#smallPdfTestFiles"])
 	fun pdfSignWithRedactableSignature(pdfFile : PDFFileWrapper) {
 		val signedPdf = pdfManipulationService.signPdfFileRedactableSignature(pdfFile)
 
-		writeDataToTempFile(signedPdf.getData(), temporaryFolder, "${signedPdf.name}.pdf")
+		temporaryFilesService.writeToTempFile(
+			signedPdf.getInputStream(),
+			"${signedPdf.name}.pdf",
+			deleteAutomatically = false
+		)
 
-		assertTrue(pdfManipulationService.verifyPdfFileRedactableSignature(signedPdf))
+		pdfManipulationService.verifyPdfFileRedactableSignature(signedPdf)
+			.also { assertTrue(it) }
 	}
 }

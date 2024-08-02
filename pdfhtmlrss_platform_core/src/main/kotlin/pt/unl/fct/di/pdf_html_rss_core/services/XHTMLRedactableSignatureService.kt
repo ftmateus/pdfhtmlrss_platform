@@ -18,6 +18,9 @@ class XHTMLRedactableSignatureService {
     @Autowired
     lateinit var securityService : SecurityService;
 
+    @Autowired
+    lateinit var domService : DOMService;
+
     companion object {
         const val RSS_ALGORITHM = "GSRSSwithRSAandBPA";
     }
@@ -99,6 +102,8 @@ class XHTMLRedactableSignatureService {
         signedDoc.documentElement.appendChild(
             signedDoc.importNode(signatureElem, true)
         )
+
+        domService.printDocument(signedDoc)
 
         return verifyDocument(signedDoc)
     }

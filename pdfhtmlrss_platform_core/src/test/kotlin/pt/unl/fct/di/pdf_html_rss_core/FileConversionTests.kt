@@ -11,11 +11,11 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
-import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.writeDataToTempFile
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
 import pt.unl.fct.di.pdf_html_rss_core.services.SecurityService
+import pt.unl.fct.di.pdf_html_rss_core.services.TemporaryFilesService
 import java.io.ByteArrayInputStream
 import java.io.File
 
@@ -26,7 +26,7 @@ class FileConversionTests {
     private lateinit var securityService: SecurityService
 
     @Autowired
-    lateinit var temporaryFolder : File;
+    lateinit var temporaryFilesService: TemporaryFilesService
 
     @Autowired
     lateinit var pdfConversionService: FileConversionService;
@@ -41,14 +41,11 @@ class FileConversionTests {
 
         val pdf = pdfConversionService.generatePDFFromHTML(htmlFile)
 
-        writeDataToTempFile(
-            temporaryFolder,
-            "${htmlFile.name}.pdf"
-        ) { out ->
-            pdf.getInputStream().use {
-                it.copyTo(out)
-            }
-        }
+        temporaryFilesService.writeToTempFile(
+            pdf.getInputStream(),
+            "${htmlFile.name}.pdf",
+            deleteAutomatically = false
+        )
 
         assertTrue(pdf.getData().isNotEmpty());
         assertIsValidPdfFile(pdf);
@@ -60,10 +57,10 @@ class FileConversionTests {
 
         val htmlDocData = pdfConversionService.generateHTMLFromPDF(pdfFile)
 
-        writeDataToTempFile(
-            htmlDocData,
-            temporaryFolder,
-            "${pdfFile.name}.html"
+        temporaryFilesService.writeToTempFile(
+            htmlDocData.inputStream(),
+            "${pdfFile.name}.html",
+            deleteAutomatically = false
         )
 
         assertTrue(htmlDocData.isNotEmpty())
@@ -79,10 +76,10 @@ class FileConversionTests {
 
         val reconvertedPdfDoc = pdfConversionService.generatePDFFromHTML(htmlDocData)
 
-        writeDataToTempFile(
-            reconvertedPdfDoc.getData(),
-            temporaryFolder,
-            "${pdfFile.name}.html.pdf"
+        temporaryFilesService.writeToTempFile(
+            reconvertedPdfDoc.getInputStream(),
+            "${pdfFile.name}.html.pdf",
+            deleteAutomatically = false
         )
 
         assertIsValidPdfFile(reconvertedPdfDoc);
@@ -115,8 +112,17 @@ class FileConversionTests {
         val htmlDocData1 = pdfConversionService.generateHTMLFromPDF(PDFFileWrapper(pdfWithoutAttachment))
         val htmlDocData2 = pdfConversionService.generateHTMLFromPDF(PDFFileWrapper(pdfWithAttachment))
 
-        writeDataToTempFile(htmlDocData1, temporaryFolder, "${pdfWithoutAttachment.name}.html")
-        writeDataToTempFile(htmlDocData2, temporaryFolder, "${pdfWithAttachment.name}.html")
+        temporaryFilesService.writeToTempFile(
+            htmlDocData1.inputStream(),
+            "${pdfWithoutAttachment.name}.html",
+            deleteAutomatically = false
+        )
+
+        temporaryFilesService.writeToTempFile(
+            htmlDocData1.inputStream(),
+            "${pdfWithAttachment.name}.html",
+            deleteAutomatically = false
+        )
 
         val htmlDocHash1 = securityService.toSha256(htmlDocData1)
         val htmlDocHash2 = securityService.toSha256(htmlDocData2)

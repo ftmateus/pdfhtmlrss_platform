@@ -1,5 +1,6 @@
 package pt.unl.fct.di.pdf_html_rss_core
 
+import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Scope
@@ -9,6 +10,7 @@ import org.springframework.security.config.annotation.web.configurers.CsrfConfig
 import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer.ExpressionInterceptUrlRegistry
 import org.springframework.security.web.SecurityFilterChain
 import java.io.File
+import java.security.Security
 import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
@@ -17,6 +19,11 @@ import javax.xml.validation.SchemaFactory
 
 @Configuration
 class Config {
+
+    @Bean
+    fun wpProvider() : WPProvider {
+        return WPProvider()
+    }
 
     @Bean
     @Throws(Exception::class)

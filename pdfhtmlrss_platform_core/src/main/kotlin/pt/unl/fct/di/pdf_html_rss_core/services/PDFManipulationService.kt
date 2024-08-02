@@ -138,7 +138,7 @@ class PDFManipulationService {
 
         val signatureDom = getRedactableSignature(pdf)
 
-        GSRedactableSignature.GSRSSwithBPAccumulatorAndRSA()
+//        GSRedactableSignature.GSRSSwithBPAccumulatorAndRSA()
 
 
         return xhtmlRedactableSignaturesService

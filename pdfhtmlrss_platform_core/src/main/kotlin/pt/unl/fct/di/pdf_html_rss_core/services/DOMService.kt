@@ -1,5 +1,6 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
+import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.Dereferencer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
@@ -37,6 +38,20 @@ class DOMService {
         return documentBuilderFactory.newDocumentBuilder()
             .also {
                 it.setEntityResolver(w3CCacheEntityResolver)
+            }
+    }
+
+    fun hasAllXPathElements(document: Document, xPathElems : List<String>): Boolean {
+        return xPathElems.stream()
+            .allMatch { xPathElem ->
+                Dereferencer.dereference(xPathElem, document) != null
+            }
+    }
+
+    fun hasSomeXPathElements(document: Document, xPathElems : List<String>): Boolean {
+        return xPathElems.stream()
+            .anyMatch { xPathElem ->
+                Dereferencer.dereference(xPathElem, document) != null
             }
     }
 

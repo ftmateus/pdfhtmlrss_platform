@@ -10,7 +10,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.stream.IntStream
 import java.util.stream.Stream
+import kotlin.streams.toList
 
 class TestUtils {
 
@@ -68,8 +70,13 @@ class TestUtils {
                 Arguments.of(
                     "simple.html", listOf(
                         "#xpath(/html/body/div/label[2])"
-                    )
+                    ),
                 ),
+                Arguments.of(
+                    "lorem_ipsum.html", IntStream.range(1, 13)
+                        .mapToObj { "#xpath(/html/body/p[$it])" }
+                        .toList()
+                )
             )
         }
 
@@ -91,21 +98,6 @@ class TestUtils {
                 ?.asReversed()
                 ?.map { Arguments.of(it) }
                 ?.stream() ?: Stream.empty();
-        }
-
-        @Deprecated("Uses a lot of memory")
-        @JvmStatic
-        fun writeDataToTempFile(data : ByteArray, temporaryFolder : File, fileName : String) {
-            val tempFile = File(temporaryFolder, fileName);
-            FileOutputStream(tempFile).use {
-                it.write(data);
-            }
-        }
-
-        @JvmStatic
-        fun writeDataToTempFile(temporaryFolder : File, fileName : String, block : (OutputStream) -> Unit) {
-            val tempFile = File(temporaryFolder, fileName);
-            tempFile.outputStream().use(block)
         }
 
         @JvmStatic
