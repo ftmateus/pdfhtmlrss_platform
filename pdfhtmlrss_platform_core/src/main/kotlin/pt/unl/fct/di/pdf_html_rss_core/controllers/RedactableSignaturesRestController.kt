@@ -10,11 +10,9 @@ import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
-import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
-import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
-import pt.unl.fct.di.pdf_html_rss_core.services.PDFManipulationService
-import pt.unl.fct.di.pdf_html_rss_core.services.XHTMLRedactableSignatureService
+import pt.unl.fct.di.pdf_html_rss_core.services.*
 import java.io.*
+import java.nio.file.Paths
 
 
 //import kotlin.io.encoding.Base64
@@ -24,6 +22,8 @@ import java.io.*
 @RequestMapping(value = ["/"])
 class RedactableSignaturesRestController {
 
+    @Autowired
+    private lateinit var fileConversionService: FileConversionService
     val SUPPORTED_UPLOAD_MIME_TYPES = listOf(
         MediaType.APPLICATION_PDF,
         MediaType.TEXT_XML,
@@ -32,6 +32,9 @@ class RedactableSignaturesRestController {
 
     @Autowired
     lateinit var redactableSignaturesService: XHTMLRedactableSignatureService
+
+    @Autowired
+    lateinit var temporaryFilesService: TemporaryFilesService
 
     @Autowired
     lateinit var pdfManipulationService: PDFManipulationService;
@@ -46,6 +49,24 @@ class RedactableSignaturesRestController {
     fun testApi() : String {
         return "Hello World\n";
     }
+
+    //TODO html file type?
+    @GetMapping(value = ["/tmp/{filePath}"])
+    fun getTempFile(@PathVariable filePath: String): ResponseEntity<InputStreamResource> {
+        val normalizedPath: String = Paths.get(filePath).normalize().toString()
+
+        val tempFile = temporaryFilesService.getTempFileSecurely(
+            normalizedPath
+        )
+
+        if(tempFile == null) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND)
+        }
+
+        return ResponseEntity.ok()
+            .body(InputStreamResource(tempFile.inputStream()));
+    }
+
 
     //TODO post or get?
     @PostMapping("/verify")
@@ -64,6 +85,26 @@ class RedactableSignaturesRestController {
         return false;
     }
 
+    @PostMapping("/sign/prepare")
+    fun preparePdfFileForRedaction(
+        @RequestParam("file") file: MultipartFile,
+        @RequestParam("type") type: MediaType
+    ): String {
+        if (type != MediaType.APPLICATION_PDF)
+            throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+
+        val pdfFile = PDFFileWrapper(file.resource)
+
+        val htmlTmpFile = temporaryFilesService.writeToTempFile { tmpFileOut ->
+            val docBytes = pdfConversionService.generateHTMLFromPDF(pdfFile)
+            tmpFileOut.write(docBytes)
+        }
+
+        //TODO additional logic to store pendent redaction tasks
+
+        return htmlTmpFile.name
+    }
+
     @PostMapping("/sign")
     fun signDocument(
         @RequestParam("file") file: MultipartFile,
@@ -71,9 +112,7 @@ class RedactableSignaturesRestController {
         redirectAttributes: RedirectAttributes
     ): ResponseEntity<InputStreamResource> {
 
-        //TODO extract function
-        if(SUPPORTED_UPLOAD_MIME_TYPES.none { it == type })
-            throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+        checkIfFileTypeIsSupported(type)
 
         val docBytes : ByteArray = file.inputStream.use {
             it.readBytes()
@@ -106,5 +145,10 @@ class RedactableSignaturesRestController {
             .body(resource)
     }
 
+
+    private fun checkIfFileTypeIsSupported(type : MediaType) {
+        if(SUPPORTED_UPLOAD_MIME_TYPES.none { it == type })
+            throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+    }
 
 }

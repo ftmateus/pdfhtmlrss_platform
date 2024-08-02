@@ -16,6 +16,10 @@ class TemporaryFilesService {
     companion object {
         //1 hour
         const val TEMPORARY_FILES_TTL : Long = 3600 * 60 * 1000;
+        val SPECIAL_TEMP_FILES_FOLDERS = listOf(
+            SecurityService.SERIALIZED_KEYPAIR_FILE,
+            "www.w3.com/"
+        )
     }
 
     @Autowired
@@ -63,6 +67,14 @@ class TemporaryFilesService {
             return false
         }
         return file.lastModified() < System.currentTimeMillis() - TEMPORARY_FILES_TTL
+    }
+
+    fun getTempFileSecurely(fileName : String) : File? {
+        if(SPECIAL_TEMP_FILES_FOLDERS.contains(fileName)) {
+            return null;
+        }
+
+        return getTempFile(fileName)
     }
 
     fun getTempFile(fileName : String) : File? {

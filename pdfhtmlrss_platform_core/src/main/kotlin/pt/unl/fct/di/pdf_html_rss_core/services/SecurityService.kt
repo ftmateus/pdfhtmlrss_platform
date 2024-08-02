@@ -31,6 +31,10 @@ class SecurityService() {
     val publicKey : PublicKey get() = keyPair.public;
     val privateKey : PrivateKey get() = keyPair.private;
 
+    companion object {
+        const val SERIALIZED_KEYPAIR_FILE = "keyPair.ser"
+    }
+
     @PostConstruct
     private fun afterBeanInitialization() {
         Security.insertProviderAt(wpProvider, 1)
@@ -38,7 +42,7 @@ class SecurityService() {
     }
 
     private fun getSerializedKeyPair() : KeyPair {
-        val serializedFile : File? = temporaryFilesService.getTempFile("keyPair.ser");
+        val serializedFile : File? = temporaryFilesService.getTempFile(SERIALIZED_KEYPAIR_FILE);
         if(serializedFile != null) {
             return readSerializedKeyPair(serializedFile)
         }
@@ -46,7 +50,7 @@ class SecurityService() {
 
         return generateKeyPair().also { kp ->
             temporaryFilesService.writeToTempFile(
-                "keyPair.ser",
+                SERIALIZED_KEYPAIR_FILE,
                 deleteAutomatically = false
             ) { out ->
                 serializeKeyPair(kp, out)
@@ -116,13 +120,21 @@ class SecurityService() {
 
     private fun toGenericHash(hashAlgorithm : String, stream : InputStream) : String {
         val hash = MessageDigest.getInstance(hashAlgorithm)
-        val buffer : ByteArray = ByteArray(4096)
+        val bufferSize = 4096;
+        val buffer : ByteArray = ByteArray(bufferSize)
         stream.use {
-            do {
-                val bytesAvailable = it.available()
+            var bytesAvailable = it.available();
+            while ( bytesAvailable > 0) {
+                val bytesToWrite = let {
+                    if (bytesAvailable <= bufferSize)
+                        bytesAvailable
+                    else
+                        bufferSize;
+                }
                 it.read(buffer)
-                hash.update(buffer, 0, bytesAvailable)
-            } while (bytesAvailable != -1)
+                hash.update(buffer, 0, bytesToWrite)
+                bytesAvailable = it.available();
+            }
         }
         return hash.digest()
             .fold(StringBuilder()) { sb, it -> sb.append("%02x".format(it)) }

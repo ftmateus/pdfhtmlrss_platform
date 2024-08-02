@@ -20,7 +20,6 @@ class TestUtils {
 
         private const val TEST_FILES_FOLDER_PATH = "./testfiles";
 
-
         private const val SMALL_PDF_SPACE_THRESHOLD : Long = 1*1024*1024;
 
         @JvmStatic
@@ -32,12 +31,25 @@ class TestUtils {
         }
 
         @JvmStatic
-        fun pdfTestFiles(): Stream<Arguments> {
+        fun allPdfTestFiles(): Stream<Arguments> {
             return File(TEST_FILES_FOLDER_PATH).listFiles()
                 ?.filter { it.extension == "pdf" }
                 ?.sortedBy { it.totalSpace }
                 ?.asReversed()
                 ?.map { Arguments.of(PDFFileWrapper(it)) }
+                ?.stream() ?: Stream.empty();
+        }
+
+        //TODO create test cases
+        @JvmStatic
+        fun pdfTestFilesWithMultiplePages(): Stream<Arguments> {
+            return File(TEST_FILES_FOLDER_PATH).listFiles()
+                ?.filter { it.extension == "pdf" }
+                ?.sortedBy { it.totalSpace }
+                ?.asReversed()
+                ?.map { PDFFileWrapper(it) }
+                ?.filter { it.numberOfPages > 1 }
+                ?.map { Arguments.of(it) }
                 ?.stream() ?: Stream.empty();
         }
 

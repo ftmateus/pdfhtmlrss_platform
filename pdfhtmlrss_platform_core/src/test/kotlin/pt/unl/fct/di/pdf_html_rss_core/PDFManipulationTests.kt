@@ -22,7 +22,7 @@ class PDFManipulationTests {
     lateinit var pdfManipulationService: PDFManipulationService;
 
     @ParameterizedTest
-    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
+    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#allPdfTestFiles"])
     fun testPdfFileWrapperFetchMetadata(pdfFileWrapper: PDFFileWrapper) {
         assertDoesNotThrow {
             pdfFileWrapper.numberOfPages;
@@ -32,7 +32,7 @@ class PDFManipulationTests {
     }
 
     @ParameterizedTest
-    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
+    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#allPdfTestFiles"])
     fun pdfAttachments(pdfFile : PDFFileWrapper) {
         val attachmentsToAdd = mapOf(
             "Test1.txt" to "Hello World".toByteArray(),
