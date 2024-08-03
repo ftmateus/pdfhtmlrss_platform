@@ -26,7 +26,7 @@ class CompressionTests {
     }
 
     @ParameterizedTest
-    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFiles"])
+    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#allPdfTestFiles"])
     fun compressPDFFilesGZip(pdfFile : PDFFileWrapper) {
         _genericGZipCompressionTest(pdfFile.resource.file);
     }

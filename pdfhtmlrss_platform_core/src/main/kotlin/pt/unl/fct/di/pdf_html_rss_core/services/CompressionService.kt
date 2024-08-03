@@ -10,12 +10,13 @@ import java.util.zip.GZIPOutputStream
 
 @Service
 class CompressionService {
+
     fun decompressGZip(compressedData: InputStream): ByteArray {
         val gis = GZIPInputStream(compressedData);
         val fos = ByteArrayOutputStream();
 
         try {
-            val buffer = ByteArray(1024)
+            val buffer = ByteArray(8*1024)
             var len: Int
             while ((gis.read(buffer).also { len = it }) != -1) {
                 fos.write(buffer, 0, len)
@@ -30,16 +31,12 @@ class CompressionService {
         }
     }
 
-    fun compressGZip(rawData : InputStream): ByteArray {
+    fun compressGZip(writeToGZipOutputStream : (OutputStream) -> Unit) : ByteArray {
         val out = ByteArrayOutputStream();
         val gzipos = GZIPOutputStream(out);
 
         try {
-            val buffer = ByteArray(1024)
-            var len: Int
-            while ((rawData.read(buffer).also { len = it }) != -1) {
-                gzipos.write(buffer, 0, len)
-            }
+            writeToGZipOutputStream(gzipos);
 
             gzipos.finish()
 
@@ -47,9 +44,16 @@ class CompressionService {
                 assert(it.isNotEmpty())
             }
         } finally {
-            rawData.close();
             out.close();
             gzipos.close()
+        }
+    }
+
+    fun compressGZip(rawData : InputStream): ByteArray {
+        return compressGZip { gzipos ->
+            rawData.use {
+                it.copyTo(gzipos);
+            }
         }
     }
 }

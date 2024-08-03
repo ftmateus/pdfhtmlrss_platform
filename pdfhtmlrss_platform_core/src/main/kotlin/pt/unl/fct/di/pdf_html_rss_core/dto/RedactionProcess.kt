@@ -1,21 +1,19 @@
 package pt.unl.fct.di.pdf_html_rss_core.dto
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import lombok.Generated
-import org.springframework.http.MediaType
 import java.util.*
 
-enum class PendingRedactionTaskAction {
+enum class RedactionProcessAction {
     SELECT_REDACTABLE_ELEMS, REDACT
 }
 
 const val PENDING_REDACTION_TASK_TTL = 60 * 60 * 1000L;
 
-data class PendingRedactionTask(
+data class RedactionProcess(
     val taskId : String = UUID.randomUUID().toString(),
     val userId : String,
     val fileType : String,
-    val temporaryHtmlFile : String,
+    val tmpPdfFile : String?,
+    val tmpHtmlFile : String,
     val expires : Long = System.currentTimeMillis() + PENDING_REDACTION_TASK_TTL,
-    val action : PendingRedactionTaskAction
+    val action : RedactionProcessAction
 )
