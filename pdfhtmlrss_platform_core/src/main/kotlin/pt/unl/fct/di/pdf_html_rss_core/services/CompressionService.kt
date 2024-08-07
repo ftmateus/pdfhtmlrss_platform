@@ -11,19 +11,23 @@ import java.util.zip.GZIPOutputStream
 @Service
 class CompressionService {
 
-    fun decompressGZip(compressedData: InputStream): ByteArray {
-        val gis = GZIPInputStream(compressedData);
-        val fos = ByteArrayOutputStream();
-
-        try {
-            val buffer = ByteArray(8*1024)
-            var len: Int
-            while ((gis.read(buffer).also { len = it }) != -1) {
-                fos.write(buffer, 0, len)
-            }
-            return fos.toByteArray().also {
+    fun decompressGZip(compressedData: InputStream) : ByteArray {
+        ByteArrayOutputStream().use { baos ->
+            decompressGZip(compressedData, baos)
+            return baos.toByteArray().also {
                 assert(it.isNotEmpty())
             };
+        }
+    }
+
+    fun decompressGZip(
+        compressedData: InputStream,
+        fos  : OutputStream = ByteArrayOutputStream()
+    ) {
+        val gis = GZIPInputStream(compressedData);
+
+        try {
+            gis.copyTo(fos)
         } finally {
             compressedData.close()
             gis.close()
@@ -31,28 +35,39 @@ class CompressionService {
         }
     }
 
-    fun compressGZip(writeToGZipOutputStream : (OutputStream) -> Unit) : ByteArray {
-        val out = ByteArrayOutputStream();
-        val gzipos = GZIPOutputStream(out);
+    fun compressGZip(
+        output : OutputStream = ByteArrayOutputStream(),
+        writeToGZipOutputStream : (GZIPOutputStream) -> Unit
+    ) {
+        val gzipos = GZIPOutputStream(output);
 
         try {
             writeToGZipOutputStream(gzipos);
 
             gzipos.finish()
-
-            return out.toByteArray().also {
-                assert(it.isNotEmpty())
-            }
         } finally {
-            out.close();
+            output.close();
             gzipos.close()
+        }
+
+    }
+
+    fun compressGZip(rawData : InputStream, output: OutputStream) {
+        compressGZip(output = output) { gzipos ->
+            rawData.use {
+                it.copyTo(gzipos);
+            }
         }
     }
 
-    fun compressGZip(rawData : InputStream): ByteArray {
-        return compressGZip { gzipos ->
-            rawData.use {
-                it.copyTo(gzipos);
+//    @Deprecated("Consider using the I/O streams implementations")
+    fun compressGZip(rawData : InputStream) : ByteArray {
+        ByteArrayOutputStream().use { baos ->
+
+            compressGZip(rawData, output = baos);
+
+            return baos.toByteArray().also {
+                assert(it.isNotEmpty())
             }
         }
     }

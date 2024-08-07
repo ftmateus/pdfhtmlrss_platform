@@ -1,6 +1,7 @@
 package pt.unl.fct.di.pdf_html_rss_core
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,7 +35,9 @@ class CompressionTests {
     fun _genericGZipCompressionTest(file : File) {
         val originalData = file.readBytes();
 
-        val compressedData = compressionService.compressGZip(file.inputStream())
+        val compressedData = originalData.inputStream().use {
+            compressionService.compressGZip(it)
+        }
 
         temporaryFilesService.writeToTempFile(
             compressedData.inputStream(),
@@ -46,7 +49,9 @@ class CompressionTests {
 
         assert(compressionRatio < 1.0);
 
-        val decompressedData = compressionService.decompressGZip(compressedData.inputStream());
+        val decompressedData = compressedData.inputStream().use {
+            compressionService.decompressGZip(it);
+        }
 
         temporaryFilesService.writeToTempFile(
             decompressedData.inputStream(),
@@ -55,6 +60,6 @@ class CompressionTests {
         )
 
         assertEquals(originalData.size, decompressedData.size);
-        assertEquals(originalData.toList(), decompressedData.toList());
+        assertTrue(originalData.contentEquals(decompressedData));
     }
 }

@@ -53,7 +53,7 @@ dependencies {
 	compileOnly("org.projectlombok:lombok")
 	//developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 	annotationProcessor("org.projectlombok:lombok")
-
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
 	implementation("org.apache.pdfbox:pdfbox-tools:2.0.25")
 	implementation("net.sf.cssbox:pdf2dom:2.0.1")
 	implementation("com.itextpdf:itextpdf:5.5.10")
