@@ -26,11 +26,14 @@ class Config {
     @Bean
     @Throws(Exception::class)
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        http.authorizeRequests(Customizer { authorizeRequests ->
-            authorizeRequests.anyRequest()
-                .permitAll()
-        }) //TODO
-        .csrf { obj: CsrfConfigurer<HttpSecurity> -> obj.disable() }
+        http.authorizeRequests()
+            .antMatchers("/login*")
+            .permitAll()
+            .anyRequest()
+            .authenticated()
+            .and()
+            .csrf() //TODO
+            .disable()
         return http.build()
     }
 

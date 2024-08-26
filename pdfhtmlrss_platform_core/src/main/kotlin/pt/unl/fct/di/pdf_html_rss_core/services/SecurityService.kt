@@ -5,6 +5,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import pt.unl.fct.di.pdf_html_rss_core.repositories.RSSKeyPairRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.*
 import java.nio.charset.Charset
@@ -20,6 +21,9 @@ import javax.annotation.PostConstruct
 class SecurityService() {
 
     var logger: Logger = LoggerFactory.getLogger(SecurityService::class.java)
+
+    @Autowired
+    private lateinit var rssKeyPairRepository: RSSKeyPairRepository;
 
     @Autowired
     private lateinit var temporaryFilesRepository: TemporaryFilesRepository
@@ -56,6 +60,14 @@ class SecurityService() {
             ) { out ->
                 serializeKeyPair(kp, out)
             }
+        }
+    }
+
+    fun generateKeyPairToUser(userId : Long) : KeyPair {
+        check(rssKeyPairRepository.getKeyPair(userId) == null)
+
+        return generateKeyPair().also {
+            rssKeyPairRepository.saveKeyPair(userId, it);
         }
     }
 
