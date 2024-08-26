@@ -1,9 +1,18 @@
 <script setup lang="ts">
 
+import {Operation, opToButtonTitle} from "@/components/Operations";
+
+const props = defineProps({
+  operation : {
+    type : String,
+    required : true
+  }
+})
+
 </script>
 
 <template>
-  <button>Sign</button>
+  <button>{{opToButtonTitle(operation)}}</button>
 </template>
 
 <style scoped>

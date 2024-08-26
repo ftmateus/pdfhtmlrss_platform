@@ -2,7 +2,7 @@ services:
     web:
         build: pdfhtmlrss_platform_web
         ports:
-          - 8080:80
+          - "8080:80"
         hostname:
           frontend
         networks:
@@ -13,6 +13,7 @@ services:
     backend:
         build:
           dockerfile: ./backend.Dockerfile
+          context: ./
 #        ports:
 #          - 8081:8080
         hostname:

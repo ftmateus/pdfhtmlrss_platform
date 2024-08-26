@@ -8,14 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.CompressionService
-import pt.unl.fct.di.pdf_html_rss_core.services.TemporaryFilesService
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.File
 
 @SpringBootTest
 class CompressionTests {
 
     @Autowired
-    lateinit var temporaryFilesService: TemporaryFilesService
+    lateinit var temporaryFilesRepository: TemporaryFilesRepository
 
     @Autowired
     lateinit var compressionService: CompressionService;
@@ -39,9 +39,9 @@ class CompressionTests {
             compressionService.compressGZip(it)
         }
 
-        temporaryFilesService.writeToTempFile(
+        temporaryFilesRepository.writeToTempFile(
             compressedData.inputStream(),
-            "${file.name}.gzip",
+            "${file.name}.gz",
             deleteAutomatically = false
         )
 
@@ -53,9 +53,9 @@ class CompressionTests {
             compressionService.decompressGZip(it);
         }
 
-        temporaryFilesService.writeToTempFile(
+        temporaryFilesRepository.writeToTempFile(
             decompressedData.inputStream(),
-            "${file.name}.gzip.${file.extension}",
+            "${file.name}.gz.${file.extension}",
             deleteAutomatically = false
         )
 

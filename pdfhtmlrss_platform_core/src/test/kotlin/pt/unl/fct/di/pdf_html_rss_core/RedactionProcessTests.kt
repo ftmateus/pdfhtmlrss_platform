@@ -12,7 +12,7 @@ import pt.unl.fct.di.pdf_html_rss_core.dto.RedactionProcessAction
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.RedactionProcessService
-import pt.unl.fct.di.pdf_html_rss_core.services.TemporaryFilesService
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.ByteArrayOutputStream
 
 @SpringBootTest
@@ -25,7 +25,7 @@ class RedactionProcessTests {
     lateinit var redactionProcessRepository: RedactionProcessRepository
 
     @Autowired
-    lateinit var temporaryFilesService: TemporaryFilesService;
+    lateinit var temporaryFilesRepository: TemporaryFilesRepository;
 
     @Autowired
     lateinit var domService : DOMService;
@@ -122,7 +122,7 @@ class RedactionProcessTests {
 
     fun assertHtmlRedactionProcessIsValid(process: RedactionProcess) {
         assertTrue(
-            temporaryFilesService.getTempFile(process.tmpHtmlFile).let {
+            temporaryFilesRepository.getTempFile(process.tmpHtmlFile).let {
                 it != null && it.exists() && it.isFile
             }
         )
@@ -139,14 +139,14 @@ class RedactionProcessTests {
 
     fun assertPdfRedactionProcessIsValid(process: RedactionProcess) {
         assertTrue(
-            temporaryFilesService.getTempFile(process.tmpHtmlFile).let {
+            temporaryFilesRepository.getTempFile(process.tmpHtmlFile).let {
                 it != null && it.exists() && it.isFile
             }
         )
 
         assertTrue(
             process.tmpPdfFile != null &&
-            temporaryFilesService.getTempFile(process.tmpPdfFile!!).let {
+            temporaryFilesRepository.getTempFile(process.tmpPdfFile!!).let {
                 it != null && it.exists() && it.isFile
             }
         )
@@ -159,13 +159,13 @@ class RedactionProcessTests {
 
     fun assertRedactionProcessWasFinished(process: RedactionProcess) {
         assertFalse(
-            temporaryFilesService.getTempFile(process.tmpHtmlFile)
+            temporaryFilesRepository.getTempFile(process.tmpHtmlFile)
                 ?.exists() ?: false
         )
 
         assertFalse(
             process.tmpPdfFile != null &&
-            temporaryFilesService.getTempFile(process.tmpPdfFile!!).let {
+            temporaryFilesRepository.getTempFile(process.tmpPdfFile!!).let {
                 it != null && it.exists() && it.isFile
             }
         )

@@ -79,12 +79,12 @@ class PDFManipulationService {
         }
 
         for ( i in 0 until embeddedFiles.size() step 2) {
-            val name : String = embeddedFiles.getAsString(i).toString() // should always be present
-            val fileSpec = embeddedFiles.getAsDict(i + 1) // ditto
+            val name : String = embeddedFiles.getAsString(i).toString()
+            val fileSpec = embeddedFiles.getAsDict(i + 1)
 
             val streams = fileSpec.getAsDict(PdfName.EF)
             val stream = if (streams.contains(PdfName.UF)) streams.getAsStream(PdfName.UF) as PRStream?
-            else streams.getAsStream(PdfName.F) as PRStream // Default stream for backwards compatibility
+            else streams.getAsStream(PdfName.F) as PRStream
 
             if (stream == null)
                 continue

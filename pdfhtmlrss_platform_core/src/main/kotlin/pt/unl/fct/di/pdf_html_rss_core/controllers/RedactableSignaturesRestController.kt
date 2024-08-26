@@ -1,16 +1,14 @@
 package pt.unl.fct.di.pdf_html_rss_core.controllers
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.cache.annotation.Caching
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
-import org.w3c.dom.Document
 import pt.unl.fct.di.pdf_html_rss_core.dto.*
-import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.*
 import java.io.*
 import java.nio.file.Paths
@@ -24,7 +22,6 @@ import javax.servlet.http.HttpServletResponse
 @RequestMapping(value = ["/"])
 class RedactableSignaturesRestController {
 
-
     val SUPPORTED_UPLOAD_MIME_TYPES = listOf(
         MediaType.APPLICATION_PDF,
         MediaType.TEXT_XML,
@@ -35,7 +32,7 @@ class RedactableSignaturesRestController {
     lateinit var redactableSignaturesService: XHTMLRedactableSignatureService
 
     @Autowired
-    lateinit var temporaryFilesService: TemporaryFilesService
+    lateinit var temporaryFilesRepository: TemporaryFilesRepository
 
     @Autowired
     lateinit var pdfManipulationService: PDFManipulationService;
@@ -61,7 +58,7 @@ class RedactableSignaturesRestController {
     fun getTempFile(@PathVariable filePath: String): ResponseEntity<InputStreamResource> {
         val normalizedPath: String = Paths.get(filePath).normalize().toString()
 
-        val tempFile = temporaryFilesService.getTempFileSecurely(
+        val tempFile = temporaryFilesRepository.getTempFileSecurely(
             normalizedPath
         )
 
@@ -118,6 +115,15 @@ class RedactableSignaturesRestController {
             }
             else -> throw AssertionError();
         }
+    }
+
+    @GetMapping("/sign/{processId}")
+    fun getRedactionProcess(
+        @PathVariable processId: String
+    ) : RedactionProcess {
+        val process = redactionProcessService.getRedactionProcess(processId)
+
+        return process;
     }
 
     @PostMapping("/sign/{processId}")

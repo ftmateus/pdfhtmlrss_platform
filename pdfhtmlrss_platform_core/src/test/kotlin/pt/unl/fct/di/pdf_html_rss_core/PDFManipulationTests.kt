@@ -8,15 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.PDFManipulationService
-import pt.unl.fct.di.pdf_html_rss_core.services.TemporaryFilesService
-import java.io.File
-import kotlin.streams.asStream
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 
 @SpringBootTest
 class PDFManipulationTests {
 
     @Autowired
-    lateinit var temporaryFilesService: TemporaryFilesService;
+    lateinit var temporaryFilesRepository: TemporaryFilesRepository;
 
     @Autowired
     lateinit var pdfManipulationService: PDFManipulationService;
@@ -41,7 +39,7 @@ class PDFManipulationTests {
 
         val newPdfData = pdfManipulationService.addByteArrayAttachmentsToPdf(pdfFile, attachmentsToAdd);
 
-        temporaryFilesService.writeToTempFile(
+        temporaryFilesRepository.writeToTempFile(
             newPdfData.inputStream(),
             "${pdfFile.name}_attachments.pdf",
             deleteAutomatically = false

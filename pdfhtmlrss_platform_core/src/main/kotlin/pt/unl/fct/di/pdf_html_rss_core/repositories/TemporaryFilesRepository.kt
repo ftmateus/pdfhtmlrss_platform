@@ -1,18 +1,18 @@
-package pt.unl.fct.di.pdf_html_rss_core.services
+package pt.unl.fct.di.pdf_html_rss_core.repositories
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
+import pt.unl.fct.di.pdf_html_rss_core.services.SecurityService
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.OutputStream
-import java.security.MessageDigest
 import java.util.*
 
 //TODO to repository?
-@Service
-class TemporaryFilesService {
+@Repository
+class TemporaryFilesRepository {
 
     companion object {
         //1 hour

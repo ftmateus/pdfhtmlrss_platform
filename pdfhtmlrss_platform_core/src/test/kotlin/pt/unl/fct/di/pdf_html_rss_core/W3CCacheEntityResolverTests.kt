@@ -1,20 +1,14 @@
 package pt.unl.fct.di.pdf_html_rss_core
 
-t import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
-import pt.unl.fct.di.pdf_html_rss_core.services.TemporaryFilesService
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.W3CCacheEntityResolver
-import java.util.concurrent.TimeUnit
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.system.measureTimeMillis
 
@@ -28,7 +22,7 @@ class W3CCacheEntityResolverTests {
     lateinit var documentBuilderFactory: DocumentBuilderFactory;
 
     @Autowired
-    lateinit var temporaryFilesService: TemporaryFilesService
+    lateinit var temporaryFilesRepository: TemporaryFilesRepository
 
 
     @Test
@@ -37,7 +31,7 @@ class W3CCacheEntityResolverTests {
 
         val file = getTestFile("simple_signed.html")
 
-        temporaryFilesService.getTempFile("www.w3.org")
+        temporaryFilesRepository.getTempFile("www.w3.org")
             ?.deleteRecursively()
 
         val dbBuilder = documentBuilderFactory.newDocumentBuilder()
@@ -53,7 +47,7 @@ class W3CCacheEntityResolverTests {
 
         println("Duration without cache : $durationWithoutCache")
 
-        assertNotNull(temporaryFilesService.getTempFile("www.w3.org"))
+        assertNotNull(temporaryFilesRepository.getTempFile("www.w3.org"))
 
         //at least 10 times faster
         val expectedDurationWithCache = (durationWithoutCache * 0.1).toLong()
@@ -67,6 +61,6 @@ class W3CCacheEntityResolverTests {
         }
 
         println("Duration with cache : $actualDurationWithCache")
-}
+    }
 
 }

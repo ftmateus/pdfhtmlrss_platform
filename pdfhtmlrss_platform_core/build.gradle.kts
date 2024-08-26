@@ -63,6 +63,7 @@ dependencies {
 	implementation("org.apache.poi:poi-scratchpad:3.15")
 	implementation("org.apache.santuario:xmlsec:2.0.8")
 	implementation("org.bouncycastle:bcprov-jdk18on:1.76")
+	compileOnly("eu.europa.ec.joinup.sd-dss:dss-pades:6.0")
 //	implementation("com.e-iceblue:spire.pdf:10.6.2")
 
 	implementation("org.jsoup:jsoup:1.16.2")

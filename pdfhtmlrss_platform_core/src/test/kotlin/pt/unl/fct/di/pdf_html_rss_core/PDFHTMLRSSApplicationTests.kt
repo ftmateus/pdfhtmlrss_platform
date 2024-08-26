@@ -1,24 +1,18 @@
 package pt.unl.fct.di.pdf_html_rss_core
 
-import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.w3c.dom.Document
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.checkSha256WithLinux
-import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.*
 import java.io.File
 import java.io.FileInputStream
-import java.security.Security
-import kotlin.math.sign
 
 //@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest
@@ -31,7 +25,7 @@ class PDFHTMLRSSApplicationTests {
 	private lateinit var securityService: SecurityService
 
 	@Autowired
-	lateinit var temporaryFilesService: TemporaryFilesService
+	lateinit var temporaryFilesRepository: TemporaryFilesRepository
 
 	@Autowired
 	lateinit var fileConversionService: FileConversionService;
@@ -66,19 +60,19 @@ class PDFHTMLRSSApplicationTests {
 
 		val domDocReconversionBytes = fileConversionService.generateHTMLFromPDF(pdfBytes)
 
-		temporaryFilesService.writeToTempFile(
+		temporaryFilesRepository.writeToTempFile(
 			pdfFile.getInputStream(),
 			"${pdfFile.name}.pdf",
 			deleteAutomatically = false
 		)
 
-		temporaryFilesService.writeToTempFile(
+		temporaryFilesRepository.writeToTempFile(
 			domDocBytes.inputStream(),
 			"${pdfFile.name}1.html",
 			deleteAutomatically = false
 		)
 
-		temporaryFilesService.writeToTempFile(
+		temporaryFilesRepository.writeToTempFile(
 			domDocReconversionBytes.inputStream(),
 			"${pdfFile.name}2.html",
 			deleteAutomatically = false
@@ -113,7 +107,7 @@ class PDFHTMLRSSApplicationTests {
 	fun pdfSignWithRedactableSignature(pdfFile : PDFFileWrapper) {
 		val signedPdf = pdfManipulationService.signPdfFileRedactableSignature(pdfFile)
 
-		temporaryFilesService.writeToTempFile(
+		temporaryFilesRepository.writeToTempFile(
 			signedPdf.getInputStream(),
 			"${signedPdf.name}.pdf",
 			deleteAutomatically = false

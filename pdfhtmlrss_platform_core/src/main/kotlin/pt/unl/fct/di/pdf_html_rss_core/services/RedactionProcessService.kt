@@ -11,8 +11,8 @@ import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.dto.RedactionProcess
 import pt.unl.fct.di.pdf_html_rss_core.dto.RedactionProcessAction
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -23,7 +23,7 @@ class RedactionProcessService {
     lateinit var redactionProcessRepository: RedactionProcessRepository;
 
     @Autowired
-    lateinit var temporaryFilesService: TemporaryFilesService
+    lateinit var temporaryFilesRepository: TemporaryFilesRepository
 
     @Autowired
     lateinit var fileConversionService: FileConversionService
@@ -44,13 +44,13 @@ class RedactionProcessService {
         pdfFile : PDFFileWrapper,
         action : RedactionProcessAction
     ) : RedactionProcess {
-        val tmpHtmlFile = temporaryFilesService.writeToTempFile { tmpFileOut ->
+        val tmpHtmlFile = temporaryFilesRepository.writeToTempFile { tmpFileOut ->
             val docBytes = fileConversionService
                 .generateHTMLFromPDF(pdfFile)
             tmpFileOut.write(docBytes)
         }
 
-        val tmpPdfFile = temporaryFilesService.writeToTempFile { tmpFileOut ->
+        val tmpPdfFile = temporaryFilesRepository.writeToTempFile { tmpFileOut ->
             pdfFile.getInputStream().use {
                 it.copyTo(tmpFileOut)
             }
@@ -71,7 +71,7 @@ class RedactionProcessService {
         htmlFileInputStream : InputStream,
         action : RedactionProcessAction
     ) : RedactionProcess {
-        val tmpHtmlFile = temporaryFilesService.writeToTempFile { tmpFileOut ->
+        val tmpHtmlFile = temporaryFilesRepository.writeToTempFile { tmpFileOut ->
             htmlFileInputStream.copyTo(tmpFileOut)
             htmlFileInputStream.close()
         }
@@ -106,7 +106,7 @@ class RedactionProcessService {
             throw RuntimeException()
         }
 
-        val htmlTmpFile = temporaryFilesService.getTempFile(process.tmpHtmlFile)
+        val htmlTmpFile = temporaryFilesRepository.getTempFile(process.tmpHtmlFile)
             ?: throw RuntimeException()
 
         val htmlTmpDom = htmlTmpFile.inputStream().use {
@@ -139,11 +139,17 @@ class RedactionProcessService {
         return process
     }
 
+    fun getRedactionProcess(processId : String ) : RedactionProcess {
+        //Change exception
+        return redactionProcessRepository.findById(processId)
+            .orElseThrow { throw RuntimeException("Not found!") }
+    }
+
     private fun finalizePdfRedactionProcess(
         process: RedactionProcess,
         processedSignedDoc : Document
     ) : PDFFileWrapper {
-        val tmpPdfFile = temporaryFilesService.getTempFile(
+        val tmpPdfFile = temporaryFilesRepository.getTempFile(
             process.tmpPdfFile ?: ""
         ) ?: throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR)
 

@@ -1,20 +1,18 @@
 package pt.unl.fct.di.pdf_html_rss_core
 
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
 import pt.unl.fct.di.pdf_html_rss_core.services.SecurityService
-import pt.unl.fct.di.pdf_html_rss_core.services.TemporaryFilesService
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.File
 
 @SpringBootTest
 class TemporaryFilesTests {
     @Autowired
-    lateinit var temporaryFilesService: TemporaryFilesService
+    lateinit var temporaryFilesRepository: TemporaryFilesRepository
 
     @Autowired
     lateinit var securityService: SecurityService
@@ -22,12 +20,12 @@ class TemporaryFilesTests {
     @ParameterizedTest
     @MethodSource("pt.unl.fct.di.pdf_html_rss_core.TestUtils#allTestFiles")
     fun writeRandomNameTemporaryFileTest(testFile : File) {
-        val tempFile = temporaryFilesService.writeToTempFile(
+        val tempFile = temporaryFilesRepository.writeToTempFile(
             testFile.inputStream(),
             deleteAutomatically = true
         )
 
-        temporaryFilesService.getTempFile(tempFile.name)
+        temporaryFilesRepository.getTempFile(tempFile.name)
             .also {
                 assertNotNull(it)
                 assertNotEquals(tempFile.name, testFile.name)
@@ -46,13 +44,13 @@ class TemporaryFilesTests {
     @ParameterizedTest
     @MethodSource("pt.unl.fct.di.pdf_html_rss_core.TestUtils#allTestFiles")
     fun writeCustomNameTemporaryFileTest(testFile : File) {
-        val tempFile = temporaryFilesService.writeToTempFile(
+        val tempFile = temporaryFilesRepository.writeToTempFile(
             testFile.inputStream(),
             name = testFile.name,
             deleteAutomatically = true
         )
 
-        temporaryFilesService.getTempFile(tempFile.name)
+        temporaryFilesRepository.getTempFile(tempFile.name)
             .also {
                 assertNotNull(it)
                 assertEquals(tempFile.name, testFile.name)

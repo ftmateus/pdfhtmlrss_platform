@@ -1,6 +1,5 @@
 package pt.unl.fct.di.pdf_html_rss_core
 
-import com.itextpdf.text.pdf.PdfReader
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Disabled
@@ -15,7 +14,7 @@ import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
 import pt.unl.fct.di.pdf_html_rss_core.services.SecurityService
-import pt.unl.fct.di.pdf_html_rss_core.services.TemporaryFilesService
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.ByteArrayInputStream
 import java.io.File
 
@@ -26,7 +25,7 @@ class FileConversionTests {
     private lateinit var securityService: SecurityService
 
     @Autowired
-    lateinit var temporaryFilesService: TemporaryFilesService
+    lateinit var temporaryFilesRepository: TemporaryFilesRepository
 
     @Autowired
     lateinit var pdfConversionService: FileConversionService;
@@ -41,7 +40,7 @@ class FileConversionTests {
 
         val pdf = pdfConversionService.generatePDFFromHTML(htmlFile)
 
-        temporaryFilesService.writeToTempFile(
+        temporaryFilesRepository.writeToTempFile(
             pdf.getInputStream(),
             "${htmlFile.name}.pdf",
             deleteAutomatically = false
@@ -57,7 +56,7 @@ class FileConversionTests {
 
         val htmlDocData = pdfConversionService.generateHTMLFromPDF(pdfFile)
 
-        temporaryFilesService.writeToTempFile(
+        temporaryFilesRepository.writeToTempFile(
             htmlDocData.inputStream(),
             "${pdfFile.name}.html",
             deleteAutomatically = false
@@ -76,7 +75,7 @@ class FileConversionTests {
 
         val reconvertedPdfDoc = pdfConversionService.generatePDFFromHTML(htmlDocData)
 
-        temporaryFilesService.writeToTempFile(
+        temporaryFilesRepository.writeToTempFile(
             reconvertedPdfDoc.getInputStream(),
             "${pdfFile.name}.html.pdf",
             deleteAutomatically = false
@@ -112,13 +111,13 @@ class FileConversionTests {
         val htmlDocData1 = pdfConversionService.generateHTMLFromPDF(PDFFileWrapper(pdfWithoutAttachment))
         val htmlDocData2 = pdfConversionService.generateHTMLFromPDF(PDFFileWrapper(pdfWithAttachment))
 
-        temporaryFilesService.writeToTempFile(
+        temporaryFilesRepository.writeToTempFile(
             htmlDocData1.inputStream(),
             "${pdfWithoutAttachment.name}.html",
             deleteAutomatically = false
         )
 
-        temporaryFilesService.writeToTempFile(
+        temporaryFilesRepository.writeToTempFile(
             htmlDocData1.inputStream(),
             "${pdfWithAttachment.name}.html",
             deleteAutomatically = false

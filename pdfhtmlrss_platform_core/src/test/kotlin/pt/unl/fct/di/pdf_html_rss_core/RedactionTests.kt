@@ -2,24 +2,20 @@ package pt.unl.fct.di.pdf_html_rss_core
 
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.RepeatedTest
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.*
-import java.io.File
-import kotlin.math.sign
 
 @SpringBootTest
 class RedactionTests {
 
     @Autowired
-    lateinit var temporaryFilesService: TemporaryFilesService;
+    lateinit var temporaryFilesRepository: TemporaryFilesRepository;
 
     @Autowired
     lateinit var fileConversionService: FileConversionService;
@@ -43,7 +39,7 @@ class RedactionTests {
         )
 
 
-        temporaryFilesService.writeToTempFile(
+        temporaryFilesRepository.writeToTempFile(
             "${htmlFile.nameWithoutExtension}_signed.html",
             deleteAutomatically = false
         ) {
@@ -62,7 +58,7 @@ class RedactionTests {
             redactSelectors = xpathElems
         )
 
-        temporaryFilesService.writeToTempFile(
+        temporaryFilesRepository.writeToTempFile(
             "${htmlFile.nameWithoutExtension}_redacted.html",
             deleteAutomatically = false
         ) {
@@ -88,7 +84,7 @@ class RedactionTests {
         val htmlDom = fileConversionService
             .generateHTMLFromPDFDoc(pdfFile)
 
-        temporaryFilesService.writeToTempFile(
+        temporaryFilesRepository.writeToTempFile(
             "$fileName.html",
             deleteAutomatically = false
         ) {

@@ -21,7 +21,7 @@ class W3CCacheEntityResolver : EntityResolver {
 
         if (systemIdUrl?.protocol == "file") {
             val fileName = File(systemIdUrl.file).name
-            systemIdUrl = matchW3CFilesWithoutHttpURL(fileName)
+            systemIdUrl = mapW3CFilesToHttpURL(fileName)
             if(systemIdUrl == null) return null;
         } else if (systemIdUrl?.host != "www.w3.org") return null;
 
@@ -34,7 +34,7 @@ class W3CCacheEntityResolver : EntityResolver {
         return InputSource(cachedFile.inputStream())
     }
 
-    fun matchW3CFilesWithoutHttpURL(fileName : String) : URL? {
+    fun mapW3CFilesToHttpURL(fileName : String) : URL? {
         val url = when(fileName) {
             "xhtml-datatypes-1.mod", "xhtml-events-1.mod", "xhtml-qname-1.mod",
             "xhtml-attribs-1.mod", "xhtml-charent-1.mod", "xhtml-inlstruct-1.mod",
@@ -50,11 +50,11 @@ class W3CCacheEntityResolver : EntityResolver {
         return if (url != null) URL(url) else null
     }
 
-    private fun createW3CCacheFile(w3cFile : File, url: URL) {
-        w3cFile.parentFile.mkdirs()
-        w3cFile.createNewFile()
-        url.openStream().use { inputStream ->
-            w3cFile.outputStream().use { outputStream ->
+    private fun createW3CCacheFile(w3cLocalFile : File, w3cUrl: URL) {
+        w3cLocalFile.parentFile.mkdirs()
+        w3cLocalFile.createNewFile()
+        w3cUrl.openStream().use { inputStream ->
+            w3cLocalFile.outputStream().use { outputStream ->
                 inputStream.copyTo(outputStream)
             }
         }
