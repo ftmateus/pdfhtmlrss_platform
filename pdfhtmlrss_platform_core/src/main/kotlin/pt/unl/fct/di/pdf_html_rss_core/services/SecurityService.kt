@@ -5,6 +5,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.*
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -21,7 +22,7 @@ class SecurityService() {
     var logger: Logger = LoggerFactory.getLogger(SecurityService::class.java)
 
     @Autowired
-    private lateinit var temporaryFilesService: TemporaryFilesService
+    private lateinit var temporaryFilesRepository: TemporaryFilesRepository
 
     @Autowired
     private lateinit var wpProvider: WPProvider
@@ -42,14 +43,14 @@ class SecurityService() {
     }
 
     private fun getSerializedKeyPair() : KeyPair {
-        val serializedFile : File? = temporaryFilesService.getTempFile(SERIALIZED_KEYPAIR_FILE);
+        val serializedFile : File? = temporaryFilesRepository.getTempFile(SERIALIZED_KEYPAIR_FILE);
         if(serializedFile != null) {
             return readSerializedKeyPair(serializedFile)
         }
         logger.info("Key pair not found, generating new one...")
 
         return generateKeyPair().also { kp ->
-            temporaryFilesService.writeToTempFile(
+            temporaryFilesRepository.writeToTempFile(
                 SERIALIZED_KEYPAIR_FILE,
                 deleteAutomatically = false
             ) { out ->

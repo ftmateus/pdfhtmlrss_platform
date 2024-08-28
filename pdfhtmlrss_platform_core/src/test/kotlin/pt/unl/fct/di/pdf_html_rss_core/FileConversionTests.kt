@@ -73,6 +73,12 @@ class FileConversionTests {
 
         val htmlDocData = pdfConversionService.generateHTMLFromPDF(pdfFile)
 
+        temporaryFilesRepository.writeToTempFile(
+            htmlDocData.inputStream(),
+            "${pdfFile.name}.html",
+            deleteAutomatically = false
+        )
+
         val reconvertedPdfDoc = pdfConversionService.generatePDFFromHTML(htmlDocData)
 
         temporaryFilesRepository.writeToTempFile(

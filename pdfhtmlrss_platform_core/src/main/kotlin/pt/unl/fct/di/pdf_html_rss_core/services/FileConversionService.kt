@@ -7,6 +7,7 @@ import org.fit.pdfdom.PDFDomTree
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
+import org.xhtmlrenderer.context.StyleReference
 import org.xhtmlrenderer.pdf.ITextRenderer
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import java.io.*
@@ -89,9 +90,12 @@ class FileConversionService {
             val renderer = ITextRenderer()
             renderer.sharedContext.apply {
                 this.setPrint(true)
+//                this.dpi *= 1.20f;
+//                this.
                 this.isInteractive = false
             }
             with(renderer) {
+//                val firstPageNode = domDoc.getElementById("page1-div")
                 this.setDocument(domDoc, "")
                 this.layout()
                 this.createPDF(out)
