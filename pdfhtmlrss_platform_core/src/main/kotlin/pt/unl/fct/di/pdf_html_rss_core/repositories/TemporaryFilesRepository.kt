@@ -10,7 +10,6 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
 
-//TODO to repository?
 @Repository
 class TemporaryFilesRepository {
 

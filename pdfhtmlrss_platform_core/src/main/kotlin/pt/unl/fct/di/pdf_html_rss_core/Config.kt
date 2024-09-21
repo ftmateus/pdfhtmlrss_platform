@@ -1,17 +1,13 @@
 package pt.unl.fct.di.pdf_html_rss_core
 
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
-import org.springframework.boot.jdbc.DataSourceBuilder
-import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import java.io.File
-import javax.servlet.annotation.WebServlet
-import javax.sql.DataSource
 import javax.xml.parsers.DocumentBuilderFactory
 
 
@@ -67,6 +63,11 @@ class Config {
 //            it.deleteRecursively()
             it.mkdir()
         }
+    }
+
+    @Bean
+    fun passwordEncoder(): PasswordEncoder { // NEEDED TO ALLOW PASSWORD ENCODER INSIDE SECURITY
+        return BCryptPasswordEncoder(10)
     }
 
 //    @Bean

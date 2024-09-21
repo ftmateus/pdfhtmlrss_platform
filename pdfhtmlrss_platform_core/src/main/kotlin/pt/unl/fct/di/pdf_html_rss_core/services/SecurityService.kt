@@ -4,7 +4,10 @@ import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import pt.unl.fct.di.pdf_html_rss_core.dto.RSSKeyPairEntity
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RSSKeyPairRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.*
@@ -31,6 +34,9 @@ class SecurityService() {
     @Autowired
     private lateinit var wpProvider: WPProvider
 
+    @Autowired
+    private lateinit var passwordEncoder: PasswordEncoder;
+
     lateinit var keyPair : KeyPair;
 
     val publicKey : PublicKey get() = keyPair.public;
@@ -43,7 +49,15 @@ class SecurityService() {
     @PostConstruct
     private fun afterBeanInitialization() {
         Security.insertProviderAt(wpProvider, 1)
-        keyPair = getSerializedKeyPair()
+
+        keyPair = rssKeyPairRepository
+            .findById(UserService.ADMIN_USER_ID)
+            .orElseGet {
+                logger.info("Admin key pair not found on database, generating new one...")
+                generateKeyPairToUser(UserService.ADMIN_USER_ID)
+            }
+            .keyPair
+//        keyPair = getSerializedKeyPair()
     }
 
     private fun getSerializedKeyPair() : KeyPair {
@@ -63,18 +77,22 @@ class SecurityService() {
         }
     }
 
-    fun generateKeyPairToUser(userId : Long) : KeyPair {
-        check(rssKeyPairRepository.getKeyPair(userId) == null)
+    fun generateKeyPairToUser(userId : Long) : RSSKeyPairEntity {
+        //check(rssKeyPairRepository.findById(userId) == null)
 
-        return generateKeyPair().also {
-            rssKeyPairRepository.saveKeyPair(userId, it);
-        }
+        val keyPair = generateKeyPair()
+
+        return rssKeyPairRepository.save(
+            RSSKeyPairEntity(
+                userId, keyPair.private, keyPair.public
+            )
+        )
     }
 
     fun generateKeyPair(): KeyPair {
         val keyGen = KeyPairGenerator.getInstance("GSRSSwithRSAandBPA")
-        //TODO change key size. Key generation is too slow...
-        keyGen.initialize(1024)
+        //TODO Key generation is too slow...
+        keyGen.initialize(2048)
         return keyGen.generateKeyPair()
     }
 
@@ -160,6 +178,12 @@ class SecurityService() {
 
     fun toSha256(stream : InputStream) : String {
         return toGenericHash("SHA-256", stream);
+    }
+
+    fun toBCrypt(password : String) : String {
+        //TODO to bean?
+        val passwordEncoder = BCryptPasswordEncoder(10)
+        return passwordEncoder.encode(password);
     }
 
     fun toSha256(data : ByteArray) : String {

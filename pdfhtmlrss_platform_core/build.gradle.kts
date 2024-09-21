@@ -42,6 +42,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+	implementation("org.mariadb.jdbc:mariadb-java-client")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
@@ -63,6 +65,7 @@ dependencies {
 	implementation("org.apache.poi:poi-scratchpad:3.15")
 	implementation("org.apache.santuario:xmlsec:2.0.8")
 	implementation("org.bouncycastle:bcprov-jdk18on:1.76")
+	implementation("redis.clients:jedis:5.1.5")
 	compileOnly("eu.europa.ec.joinup.sd-dss:dss-pades:6.0")
 //	implementation("com.e-iceblue:spire.pdf:10.6.2")
 
