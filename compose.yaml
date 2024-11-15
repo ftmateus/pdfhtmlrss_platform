@@ -1,30 +1,66 @@
 services:
-    web:
-        build: pdfhtmlrss_platform_web
-        ports:
-          - "8080:80"
-        hostname:
-          frontend
-        networks:
-          frontend:
-          backend:
-        depends_on:
-          - backend
-    backend:
-        build:
-          dockerfile: ./backend.Dockerfile
-          context: ./
+  web:
+      build: pdfhtmlrss_platform_web
+      ports:
+        - "8080:80"
+      hostname:
+        frontend
+      networks:
+        frontend:
+        backend:
+      depends_on:
+        - api
+  api:
+    build:
+      dockerfile: ./backend.Dockerfile
+      context: ./
 #        ports:
 #          - 8081:8080
-        hostname:
-          backend
-        tmpfs:
-          - /tmp/pdfrss
-        networks:
-          backend:
+    hostname:
+      api
+    volumes:
+      - pdfrsstmp:/tmp/pdfrss
+#        tmpfs:
+#          - /tmp/pdfrss
+    environment:
+      SPRING_DATASOURCE_URL : jdbc:mariadb://mariadb:3306/pdfhtmlrss
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD:
+    networks:
+      backend:
+    depends_on:
+      - redisdb
+      - mariadb
+  redisdb :
+    image: redis:latest
+    restart: always
+    networks:
+      backend:
+    volumes:
+      - rediscache:/data
+  mariadb :
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_DATABASE: pdfhtmlrss
+      MARIADB_ROOT_PASSWORD:
+    networks:
+      backend:
+    volumes:
+      - database:/var/lib/mysql
 networks:
   frontend:
     internal: false
   backend:
     driver: bridge
     internal: false
+volumes:
+  pdfrsstmp:
+    driver: local
+    driver_opts:
+      type : tmpfs
+      device : tmpfs
+  database:
+    driver: local
+  rediscache:
+    driver: local

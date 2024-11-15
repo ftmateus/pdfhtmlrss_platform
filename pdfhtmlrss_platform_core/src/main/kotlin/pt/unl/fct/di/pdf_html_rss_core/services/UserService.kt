@@ -74,6 +74,7 @@ class UserService {
     fun getUserById(userId: Long) : User {
         return usersRepository
             .findById(userId)
+            //TODO change exception
             .orElseThrow { RuntimeException(); }
             .also {
                 check(it.passwordClear == null);
@@ -83,6 +84,7 @@ class UserService {
     fun getUserByUsername(username : String) : User {
         return usersRepository
             .findByUsername(username)
+            //TODO change exception
             .orElseThrow { RuntimeException(); }
             .also {
                 check(it.passwordClear == null);
