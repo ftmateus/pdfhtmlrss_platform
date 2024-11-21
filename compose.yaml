@@ -26,6 +26,9 @@ services:
       SPRING_DATASOURCE_URL : jdbc:mariadb://mariadb:3306/pdfhtmlrss
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD:
+      SPRING_REDIS_HOST : redisdb
+      SPRING_REDIS_PORT : 6379
+      SPRING_REDIS_PASSWORD :
     networks:
       backend:
     depends_on:

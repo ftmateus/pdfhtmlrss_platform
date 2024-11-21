@@ -48,11 +48,6 @@ class RedactableSignaturesRestController {
         return "Hello World\n";
     }
 
-    @PostMapping("/login")
-    fun login() {
-
-    }
-
     //TODO html file type?
     @GetMapping("/tmp/{filePath}")
     fun getTempFile(@PathVariable filePath: String): ResponseEntity<InputStreamResource> {

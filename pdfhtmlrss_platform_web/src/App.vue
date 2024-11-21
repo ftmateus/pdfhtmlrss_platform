@@ -2,7 +2,7 @@
   <img alt="Vue logo" src="./assets/logo.png">
   <h1>PDF HTML Redactable Signatures Platform</h1>
   <HelloWorld msg="PDF HTML Redactable Signatures Platform"/>
-<!--    <Login></Login>-->
+  <Login></Login>
 </template>
 
 <script lang="ts">

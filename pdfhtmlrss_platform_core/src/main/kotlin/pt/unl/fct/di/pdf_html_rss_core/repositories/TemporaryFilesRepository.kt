@@ -92,14 +92,14 @@ class TemporaryFilesRepository {
     }
 
     //TODO every minute, maybe change it
-    @Scheduled(fixedRate = 60*1000)
-    private fun pruneTemporaryFiles() {
-        for(temporaryFile in temporaryFilesToDelete) {
-            val file = File(temporaryFolder, temporaryFile)
-            if(isTemporaryFileExpired(file)) {
-                temporaryFilesToDelete.remove(temporaryFile)
-                file.delete()
-            }
-        }
-    }
+//    @Scheduled(fixedRate = 60*1000)
+//    private fun pruneTemporaryFiles() {
+//        for(temporaryFile in temporaryFilesToDelete) {
+//            val file = File(temporaryFolder, temporaryFile)
+//            if(isTemporaryFileExpired(file)) {
+//                temporaryFilesToDelete.remove(temporaryFile)
+//                file.delete()
+//            }
+//        }
+//    }
 }

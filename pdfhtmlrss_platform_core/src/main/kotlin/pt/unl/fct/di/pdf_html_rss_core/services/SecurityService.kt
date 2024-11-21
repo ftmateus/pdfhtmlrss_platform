@@ -34,9 +34,6 @@ class SecurityService() {
     @Autowired
     private lateinit var wpProvider: WPProvider
 
-    @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder;
-
     lateinit var keyPair : KeyPair;
 
     val publicKey : PublicKey get() = keyPair.public;
@@ -178,12 +175,6 @@ class SecurityService() {
 
     fun toSha256(stream : InputStream) : String {
         return toGenericHash("SHA-256", stream);
-    }
-
-    fun toBCrypt(password : String) : String {
-        //TODO to bean?
-        val passwordEncoder = BCryptPasswordEncoder(10)
-        return passwordEncoder.encode(password);
     }
 
     fun toSha256(data : ByteArray) : String {

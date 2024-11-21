@@ -3,6 +3,9 @@ package pt.unl.fct.di.pdf_html_rss_core.services
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Service
 import pt.unl.fct.di.pdf_html_rss_core.dto.User
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RSSKeyPairRepository
@@ -11,7 +14,7 @@ import javax.annotation.PostConstruct
 import kotlin.random.Random
 
 @Service
-class UserService {
+class UserService : UserDetailsService {
     companion object {
         const val ADMIN_USER_ID = 0L;
     }
@@ -31,8 +34,7 @@ class UserService {
         val adminUser = User(
             ADMIN_USER_ID,
             "admin",
-            //TODO salt or use more sophisticated algorithm
-            "fc8252c8dc55839967c58b9ad755a59b61b67c13227ddae4bd3f78a38bf394f7",
+            "\$2a\$12\$An68OidsmncWv2WVCCiLLuWS3QN5mK7CaNvlLJQoo2m46ouFxCZZu",
             null
         )
         usersRepository.save(adminUser);
@@ -40,7 +42,6 @@ class UserService {
 
     fun createUser(user : User) : Long {
         with(user.username) {
-            check(this != null)
             check(isNotBlank())
             check(
                 usersRepository.existsByUsername(this)
@@ -81,21 +82,21 @@ class UserService {
             }
     }
 
-    fun getUserByUsername(username : String) : User {
-        return usersRepository
-            .findByUsername(username)
-            //TODO change exception
-            .orElseThrow { RuntimeException(); }
-            .also {
-                check(it.passwordClear == null);
-            }
-    }
-
     fun generateUserId() : Long {
         return generateSequence {
             Random.nextLong(100, Long.MAX_VALUE)
         }.first {
             !usersRepository.existsById(it)
         }
+    }
+
+    override fun loadUserByUsername(username: String): User {
+        return usersRepository
+            .findByUsername(username)
+            //TODO change exception
+            .orElseThrow { throw UsernameNotFoundException(username); }
+            .also {
+                check(it.passwordClear == null || it.passwordClear!!.isBlank());
+            }
     }
 }
