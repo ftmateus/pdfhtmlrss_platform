@@ -12,6 +12,7 @@ import org.springframework.security.web.SecurityFilterChain
 import pt.unl.fct.di.pdf_html_rss_core.services.UserService
 
 
+//https://www.geeksforgeeks.org/spring-security-authentication-providers/
 @EnableWebSecurity
 @Configuration
 class SecurityConfig {
@@ -23,7 +24,7 @@ class SecurityConfig {
     fun authenticationProvider(): DaoAuthenticationProvider {
         return DaoAuthenticationProvider().also {
             it.setUserDetailsService(userService)
-            //TODO move password encoder to bean
+            //TODO move password encoder to bean?
             it.setPasswordEncoder(BCryptPasswordEncoder(12))
         }
     }

@@ -3,11 +3,15 @@ package pt.unl.fct.di.pdf_html_rss_core.configurations
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.data.redis.connection.RedisConnectionFactory
+import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.repository.configuration.EnableRedisRepositories
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
 
 @Configuration
+@EnableRedisRepositories
 class GeneralConfig {
 
     @Bean
@@ -44,6 +48,13 @@ class GeneralConfig {
 //            it.deleteRecursively()
             it.mkdir()
         }
+    }
+
+    @Bean
+    fun redisTemplate(redisConnectionFactory: RedisConnectionFactory?): RedisTemplate<*, *> {
+        val template = RedisTemplate<ByteArray, ByteArray>()
+        template.setConnectionFactory(redisConnectionFactory!!)
+        return template
     }
 
 //    @Bean
