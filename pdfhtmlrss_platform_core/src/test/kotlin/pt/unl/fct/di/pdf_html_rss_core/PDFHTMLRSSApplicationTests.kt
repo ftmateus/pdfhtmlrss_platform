@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.security.test.context.support.WithUserDetails
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.checkSha256WithLinux
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
@@ -16,6 +17,7 @@ import java.io.FileInputStream
 
 //@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest
+@WithUserDetails("admin")
 class PDFHTMLRSSApplicationTests {
 
 	@Autowired

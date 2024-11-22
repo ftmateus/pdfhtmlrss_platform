@@ -1,17 +1,18 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.context.event.ApplicationReadyEvent
-import org.springframework.context.event.EventListener
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContext
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Service
 import pt.unl.fct.di.pdf_html_rss_core.dto.User
-import pt.unl.fct.di.pdf_html_rss_core.repositories.RSSKeyPairRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.UsersRepository
 import javax.annotation.PostConstruct
 import kotlin.random.Random
+
 
 @Service
 class UserService : UserDetailsService {

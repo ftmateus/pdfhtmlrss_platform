@@ -22,6 +22,9 @@ import javax.servlet.http.HttpServletResponse
 @RequestMapping(value = ["/"])
 class RedactableSignaturesRestController {
 
+    @Autowired
+    private lateinit var securityService: SecurityService
+
     val SUPPORTED_UPLOAD_MIME_TYPES = listOf(
         MediaType.APPLICATION_PDF,
         MediaType.TEXT_XML,
@@ -117,6 +120,12 @@ class RedactableSignaturesRestController {
         @PathVariable processId: String
     ) : RedactionProcess {
         val process = redactionProcessService.getRedactionProcess(processId)
+
+        val loggedInUser = securityService.getLoggedInUser() ?:
+            throw ResponseStatusException(HttpStatus.FORBIDDEN)
+
+        if(process.userId != loggedInUser.userId)
+            throw ResponseStatusException(HttpStatus.FORBIDDEN)
 
         return process;
     }

@@ -78,6 +78,9 @@ class TemporaryFilesRepository {
     }
 
     fun getTempFile(fileName : String) : File? {
+        if(fileName.isBlank())
+            return null;
+
         val file = File(temporaryFolder, fileName)
         if(!file.exists())
             return null

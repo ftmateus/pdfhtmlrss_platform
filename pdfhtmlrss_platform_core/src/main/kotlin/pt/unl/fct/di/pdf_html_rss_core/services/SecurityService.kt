@@ -4,10 +4,15 @@ import de.unipassau.wolfgangpopp.xmlrss.wpprovider.WPProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContext
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import pt.unl.fct.di.pdf_html_rss_core.dto.RSSKeyPairEntity
+import pt.unl.fct.di.pdf_html_rss_core.dto.User
+import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RSSKeyPairRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.*
@@ -34,10 +39,10 @@ class SecurityService() {
     @Autowired
     private lateinit var wpProvider: WPProvider
 
-    lateinit var keyPair : KeyPair;
+//    lateinit var keyPair : KeyPair;
 
-    val publicKey : PublicKey get() = keyPair.public;
-    val privateKey : PrivateKey get() = keyPair.private;
+//    val publicKey : PublicKey get() = keyPair.public;
+//    val privateKey : PrivateKey get() = keyPair.private;
 
     companion object {
         const val SERIALIZED_KEYPAIR_FILE = "keyPair.ser"
@@ -47,7 +52,7 @@ class SecurityService() {
     private fun afterBeanInitialization() {
         Security.insertProviderAt(wpProvider, 1)
 
-        keyPair = rssKeyPairRepository
+        rssKeyPairRepository
             .findById(UserService.ADMIN_USER_ID)
             .orElseGet {
                 logger.info("Admin key pair not found on database, generating new one...")
@@ -72,6 +77,21 @@ class SecurityService() {
                 serializeKeyPair(kp, out)
             }
         }
+    }
+
+    fun getLoggedInUser() : User? {
+        val securityContext: SecurityContext = SecurityContextHolder.getContext()
+        val authentication: Authentication = securityContext.authentication
+        val principal: Any = authentication.principal
+        return if (principal is User) principal else null
+    }
+
+    fun getKeyPairFromLoggedInUser() : RSSKeyPairEntity {
+        val currentUser = getLoggedInUser() ?: throw PDFHTMLRSSException();
+
+        return rssKeyPairRepository
+            .findById(currentUser.userId)
+            .orElseThrow { PDFHTMLRSSException() }
     }
 
     fun generateKeyPairToUser(userId : Long) : RSSKeyPairEntity {

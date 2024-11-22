@@ -43,9 +43,13 @@ class XHTMLRedactableSignatureService {
         redactSelectors: List<String> = emptyList()
 //        signSelectors: List<String> = emptyList(),
     ) : Document {
+        val keyPair = securityService
+            .getKeyPairFromLoggedInUser()
+            .keyPair;
+
         val rss = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
 
-        rss.initSign(securityService.keyPair);
+        rss.initSign(keyPair);
         rss.setDocument(doc)
 
         for (selector in redactSelectors)
@@ -61,7 +65,11 @@ class XHTMLRedactableSignatureService {
     ) : Document {
         val rss = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
 
-        rss.initSign(securityService.keyPair);
+        val keyPair = securityService
+            .getKeyPairFromLoggedInUser()
+            .keyPair;
+
+        rss.initSign(keyPair);
         rss.setDocument(doc)
 
         for (selector in redactSelectors)
@@ -76,7 +84,11 @@ class XHTMLRedactableSignatureService {
     ) : Document {
         val rss = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
 
-        rss.initRedact(securityService.publicKey)
+        val publicKey = securityService
+            .getKeyPairFromLoggedInUser()
+            .publicKey;
+
+        rss.initRedact(publicKey)
         rss.setDocument(doc)
 
         for (selector in redactSelectors)
@@ -88,7 +100,12 @@ class XHTMLRedactableSignatureService {
     fun verifyDocument(signedDoc : Document) : Boolean {
         val sig = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
 
-        sig.initVerify(securityService.publicKey);
+        //TODO get public key from document instead of logged in user
+        val publicKey = securityService
+            .getKeyPairFromLoggedInUser()
+            .publicKey;
+
+        sig.initVerify(publicKey);
 
         sig.setDocument(signedDoc)
 
