@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import org.w3c.dom.Document
@@ -161,11 +162,6 @@ class RedactionProcessService {
     fun getRedactionProcess(processId : String ) : RedactionProcess {
         val process = redactionProcessRepository.findById(processId)
             .orElseThrow { throw PDFHTMLRSSException() }
-
-        if (process.expires <= System.currentTimeMillis()) {
-            redactionProcessRepository.deleteById(processId)
-            throw PDFHTMLRSSException()
-        }
 
         val loggedInUser = securityService.getLoggedInUser() ?: throw PDFHTMLRSSException()
 

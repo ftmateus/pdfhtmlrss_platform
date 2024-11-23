@@ -26,6 +26,7 @@ class UserService : UserDetailsService {
     @Autowired
     private lateinit var securityService: SecurityService;
 
+    //TODO remove this in production
     @PostConstruct
     final fun makeAdminUser()  {
         if(usersRepository.existsById(ADMIN_USER_ID)) {
