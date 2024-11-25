@@ -7,8 +7,10 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import pt.unl.fct.di.pdf_html_rss_core.dto.User
+import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.UsersRepository
 import javax.annotation.PostConstruct
 import kotlin.random.Random
@@ -25,6 +27,9 @@ class UserService : UserDetailsService {
 
     @Autowired
     private lateinit var securityService: SecurityService;
+
+    @Autowired
+    private lateinit var passwordEncoder: PasswordEncoder;
 
     //TODO remove this in production
     @PostConstruct
@@ -56,8 +61,8 @@ class UserService : UserDetailsService {
             //TODO check if password is strong
         }
 
-        val passwordHash = securityService
-            .toSha256(user.passwordClear!!.toByteArray());
+        val passwordHash = passwordEncoder
+            .encode(user.passwordClear)
 
         val userId : Long = generateUserId();
 
@@ -74,16 +79,17 @@ class UserService : UserDetailsService {
         return userId;
     }
 
-    fun getUserById(userId: Long) : User {
+    fun loadUserById(userId: Long) : User {
         return usersRepository
             .findById(userId)
             //TODO change exception
-            .orElseThrow { RuntimeException(); }
+            .orElseThrow { PDFHTMLRSSException(); }
             .also {
-                check(it.passwordClear == null);
+                check(it.passwordClear == null || it.passwordClear!!.isBlank());
             }
     }
 
+    //TODO Maybe give responsability to database
     fun generateUserId() : Long {
         return generateSequence {
             Random.nextLong(100, Long.MAX_VALUE)

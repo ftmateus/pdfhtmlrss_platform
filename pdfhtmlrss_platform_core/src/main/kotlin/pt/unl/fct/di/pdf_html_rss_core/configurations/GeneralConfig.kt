@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -17,6 +19,11 @@ class GeneralConfig {
     @Bean
     fun wpProvider() : WPProvider {
         return WPProvider()
+    }
+
+    @Bean
+    fun passwordEncoder() : PasswordEncoder {
+        return BCryptPasswordEncoder(12);
     }
 
     @Bean

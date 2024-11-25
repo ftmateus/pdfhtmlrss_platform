@@ -46,6 +46,7 @@ class SecurityService() {
 
     companion object {
         const val SERIALIZED_KEYPAIR_FILE = "keyPair.ser"
+        const val RSS_KEY_PAIR_SIZE = 2048
     }
 
     @PostConstruct
@@ -58,7 +59,6 @@ class SecurityService() {
                 logger.info("Admin key pair not found on database, generating new one...")
                 generateKeyPairToUser(UserService.ADMIN_USER_ID)
             }
-            .keyPair
 //        keyPair = getSerializedKeyPair()
     }
 
@@ -109,7 +109,7 @@ class SecurityService() {
     fun generateKeyPair(): KeyPair {
         val keyGen = KeyPairGenerator.getInstance("GSRSSwithRSAandBPA")
         //TODO Key generation is too slow...
-        keyGen.initialize(2048)
+        keyGen.initialize(RSS_KEY_PAIR_SIZE)
         return keyGen.generateKeyPair()
     }
 

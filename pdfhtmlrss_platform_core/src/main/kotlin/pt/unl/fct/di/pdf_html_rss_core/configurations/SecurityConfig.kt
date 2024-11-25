@@ -8,6 +8,7 @@ import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import pt.unl.fct.di.pdf_html_rss_core.services.UserService
 
@@ -20,12 +21,15 @@ class SecurityConfig {
     @Autowired
     private val userService: UserService? = null
 
+    @Autowired
+    private lateinit var passwordEncoder: PasswordEncoder;
+
     @Bean
     fun authenticationProvider(): DaoAuthenticationProvider {
         return DaoAuthenticationProvider().also {
             it.setUserDetailsService(userService)
             //TODO move password encoder to bean?
-            it.setPasswordEncoder(BCryptPasswordEncoder(12))
+            it.setPasswordEncoder(passwordEncoder)
         }
     }
 
