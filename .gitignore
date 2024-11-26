@@ -1,4 +1,5 @@
 *.pem
+*.log
 
 HELP.md
 .gradle
@@ -28,6 +29,7 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+
 
 ### NetBeans ###
 /nbproject/private/
