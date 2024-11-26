@@ -1,8 +1,9 @@
 <template>
   <img alt="Vue logo" src="./assets/logo.png">
   <h1>PDF HTML Redactable Signatures Platform</h1>
-  <HelloWorld msg="PDF HTML Redactable Signatures Platform"/>
-  <Login></Login>
+<!--  <HelloWorld msg="PDF HTML Redactable Signatures Platform"/>-->
+  <RouterView />
+<!--  <Login></Login>-->
 </template>
 
 <script lang="ts">

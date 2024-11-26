@@ -51,6 +51,14 @@ class RedactableSignaturesRestController {
         return "Hello World\n";
     }
 
+    @GetMapping("/auth/status", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun checkAuthStatus() : String {
+        val loggedInUser = securityService.getLoggedInUser()
+            ?: return "{\"loggedIn\":false}";
+
+        return "{\"loggedIn\":true,\"user\":\"${loggedInUser.username}\"}"
+    }
+
     //TODO html file type?
     @GetMapping("/tmp/{filePath}")
     fun getTempFile(@PathVariable filePath: String): ResponseEntity<InputStreamResource> {

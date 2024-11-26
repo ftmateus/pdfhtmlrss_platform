@@ -4,8 +4,8 @@ export type RedactionProcess = {
     fileType : string,
     tmpPdfFile : string | null,
     tmpHtmlFile : string,
-    expires : number,
     action : RedactionProcessAction
+    // expires : number,
 };
 
 export enum RedactionProcessAction {
