@@ -2,9 +2,6 @@
 // import Vue from 'vue';
 import {Options, Vue} from 'vue-class-component';
 import {login} from "@/api";
-import { useRoute, useRouter } from 'vue-router'
-
-const router = useRouter()
 
 @Options({
   components : {

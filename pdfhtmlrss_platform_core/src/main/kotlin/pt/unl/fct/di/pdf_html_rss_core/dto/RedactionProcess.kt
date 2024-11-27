@@ -19,7 +19,7 @@ const val PENDING_REDACTION_TASK_TTL = 30 * 60L;
 @RedisHash("redaction-processes", timeToLive = PENDING_REDACTION_TASK_TTL)
 class RedactionProcess(
     @Id
-    val taskId : String = UUID.randomUUID().toString(),
+    val taskId : String,
     val userId : Long,
     val fileType : String,
     val tmpPdfFile : String?,

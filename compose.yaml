@@ -23,12 +23,12 @@ services:
 #        tmpfs:
 #          - /tmp/pdfrss
     environment:
-      SPRING_DATASOURCE_URL : jdbc:mariadb://mariadb:3306/pdfhtmlrss
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD:
-      SPRING_REDIS_HOST : redisdb
-      SPRING_REDIS_PORT : 6379
-      SPRING_REDIS_PASSWORD :
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/pdfhtmlrss
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_JPA_GENERATE-DDL=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=pdfhtmlrss2024
+      - SPRING_REDIS_HOST=redisdb
     networks:
       backend:
     depends_on:
@@ -37,6 +37,7 @@ services:
   redisdb :
     image: redis:latest
     restart: always
+    hostname: redisdb
     networks:
       backend:
     volumes:
@@ -46,7 +47,7 @@ services:
     restart: always
     environment:
       MYSQL_DATABASE: pdfhtmlrss
-      MARIADB_ROOT_PASSWORD:
+      MARIADB_ROOT_PASSWORD: pdfhtmlrss2024
     networks:
       backend:
     volumes:

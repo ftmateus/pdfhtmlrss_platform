@@ -1,22 +1,25 @@
 <script setup lang="ts">
 
 import {Operation, opToTitle} from "@/components/Operations";
-import {ref, Ref} from "vue";
+// import { defineProps } from 'vue';
+//
+import { defineModel } from 'vue';
+// import {ref, Ref} from "vue";
 
 // const actionsSelectorRef: Ref<HTMLSelectElement> = ref(null)
 
 let currentOperation = Operation.SIGN_ONLY
 
-const props = defineProps({
-  // setAction : {
-  //   type : Function,
-  //   required : true
-  // }
-})
+// defineProps< {
+//   // setAction : {
+//   //   type : Function,
+//   //   required : true
+//   // }
+// }>
 
-const operationModel = defineModel()
+const operationModel = defineModel("operationModel")
 
-function handleActionChange(e : Event) {
+function handleActionChange() {
   operationModel.value = currentOperation
 }
 
@@ -31,7 +34,7 @@ function handleActionChange(e : Event) {
       @change="handleActionChange"
       v-model="currentOperation"
   >
-    <option v-for="a in Object.values(Operation)" :value="a">
+    <option v-bind:key="a" v-for="a in Object.values(Operation)" :value="a" >
         {{opToTitle(a)}}
     </option>
   </select>

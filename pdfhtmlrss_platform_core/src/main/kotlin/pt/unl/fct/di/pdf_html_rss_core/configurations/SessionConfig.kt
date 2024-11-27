@@ -1,13 +1,10 @@
 package pt.unl.fct.di.pdf_html_rss_core.configurations
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import org.springframework.beans.factory.BeanClassLoaderAware
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
-import org.springframework.data.redis.serializer.RedisSerializer
-import org.springframework.security.jackson2.SecurityJackson2Modules
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession
 
 
@@ -19,9 +16,16 @@ class SessionConfig {
 
 //    private var loader: ClassLoader? = null
 
+    @Value("\${spring.redis.host:localhost}")
+    private val redisHost: String? = null
+
+    @Value("\${spring.redis.port:6379}")
+    private val redisPort = 0
+
     @Bean
     fun connectionFactory(): LettuceConnectionFactory {
-        return LettuceConnectionFactory()
+        val redisConfig = RedisStandaloneConfiguration(redisHost!!, redisPort)
+        return LettuceConnectionFactory(redisConfig)
     }
 
 //    @Bean

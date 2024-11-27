@@ -17,6 +17,7 @@ import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.*
 
 @Service
 class RedactionProcessService {
@@ -52,22 +53,27 @@ class RedactionProcessService {
         pdfFile : PDFFileWrapper,
         action : RedactionProcessAction
     ) : RedactionProcess {
-        val tmpHtmlFile = temporaryFilesRepository.writeToTempFile { tmpFileOut ->
+        val loggedInUser = securityService.getLoggedInUser()
+            ?: throw PDFHTMLRSSException()
+
+        val taskId = UUID.randomUUID().toString();
+
+        val tmpHtmlFile = temporaryFilesRepository
+            .writeToTempFile("${taskId}.html") { tmpFileOut ->
             val docBytes = fileConversionService
                 .generateHTMLFromPDF(pdfFile)
             tmpFileOut.write(docBytes)
         }
 
-        val tmpPdfFile = temporaryFilesRepository.writeToTempFile { tmpFileOut ->
+        val tmpPdfFile = temporaryFilesRepository
+            .writeToTempFile("${taskId}.pdf") { tmpFileOut ->
             pdfFile.getInputStream().use {
                 it.copyTo(tmpFileOut)
             }
         }
 
-        val loggedInUser = securityService.getLoggedInUser() ?: throw PDFHTMLRSSException()
-
         return RedactionProcess(
-            //TODO user id
+            taskId = taskId,
             userId = loggedInUser.userId,
             tmpHtmlFile = tmpHtmlFile.name,
             tmpPdfFile = tmpPdfFile.name,
@@ -81,16 +87,18 @@ class RedactionProcessService {
         htmlFileInputStream : InputStream,
         action : RedactionProcessAction
     ) : RedactionProcess {
-        val tmpHtmlFile = temporaryFilesRepository.writeToTempFile { tmpFileOut ->
+        val loggedInUser = securityService.getLoggedInUser() ?: throw PDFHTMLRSSException()
+
+        val taskId = UUID.randomUUID().toString();
+
+        val tmpHtmlFile = temporaryFilesRepository
+            .writeToTempFile("${taskId}.pdf") { tmpFileOut ->
             htmlFileInputStream.copyTo(tmpFileOut)
             htmlFileInputStream.close()
         }
 
-        //TODO change exception
-        val loggedInUser = securityService.getLoggedInUser() ?: throw PDFHTMLRSSException()
-
         return RedactionProcess(
-            //TODO user id
+            taskId = taskId,
             userId = loggedInUser.userId,
             tmpHtmlFile = tmpHtmlFile.name,
             tmpPdfFile = null,
