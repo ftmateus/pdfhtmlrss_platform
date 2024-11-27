@@ -1,19 +1,33 @@
 package pt.unl.fct.di.pdf_html_rss_core.dto
 
+import org.springframework.data.annotation.Id
+import org.springframework.data.redis.core.RedisHash
+import org.springframework.data.redis.core.TimeToLive
 import java.util.*
+import javax.persistence.Entity
 
 enum class RedactionProcessAction {
     SELECT_REDACTABLE_ELEMS, REDACT
 }
 
-const val PENDING_REDACTION_TASK_TTL = 60 * 60 * 1000L;
+/**
+ * 30 minutes
+ */
+const val PENDING_REDACTION_TASK_TTL = 30 * 60L;
 
-data class RedactionProcess(
-    val taskId : String = UUID.randomUUID().toString(),
-    val userId : String,
+//@Entity
+@RedisHash("redaction-processes", timeToLive = PENDING_REDACTION_TASK_TTL)
+class RedactionProcess(
+    @Id
+    val taskId : String,
+    val userId : Long,
     val fileType : String,
     val tmpPdfFile : String?,
     val tmpHtmlFile : String,
-    val expires : Long = System.currentTimeMillis() + PENDING_REDACTION_TASK_TTL,
     val action : RedactionProcessAction
-)
+) {
+    constructor() : this("", -1L, "", "", "", RedactionProcessAction.REDACT) {
+
+    }
+
+}

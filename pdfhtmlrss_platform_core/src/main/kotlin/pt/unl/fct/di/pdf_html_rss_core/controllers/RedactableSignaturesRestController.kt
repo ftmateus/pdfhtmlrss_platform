@@ -22,6 +22,9 @@ import javax.servlet.http.HttpServletResponse
 @RequestMapping(value = ["/"])
 class RedactableSignaturesRestController {
 
+    @Autowired
+    private lateinit var securityService: SecurityService
+
     val SUPPORTED_UPLOAD_MIME_TYPES = listOf(
         MediaType.APPLICATION_PDF,
         MediaType.TEXT_XML,
@@ -48,9 +51,12 @@ class RedactableSignaturesRestController {
         return "Hello World\n";
     }
 
-    @PostMapping("/login")
-    fun login() {
+    @GetMapping("/auth/status", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun checkAuthStatus() : String {
+        val loggedInUser = securityService.getLoggedInUser()
+            ?: return "{\"loggedIn\":false}";
 
+        return "{\"loggedIn\":true,\"user\":\"${loggedInUser.username}\"}"
     }
 
     //TODO html file type?
@@ -122,6 +128,12 @@ class RedactableSignaturesRestController {
         @PathVariable processId: String
     ) : RedactionProcess {
         val process = redactionProcessService.getRedactionProcess(processId)
+
+        val loggedInUser = securityService.getLoggedInUser() ?:
+            throw ResponseStatusException(HttpStatus.FORBIDDEN)
+
+        if(process.userId != loggedInUser.userId)
+            throw ResponseStatusException(HttpStatus.FORBIDDEN)
 
         return process;
     }

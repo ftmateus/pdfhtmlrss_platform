@@ -4,20 +4,26 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import org.w3c.dom.Document
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.dto.RedactionProcess
 import pt.unl.fct.di.pdf_html_rss_core.dto.RedactionProcessAction
+import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.*
 
 @Service
 class RedactionProcessService {
+
+    @Autowired
+    private lateinit var securityService: SecurityService
 
     @Autowired
     lateinit var redactionProcessRepository: RedactionProcessRepository;
@@ -40,25 +46,35 @@ class RedactionProcessService {
     @Autowired
     lateinit var xhtmlRedactableSignatureService: XHTMLRedactableSignatureService
 
+    @Autowired
+    lateinit var userService: UserService;
+
     fun initiatePdfRedactionProcess(
         pdfFile : PDFFileWrapper,
         action : RedactionProcessAction
     ) : RedactionProcess {
-        val tmpHtmlFile = temporaryFilesRepository.writeToTempFile { tmpFileOut ->
+        val loggedInUser = securityService.getLoggedInUser()
+            ?: throw PDFHTMLRSSException()
+
+        val taskId = UUID.randomUUID().toString();
+
+        val tmpHtmlFile = temporaryFilesRepository
+            .writeToTempFile("${taskId}.html") { tmpFileOut ->
             val docBytes = fileConversionService
                 .generateHTMLFromPDF(pdfFile)
             tmpFileOut.write(docBytes)
         }
 
-        val tmpPdfFile = temporaryFilesRepository.writeToTempFile { tmpFileOut ->
+        val tmpPdfFile = temporaryFilesRepository
+            .writeToTempFile("${taskId}.pdf") { tmpFileOut ->
             pdfFile.getInputStream().use {
                 it.copyTo(tmpFileOut)
             }
         }
 
         return RedactionProcess(
-            //TODO user id
-            userId = "",
+            taskId = taskId,
+            userId = loggedInUser.userId,
             tmpHtmlFile = tmpHtmlFile.name,
             tmpPdfFile = tmpPdfFile.name,
             fileType = MediaType.APPLICATION_PDF.toString(),
@@ -71,14 +87,19 @@ class RedactionProcessService {
         htmlFileInputStream : InputStream,
         action : RedactionProcessAction
     ) : RedactionProcess {
-        val tmpHtmlFile = temporaryFilesRepository.writeToTempFile { tmpFileOut ->
+        val loggedInUser = securityService.getLoggedInUser() ?: throw PDFHTMLRSSException()
+
+        val taskId = UUID.randomUUID().toString();
+
+        val tmpHtmlFile = temporaryFilesRepository
+            .writeToTempFile("${taskId}.pdf") { tmpFileOut ->
             htmlFileInputStream.copyTo(tmpFileOut)
             htmlFileInputStream.close()
         }
 
         return RedactionProcess(
-            //TODO user id
-            userId = "",
+            taskId = taskId,
+            userId = loggedInUser.userId,
             tmpHtmlFile = tmpHtmlFile.name,
             tmpPdfFile = null,
             fileType = MediaType.TEXT_HTML.toString(),
@@ -89,7 +110,17 @@ class RedactionProcessService {
     fun cancelRedactionProcess(
         processId : String
     ) {
+        val process = getRedactionProcess(processId)
+
         redactionProcessRepository.deleteById(processId)
+
+        temporaryFilesRepository
+            .getTempFile(process.tmpHtmlFile)
+            ?.delete();
+
+        temporaryFilesRepository
+            .getTempFile(process.tmpPdfFile ?: "")
+            ?.delete()
     }
 
     fun finalizeRedactionProcess(
@@ -98,13 +129,7 @@ class RedactionProcessService {
         outputStream : OutputStream,
     ) : RedactionProcess {
         //TODO change all exceptions
-        val process = redactionProcessRepository.findById(processId)
-            .orElseThrow { RuntimeException() }
-
-        if (process.expires <= System.currentTimeMillis()) {
-            redactionProcessRepository.deleteById(processId)
-            throw RuntimeException()
-        }
+        val process = getRedactionProcess(processId)
 
         val htmlTmpFile = temporaryFilesRepository.getTempFile(process.tmpHtmlFile)
             ?: throw RuntimeException()
@@ -139,10 +164,19 @@ class RedactionProcessService {
         return process
     }
 
+    /*
+     * TODO change exceptions
+     */
     fun getRedactionProcess(processId : String ) : RedactionProcess {
-        //Change exception
-        return redactionProcessRepository.findById(processId)
-            .orElseThrow { throw RuntimeException("Not found!") }
+        val process = redactionProcessRepository.findById(processId)
+            .orElseThrow { throw PDFHTMLRSSException() }
+
+        val loggedInUser = securityService.getLoggedInUser() ?: throw PDFHTMLRSSException()
+
+        if(process.userId != loggedInUser.userId)
+            throw PDFHTMLRSSException();
+
+        return process;
     }
 
     private fun finalizePdfRedactionProcess(

@@ -1,5 +1,6 @@
 FROM node:lts-alpine as build
 WORKDIR /app
+ENV DISABLE_ESLINT_PLUGIN=true
 COPY package*.json .
 RUN npm install
 COPY ./babel.config.js .

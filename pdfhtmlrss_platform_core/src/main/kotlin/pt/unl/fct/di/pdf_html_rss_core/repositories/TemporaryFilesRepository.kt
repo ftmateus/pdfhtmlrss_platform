@@ -10,7 +10,6 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
 
-//TODO to repository?
 @Repository
 class TemporaryFilesRepository {
 
@@ -79,6 +78,9 @@ class TemporaryFilesRepository {
     }
 
     fun getTempFile(fileName : String) : File? {
+        if(fileName.isBlank())
+            return null;
+
         val file = File(temporaryFolder, fileName)
         if(!file.exists())
             return null
@@ -94,7 +96,7 @@ class TemporaryFilesRepository {
 
     //TODO every minute, maybe change it
     @Scheduled(fixedRate = 60*1000)
-    private fun pruneTemporaryFiles() {
+    fun pruneTemporaryFiles() {
         for(temporaryFile in temporaryFilesToDelete) {
             val file = File(temporaryFolder, temporaryFile)
             if(isTemporaryFileExpired(file)) {

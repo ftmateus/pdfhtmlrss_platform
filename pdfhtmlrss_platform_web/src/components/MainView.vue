@@ -7,6 +7,7 @@
       justify-content : space-between;
       height: 225px;
     ">
+      <UserArea/>
       <OperationsSelector v-model="operation"/>
       <FileSelector :set-file="setFile"/>
       <OperationButton :operation="operation"/>
@@ -20,11 +21,12 @@ import FileSelector from "@/components/FileSelector.vue";
 import OperationsSelector from "@/components/OperationsSelector.vue";
 import OperationButton from "@/components/OperationButton.vue";
 import {Operation} from "@/components/Operations";
+import UserArea from "@/components/UserArea.vue";
 
 @Options({
-  components: {OperationButton, OperationsSelector, FileSelector},
+  components: {UserArea, OperationButton, OperationsSelector, FileSelector},
 })
-export default class HelloWorld extends Vue {
+export default class MainView extends Vue {
 
   file : File | null = null;
   operation : Operation = Operation.SIGN_ONLY

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {Ref, ref, defineProps} from "vue";
-import {signOnly} from "@/api";
 
 const props = defineProps({
   setFile : {

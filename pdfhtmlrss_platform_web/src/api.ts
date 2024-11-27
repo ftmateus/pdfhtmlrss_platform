@@ -17,6 +17,28 @@ export function testApi() : Promise<Response> {
     return fetch(`${apiPrefix}/test`)
 }
 
+export function checkAuthStatus() : Promise<Response> {
+    return fetch(`${apiPrefix}/auth/status`)
+}
+
+export function login(user : string, password : string) : Promise<Response> {
+    const formData = new FormData()
+
+    formData.set("username", user)
+    formData.set("password", password)
+
+    return fetch(`${apiPrefix}/login`, {
+        method : 'POST',
+        body : formData
+    });
+}
+
+export function logout() : Promise<Response> {
+    return fetch(`${apiPrefix}/logout`, {
+        method : 'POST'
+    });
+}
+
 export function signOnly(file : File)  {
     const formData = new FormData()
 

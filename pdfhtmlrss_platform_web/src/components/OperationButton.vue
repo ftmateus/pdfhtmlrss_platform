@@ -1,18 +1,17 @@
 <script setup lang="ts">
+import { defineProps } from 'vue';
+import { opToButtonTitle } from "@/components/Operations";
 
-import {Operation, opToButtonTitle} from "@/components/Operations";
-
-const props = defineProps({
+defineProps<{
   operation : {
-    type : String,
-    required : true
+    type: String,
+    required: true
   }
-})
-
+}>();
 </script>
 
 <template>
-  <button>{{opToButtonTitle(operation)}}</button>
+  <button>{{opToButtonTitle($props.operation)}}</button>
 </template>
 
 <style scoped>
