@@ -6,12 +6,16 @@ defineProps<{
   operation : {
     type: String,
     required: true
+  },
+  noFileSelected : {
+    type : boolean,
+    required : true
   }
 }>();
 </script>
 
 <template>
-  <button>{{opToButtonTitle($props.operation)}}</button>
+  <button :disabled="$props.noFileSelected">{{opToButtonTitle($props.operation)}}</button>
 </template>
 
 <style scoped>

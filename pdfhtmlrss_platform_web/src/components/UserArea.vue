@@ -1,16 +1,13 @@
-<script lang="ts">
-import {Options, Vue} from 'vue-class-component';
+<script setup lang="ts">
+import { useRouter } from 'vue-router'
 import {logout} from "@/api";
 
-@Options({
-  components : {}
-})
-export default class UserArea extends Vue {
-  async handleLogout() {
-    let res = await logout();
-    if(res.ok) {
-      this.$router.push("/login")
-    }
+let router = useRouter()
+
+async function handleLogout() {
+  let res = await logout();
+  if(res.ok) {
+    await router.push("/login")
   }
 }
 </script>

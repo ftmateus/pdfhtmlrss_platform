@@ -8,22 +8,11 @@ const props = defineProps({
   }
 })
 
-const fileInputRef: Ref<any> = ref(null)
+const fileInputRef: Ref<any> = ref("fileInputRef")
 
 async function handleFileUpload() {
-
   const file = fileInputRef.value.files[0]
-
   props.setFile(file)
-
-  // const response = await signOnly(file)
-  // const data = await response.blob()
-  //
-  // const link = document.createElement('a')
-  // link.href = URL.createObjectURL(data)
-  // link.download = file.name
-  // link.click()
-  // URL.revokeObjectURL(link.href)
 }
 </script>
 

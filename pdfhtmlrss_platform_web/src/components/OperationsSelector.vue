@@ -10,14 +10,7 @@ import { defineModel } from 'vue';
 
 let currentOperation = Operation.SIGN_ONLY
 
-// defineProps< {
-//   // setAction : {
-//   //   type : Function,
-//   //   required : true
-//   // }
-// }>
-
-const operationModel = defineModel("operationModel")
+const operationModel = defineModel()
 
 function handleActionChange() {
   operationModel.value = currentOperation

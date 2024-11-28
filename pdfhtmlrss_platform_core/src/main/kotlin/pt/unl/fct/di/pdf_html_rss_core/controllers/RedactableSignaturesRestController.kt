@@ -46,11 +46,6 @@ class RedactableSignaturesRestController {
     @Autowired
     lateinit var domService: DOMService;
 
-    @GetMapping(value = ["/test"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun testApi() : String {
-        return "Hello World\n";
-    }
-
     @GetMapping("/auth/status", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun checkAuthStatus() : String {
         val loggedInUser = securityService.getLoggedInUser()

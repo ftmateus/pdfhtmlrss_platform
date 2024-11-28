@@ -1,5 +1,6 @@
 // let apiPrefix = process.env.NODE_ENV === "development" ? "http://localhost:8080" : "/api"
 import {RedactionProcess, RedactionProcessAction} from "@/dto/RedactionProcess";
+import {Operation} from "@/components/Operations";
 
 function getSubsite() : string {
     // Get the current path from the URL
@@ -12,10 +13,6 @@ function getSubsite() : string {
 }
 
 const apiPrefix : string = `${getSubsite()}api`
-
-export function testApi() : Promise<Response> {
-    return fetch(`${apiPrefix}/test`)
-}
 
 export function checkAuthStatus() : Promise<Response> {
     return fetch(`${apiPrefix}/auth/status`)
@@ -54,11 +51,11 @@ export function signOnly(file : File)  {
 
 export function submitRedactionProcess(
     file : File,
-    action : RedactionProcessAction
+    operation : Operation
 ) : Promise<RedactionProcess> {
     const formData = new FormData()
     formData.set("file", file)
-    formData.set("redactionTask", action.toString())
+    formData.set("redactionTask", operation.toString())
 
     return fetch(`${apiPrefix}/sign/prepare`, {
         method : 'POST',

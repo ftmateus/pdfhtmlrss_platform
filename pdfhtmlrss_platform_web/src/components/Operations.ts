@@ -1,10 +1,10 @@
 import { def } from "@vue/shared"
 
 export enum Operation {
-    SIGN_ONLY = "sign_only",
-    SIGN_SELECT_REDACTABLE_ELEMS = "sign_select_redactable_elems",
-    REDACT = "redact",
-    VERIFY = "verify"
+    SIGN_ONLY = "SIGN_ONLY",
+    SIGN_SELECT_REDACTABLE_ELEMS = "SELECT_REDACTABLE_ELEMS",
+    REDACT = "REDACT",
+    VERIFY = "VERIFY"
 }
 
 export function opToTitle(operation : Operation) : string {
