@@ -26,7 +26,7 @@ export function opToButtonTitle(operation : Operation | String) {
         case Operation.SIGN_ONLY:
             return "Sign"
         case Operation.REDACT:
-            return "Submit"
+            return "Redact"
         case Operation.SIGN_SELECT_REDACTABLE_ELEMS:
             return "Submit"
         case Operation.VERIFY :

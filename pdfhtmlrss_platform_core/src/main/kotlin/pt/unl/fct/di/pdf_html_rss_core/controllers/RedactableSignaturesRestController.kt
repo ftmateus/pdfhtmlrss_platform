@@ -67,8 +67,15 @@ class RedactableSignaturesRestController {
             throw ResponseStatusException(HttpStatus.NOT_FOUND)
         }
 
+        val contentType = when(tempFile.extension) {
+            "pdf" -> MediaType.APPLICATION_PDF
+            "html" -> MediaType.TEXT_HTML
+            else -> MediaType.TEXT_PLAIN
+        }
+
         return ResponseEntity.ok()
 //            .cacheControl(CacheControl.maxAge())
+            .contentType(contentType)
             .body(InputStreamResource(tempFile.inputStream()));
     }
 

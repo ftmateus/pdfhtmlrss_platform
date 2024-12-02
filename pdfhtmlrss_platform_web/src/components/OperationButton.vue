@@ -4,7 +4,7 @@ import { opToButtonTitle } from "@/components/Operations";
 
 defineProps<{
   operation : {
-    type: String,
+    type: string,
     required: true
   },
   noFileSelected : {

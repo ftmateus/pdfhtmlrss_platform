@@ -100,5 +100,12 @@ export function getTemporaryFile(
     tmpFileName : string
 ) : Promise<Response> {
 
-    return fetch(`${apiPrefix}/tmp/${tmpFileName}`)
+    return fetch(getTemporaryFileURL(tmpFileName))
+}
+
+export function getTemporaryFileURL(
+    tmpFileName : string
+) : string {
+
+    return `${apiPrefix}/tmp/${tmpFileName}`
 }
