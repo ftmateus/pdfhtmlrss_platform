@@ -17,12 +17,13 @@
         <button style="width: 150px" :disabled="!file" @click.prevent="handleOpenDocumentView">Open document view</button>
         Paste the XPath elements URLs you want to redact separated by lines. Hint: Use your browser DevTools.
         <textarea v-model="redactedElemsTextBoxRef" style="width: 300px; height: 100px"></textarea>
-        <div v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">
-          <input type="radio" name="sign_option" id="compatibility" checked>
-          <label for="compatibility">Improved compatibility</label>
-          <input type="radio" name="sign_option" id="size">
-          <label for="size">Smaller file</label>
-        </div>
+        <fieldset v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">
+          <legend>Signature Options</legend>
+          <input type="radio" name="sign_option" id="improved_compatibility" checked>
+          <label for="improved_compatibility">Improved compatibility</label>
+          <input type="radio" name="sign_option" id="smaller_size">
+          <label for="smaller_size">Smaller file</label>
+        </fieldset>
       </form>
       <button
           :disabled="isSubmitButtonDisabled()"
@@ -40,29 +41,42 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import {ref} from 'vue'
 import FileSelector from "@/components/FileSelector.vue";
 import OperationsSelector from "@/components/OperationsSelector.vue";
 // import OperationButton from "@/components/OperationButton.vue";
 import {Operation, opToButtonTitle} from "@/components/Operations";
 import UserArea from "@/components/UserArea.vue";
-import {cancelRedactionProcess, getTemporaryFileURL, signOnly, submitRedactionProcess} from "@/api";
+import {
+  cancelRedactionProcess,
+  getTemporaryFileURL,
+  RedactableSignatureOption,
+  signOnly,
+  submitRedactionProcess
+} from "@/api";
 import {RedactionProcess} from "@/dto/RedactionProcess";
 // import { RefSymbol } from '@vue/reactivity';
 
 
+
 const file = ref<File>();
-const operation = ref(Operation.SIGN_ONLY)
+const operation = ref(Operation.SIGN_SELECT_REDACTABLE_ELEMS)
 const redactionProcess = ref<RedactionProcess>();
+const redactableSignatureOption = ref<RedactableSignatureOption>(
+    RedactableSignatureOption.IMPROVED_COMPATIBILITY
+)
+
 const redactedElemsTextBoxRef = ref<String>()
 
-function setFile(newFile : File) {
-  console.log("Added file: " + newFile.name)
+async function setFile(newFile : File) {
   file.value = newFile;
-  if(redactionProcess.value)
-    cancelRedactionProcess(redactionProcess.value?.taskId)
-        .finally(() => redactionProcess.value = undefined)
-
+  if(!redactionProcess.value)
+    return
+  try {
+    await cancelRedactionProcess(redactionProcess.value?.taskId)
+  } finally {
+    redactionProcess.value = undefined
+  }
 }
 
 function downloadBlobRequest(blob : Blob) {

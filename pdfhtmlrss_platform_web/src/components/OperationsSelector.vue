@@ -1,16 +1,11 @@
 <script setup lang="ts">
 
 import {Operation, opToTitle} from "@/components/Operations";
-// import { defineProps } from 'vue';
-//
 import { defineModel } from 'vue';
-// import {ref, Ref} from "vue";
 
-// const actionsSelectorRef: Ref<HTMLSelectElement> = ref(null)
-
-let currentOperation = Operation.SIGN_ONLY
 
 const operationModel = defineModel()
+let currentOperation = operationModel.value
 
 function handleActionChange() {
   operationModel.value = currentOperation
@@ -21,7 +16,6 @@ function handleActionChange() {
 <template>
   <h3>What do you want to do?</h3>
   <select
-      ref="actionsSelectorRef"
       name="actions"
       id="actions"
       @change="handleActionChange"
@@ -32,9 +26,5 @@ function handleActionChange() {
     </option>
   </select>
 </template>
-
 <style scoped>
-
-
-
 </style>

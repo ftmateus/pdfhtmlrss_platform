@@ -2,6 +2,11 @@
 import {RedactionProcess, RedactionProcessAction} from "@/dto/RedactionProcess";
 import {Operation} from "@/components/Operations";
 
+export enum RedactableSignatureOption {
+    IMPROVED_COMPATIBILITY = "improved_compatibility",
+    SMALLER_FILE = "smaller_size"
+}
+
 function getSubsite() : string {
     // Get the current path from the URL
     const path = window.location.pathname;
