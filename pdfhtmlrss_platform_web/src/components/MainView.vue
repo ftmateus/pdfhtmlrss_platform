@@ -48,9 +48,9 @@ import OperationsSelector from "@/components/OperationsSelector.vue";
 import {Operation, opToButtonTitle} from "@/components/Operations";
 import UserArea from "@/components/UserArea.vue";
 import {
-  cancelRedactionProcess,
+  cancelRedactionProcess, finishRedactionProcess,
   getTemporaryFileURL,
-  RedactableSignatureOption,
+  // RedactableSignatureOption,
   signOnly,
   submitRedactionProcess
 } from "@/api";
@@ -62,9 +62,9 @@ import {RedactionProcess} from "@/dto/RedactionProcess";
 const file = ref<File>();
 const operation = ref(Operation.SIGN_SELECT_REDACTABLE_ELEMS)
 const redactionProcess = ref<RedactionProcess>();
-const redactableSignatureOption = ref<RedactableSignatureOption>(
-    RedactableSignatureOption.IMPROVED_COMPATIBILITY
-)
+// const redactableSignatureOption = ref<RedactableSignatureOption>(
+//     RedactableSignatureOption.IMPROVED_COMPATIBILITY
+// )c
 
 const redactedElemsTextBoxRef = ref<String>()
 
@@ -119,20 +119,37 @@ function isSubmitButtonDisabled() {
   }
 }
 
+function clearForm() {
+  file.value = undefined
+  redactionProcess.value = undefined
+  redactedElemsTextBoxRef.value = ""
+}
+
 async function handleOperationButtonClick() {
-  console.log(operation.value)
   if(!file.value)
     return
 
   switch (operation.value) {
-    case Operation.SIGN_SELECT_REDACTABLE_ELEMS : {
-      // await submitRedactionProcess(file.value!, Operation.SIGN_SELECT_REDACTABLE_ELEMS)
+    case Operation.SIGN_SELECT_REDACTABLE_ELEMS:
+    case Operation.REDACT:  {
+      if(!redactionProcess.value)
+        redactionProcess.value = await submitRedactionProcess(file.value, operation.value)
+
+      let redactElems = redactedElemsTextBoxRef.value?.split("\n")
+          ?.filter(e => e.startsWith("/html/body/"))
+          ?.map(e => e.replace(/\/html\/body\/a\[.*]\//, "/html/body/"))
+          ?.map(e => `#xpath(${e})`) ?? []
+
+      await finishRedactionProcess(redactionProcess.value.taskId, redactElems)
+          .then(res => res.blob())
+          .then(blob => downloadBlobRequest(blob))
+          .then(() => clearForm())
       break;
     }
     case Operation.SIGN_ONLY : {
-      let blob = await signOnly(file.value!)
-          .then(r => r.blob())
-      downloadBlobRequest(blob)
+      await signOnly(file.value!)
+          .then(res => res.blob())
+          .then(blob => downloadBlobRequest(blob))
       break;
     }
   }

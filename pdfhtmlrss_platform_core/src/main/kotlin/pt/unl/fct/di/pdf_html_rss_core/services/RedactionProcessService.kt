@@ -107,19 +107,17 @@ class RedactionProcessService {
         ).also { redactionProcessRepository.save(it) }
     }
 
-    fun cancelRedactionProcess(
-        processId : String
+    fun deleteRedactionProcess(
+        redactionProcess : RedactionProcess
     ) {
-        val process = getRedactionProcess(processId)
-
-        redactionProcessRepository.deleteById(processId)
+        redactionProcessRepository.deleteById(redactionProcess.taskId)
 
         temporaryFilesRepository
-            .getTempFile(process.tmpHtmlFile)
+            .getTempFile(redactionProcess.tmpHtmlFile)
             ?.delete();
 
         temporaryFilesRepository
-            .getTempFile(process.tmpPdfFile ?: "")
+            .getTempFile(redactionProcess.tmpPdfFile ?: "")
             ?.delete()
     }
 
@@ -132,7 +130,7 @@ class RedactionProcessService {
         val process = getRedactionProcess(processId)
 
         val htmlTmpFile = temporaryFilesRepository.getTempFile(process.tmpHtmlFile)
-            ?: throw RuntimeException()
+            ?: throw PDFHTMLRSSException()
 
         val htmlTmpDom = htmlTmpFile.inputStream().use {
             domService.parseDocument(it)
@@ -170,11 +168,6 @@ class RedactionProcessService {
     fun getRedactionProcess(processId : String ) : RedactionProcess {
         val process = redactionProcessRepository.findById(processId)
             .orElseThrow { throw PDFHTMLRSSException() }
-
-        val loggedInUser = securityService.getLoggedInUser() ?: throw PDFHTMLRSSException()
-
-        if(process.userId != loggedInUser.userId)
-            throw PDFHTMLRSSException();
 
         return process;
     }

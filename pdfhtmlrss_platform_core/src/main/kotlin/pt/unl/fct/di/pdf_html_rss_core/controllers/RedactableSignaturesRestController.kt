@@ -63,9 +63,8 @@ class RedactableSignaturesRestController {
             normalizedPath
         )
 
-        if(tempFile == null) {
+        if(tempFile == null)
             throw ResponseStatusException(HttpStatus.NOT_FOUND)
-        }
 
         val contentType = when(tempFile.extension) {
             "pdf" -> MediaType.APPLICATION_PDF
@@ -129,10 +128,10 @@ class RedactableSignaturesRestController {
     fun getRedactionProcess(
         @PathVariable processId: String
     ) : RedactionProcess {
-        val process = redactionProcessService.getRedactionProcess(processId)
-
         val loggedInUser = securityService.getLoggedInUser() ?:
             throw ResponseStatusException(HttpStatus.FORBIDDEN)
+
+        val process = redactionProcessService.getRedactionProcess(processId)
 
         if(process.userId != loggedInUser.userId)
             throw ResponseStatusException(HttpStatus.FORBIDDEN)
@@ -158,15 +157,15 @@ class RedactableSignaturesRestController {
                 )
             response.contentType = process.fileType
         }
-
     }
 
     @DeleteMapping("/sign/{processId}")
     fun cancelRedactionProcess(
         @PathVariable processId : String
     ) {
-        redactionProcessService
-            .cancelRedactionProcess(processId)
+        val process = getRedactionProcess(processId)
+
+        redactionProcessService.deleteRedactionProcess(process)
     }
 
     @PostMapping("/sign")
