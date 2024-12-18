@@ -1,6 +1,7 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
@@ -31,7 +32,9 @@ class UserService : UserDetailsService {
     @Autowired
     private lateinit var passwordEncoder: PasswordEncoder;
 
-    //TODO remove this in production
+    @Value("\${pdfhtmlrss.user.admin.password}")
+    private lateinit var adminPasswordHash: String
+
     @PostConstruct
     final fun makeAdminUser()  {
         if(usersRepository.existsById(ADMIN_USER_ID)) {
@@ -41,7 +44,7 @@ class UserService : UserDetailsService {
         val adminUser = User(
             ADMIN_USER_ID,
             "admin",
-            "\$2a\$12\$An68OidsmncWv2WVCCiLLuWS3QN5mK7CaNvlLJQoo2m46ouFxCZZu",
+            adminPasswordHash,
             null
         )
         usersRepository.save(adminUser);
