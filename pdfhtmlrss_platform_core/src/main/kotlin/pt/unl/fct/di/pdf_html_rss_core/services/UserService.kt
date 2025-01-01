@@ -2,10 +2,6 @@ package pt.unl.fct.di.pdf_html_rss_core.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.security.core.Authentication
-import org.springframework.security.core.context.SecurityContext
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -13,7 +9,6 @@ import org.springframework.stereotype.Service
 import pt.unl.fct.di.pdf_html_rss_core.dto.User
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.UsersRepository
-import javax.annotation.PostConstruct
 import kotlin.random.Random
 
 
@@ -35,7 +30,7 @@ class UserService : UserDetailsService {
     @Value("\${pdfhtmlrss.user.admin.password}")
     private lateinit var adminPasswordHash: String
 
-    @PostConstruct
+//    @PostConstruct
     final fun makeAdminUser()  {
         if(usersRepository.existsById(ADMIN_USER_ID)) {
             return;
@@ -77,9 +72,19 @@ class UserService : UserDetailsService {
                 passwordClear = null
             )
         );
-        securityService.generateKeyPairToUser(userId);
+        securityService.generateRSSKeyPairToUser(userId);
 
         return userId;
+    }
+
+    fun hasUserById(userId : Long) : Boolean {
+        return usersRepository
+            .existsById(userId)
+    }
+
+    fun hasUserByUsername(username : String) : Boolean {
+        return usersRepository
+            .existsByUsername(username)
     }
 
     fun loadUserById(userId: Long) : User {

@@ -33,7 +33,6 @@ class SecurityConfig {
     fun authenticationProvider(): DaoAuthenticationProvider {
         return DaoAuthenticationProvider().also {
             it.setUserDetailsService(userService)
-            //TODO move password encoder to bean?
             it.setPasswordEncoder(passwordEncoder)
         }
     }

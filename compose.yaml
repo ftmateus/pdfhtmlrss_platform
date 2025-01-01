@@ -20,6 +20,7 @@ services:
       api
     volumes:
       - pdfrsstmp:/tmp/pdfrss
+      - ${HOME}/.pdfhtmlrss:/pdfhtmlrss
 #        tmpfs:
 #          - /tmp/pdfrss
     environment:
@@ -29,6 +30,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=pdfhtmlrss2024
       - SPRING_REDIS_HOST=redisdb
+      - PDFHTMLRSS_KEYSTORE_PATH=/pdfhtmlrss/keystore.jks
     networks:
       backend:
     depends_on:
