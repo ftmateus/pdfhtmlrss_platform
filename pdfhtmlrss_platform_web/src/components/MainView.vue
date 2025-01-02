@@ -52,7 +52,7 @@ import {
   getTemporaryFileURL,
   // RedactableSignatureOption,
   signOnly,
-  submitRedactionProcess
+  submitRedactionProcess, verifyDocument
 } from "@/api";
 import {RedactionProcess} from "@/dto/RedactionProcess";
 // import { RefSymbol } from '@vue/reactivity';
@@ -151,6 +151,12 @@ async function handleOperationButtonClick() {
           .then(res => res.blob())
           .then(blob => downloadBlobRequest(blob))
       break;
+    }
+    case Operation.VERIFY : {
+      await verifyDocument(file.value!)
+          .then(res => res.blob())
+          .then(b => b.text())
+          .then(t => alert(t))
     }
   }
 }

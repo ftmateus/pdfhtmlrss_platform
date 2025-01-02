@@ -44,6 +44,9 @@ class RedactableSignaturesRestController {
     lateinit var redactionProcessService: RedactionProcessService
 
     @Autowired
+    lateinit var pAdESService: PAdESService;
+
+    @Autowired
     lateinit var domService: DOMService;
 
     @GetMapping("/auth/status", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -85,17 +88,19 @@ class RedactableSignaturesRestController {
         @RequestParam("file") file: MultipartFile,
         @RequestParam("type") type: MediaType,
     ) : Boolean {
-        //TODO extract function
-        if(SUPPORTED_UPLOAD_MIME_TYPES.none { it == type })
-            throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+        val type = MediaType.parseMediaType(file.contentType?: "")
+        checkIfFileTypeIsSupported(type)
 
         val docBytes : ByteArray = file.inputStream.use {
             it.readBytes()
         }
 
-        TODO()
-
-        return false;
+        return when(type) {
+            MediaType.APPLICATION_PDF ->
+                pAdESService
+                    .verifyDocument(PDFFileWrapper(file.name, docBytes))
+            else -> TODO()
+        }
     }
 
     @PostMapping("/sign/prepare")
@@ -184,10 +189,15 @@ class RedactableSignaturesRestController {
         val resource = InputStreamResource(
             when(type) {
                 MediaType.APPLICATION_PDF -> {
-                    val signedDoc = pdfManipulationService
-                        .signPdfFileRedactableSignature(PDFFileWrapper(file.name, docBytes))
+                    ByteArrayOutputStream().use {
+                        pAdESService
+                            .signDocument(
+                                PDFFileWrapper(file.name, docBytes),
+                                outputStream = it
+                            )
+                        ByteArrayInputStream(it.toByteArray())
+                    }
 
-                    ByteArrayInputStream(signedDoc.getData())
                 }
                 MediaType.TEXT_XML,
                 MediaType.TEXT_HTML -> {

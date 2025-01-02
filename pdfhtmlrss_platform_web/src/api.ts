@@ -54,6 +54,19 @@ export function signOnly(file : File)  {
     })
 }
 
+export function verifyDocument(file : File)  {
+    const formData = new FormData()
+
+    formData.set("file", file)
+    formData.set("type", file.type)
+
+    return fetch(`${apiPrefix}/verify`, {
+        method : 'POST',
+        // contentType : "multipart/form-data",
+        body : formData
+    })
+}
+
 export function submitRedactionProcess(
     file : File,
     operation : Operation
