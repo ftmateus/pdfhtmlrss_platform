@@ -31,6 +31,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=pdfhtmlrss2024
       - SPRING_REDIS_HOST=redisdb
       - PDFHTMLRSS_KEYSTORE_PATH=/pdfhtmlrss/keystore.jks
+      - PDFHTMLRSS_KEYSTORE_PASSWORD=
     networks:
       backend:
     depends_on:

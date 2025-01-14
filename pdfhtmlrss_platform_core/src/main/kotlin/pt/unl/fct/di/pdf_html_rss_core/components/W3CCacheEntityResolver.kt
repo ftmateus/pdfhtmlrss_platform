@@ -1,4 +1,4 @@
-package pt.unl.fct.di.pdf_html_rss_core.services
+package pt.unl.fct.di.pdf_html_rss_core.components
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component

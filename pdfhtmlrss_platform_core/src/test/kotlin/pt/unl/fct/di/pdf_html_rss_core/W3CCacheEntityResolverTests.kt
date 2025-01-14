@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
-import pt.unl.fct.di.pdf_html_rss_core.services.W3CCacheEntityResolver
+import pt.unl.fct.di.pdf_html_rss_core.components.W3CCacheEntityResolver
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.system.measureTimeMillis
 

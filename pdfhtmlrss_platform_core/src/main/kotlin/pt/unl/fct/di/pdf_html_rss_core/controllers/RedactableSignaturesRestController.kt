@@ -186,36 +186,43 @@ class RedactableSignaturesRestController {
             it.readBytes()
         }
 
-        val resource = InputStreamResource(
-            when(type) {
-                MediaType.APPLICATION_PDF -> {
-                    ByteArrayOutputStream().use {
-                        pAdESService
-                            .signDocument(
-                                PDFFileWrapper(file.name, docBytes),
-                                outputStream = it
-                            )
-                        ByteArrayInputStream(it.toByteArray())
-                    }
-
+        var resource = when(type) {
+            MediaType.APPLICATION_PDF -> {
+                ByteArrayOutputStream().use {
+                    pAdESService
+                        .signDocument(
+                            PDFFileWrapper(file.name, docBytes),
+                            outputStream = it
+                        )
+                    it.toByteArray()
                 }
-                MediaType.TEXT_XML,
-                MediaType.TEXT_HTML -> {
-                    val domDoc = docBytes.inputStream().use {
-                         domService.parseDocument(it)
-                    }
-
-                    val signedDoc = redactableSignaturesService.signDocument(domDoc)
-
-                    ByteArrayInputStream(domService.convertDomDocumentToByteArray(signedDoc));
-                }
-                else -> throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
             }
-        );
+            MediaType.TEXT_XML,
+            MediaType.TEXT_HTML -> {
+                val domDoc = docBytes.inputStream().use {
+                     domService.parseDocument(it)
+                }
 
+                val signedDoc = redactableSignaturesService.signDocument(domDoc)
+
+                domService.convertDomDocumentToByteArray(signedDoc);
+            }
+            else -> throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+        }
+
+//        if (type == MediaType.APPLICATION_PDF) {
+//            resource = ByteArrayOutputStream().use {
+//                pAdESService.signDocument(
+//                    PDFFileWrapper(file.name + "_signed", resource),
+//                    it);
+//            }
+//        }
+
+
+        //InputStreamResource
         return ResponseEntity.ok()
             .contentType(type)
-            .body(resource)
+            .body(InputStreamResource(resource.inputStream()))
     }
 
 

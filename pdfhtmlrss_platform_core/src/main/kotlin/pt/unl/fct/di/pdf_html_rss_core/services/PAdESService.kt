@@ -13,6 +13,7 @@ import java.security.KeyStore
 import java.security.Security
 import java.security.cert.Certificate
 import com.itextpdf.signatures.SignatureUtil;
+import java.io.ByteArrayOutputStream
 
 
 @Service
@@ -38,6 +39,12 @@ class PAdESService {
     companion object {
         const val SIGNATURE_FIELD = "PDFHTMLRSS"
     }
+
+//    fun signDocument(pdfFile : PDFFileWrapper) : ByteArray {
+//        ByteArrayOutputStream().use { baos ->
+//            signDocument(pdfFile, baos);
+//        }
+//    }
 
     //https://github.com/itext/itext-publications-signatures-java/blob/develop/src/test/java/com/itextpdf/samples/signatures/chapter02/C2_01_SignHelloWorld.java
     fun signDocument(pdfFile : PDFFileWrapper, outputStream: OutputStream) {

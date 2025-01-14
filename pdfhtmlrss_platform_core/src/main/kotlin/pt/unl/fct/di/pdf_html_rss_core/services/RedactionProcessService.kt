@@ -49,6 +49,9 @@ class RedactionProcessService {
     @Autowired
     lateinit var userService: UserService;
 
+    @Autowired
+    lateinit var pAdESService: PAdESService
+
     fun initiatePdfRedactionProcess(
         pdfFile : PDFFileWrapper,
         action : RedactionProcessAction
@@ -152,8 +155,9 @@ class RedactionProcessService {
                 it.copyTo(outputStream)
             }
         }
-
-        domService.writeDocumentToStream(htmlTmpDom, outputStream)
+        else {
+            domService.writeDocumentToStream(htmlTmpDom, outputStream)
+        }
 
         redactionProcessRepository.delete(process)
 
@@ -189,18 +193,24 @@ class RedactionProcessService {
             it.toByteArray()
         }
 
-        val newPdfData = pdfManipulationService.addAttachmentsToPdf(
+        val pdfWithRSSAttachment = pdfManipulationService.addAttachmentsToPdf(
             pdf, mapOf(
                 "rss.html.gz"
                         to compressedHtml.inputStream()
             )
-        )
+        ).let { PDFFileWrapper("", it) }
+
+        val signedPdf = ByteArrayOutputStream().use {
+            pAdESService.signDocument(pdfWithRSSAttachment, it)
+            it.toByteArray()
+        }
+
 
         tmpPdfFile.delete()
 
         return PDFFileWrapper(
             InputStreamResource(
-                newPdfData.inputStream()
+                signedPdf.inputStream()
             )
         )
     }

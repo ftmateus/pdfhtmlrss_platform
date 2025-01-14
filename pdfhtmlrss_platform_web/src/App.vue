@@ -1,7 +1,7 @@
 <template>
   <div id="warning">
     Attention: This is a proof of concept application intended solely for demonstration and research purposes.
-    Never use this in production!
+    Never use this in real world applications!
   </div>
   <img alt="Vue logo" src="./assets/logo.png" style="margin-top: 20px">
   <h1>PDF HTML Redactable Signatures Platform</h1>

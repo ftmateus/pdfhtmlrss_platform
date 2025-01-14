@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 import org.w3c.dom.Node
+import pt.unl.fct.di.pdf_html_rss_core.components.W3CCacheEntityResolver
 import java.io.*
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
