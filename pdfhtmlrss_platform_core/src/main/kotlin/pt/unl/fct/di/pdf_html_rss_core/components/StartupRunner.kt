@@ -31,7 +31,5 @@ class StartupRunner {
         val user = userService.loadUserByUsername("admin");
 
         securityService.setupKeyChainForUser(user);
-
-        securityService.createRSSKeyPairForAdminUser();
     }
 }

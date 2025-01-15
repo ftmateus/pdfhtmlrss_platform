@@ -8,10 +8,13 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
+import org.bouncycastle.util.io.pem.PemObject
+import org.bouncycastle.util.io.pem.PemObjectGenerator
+import org.bouncycastle.util.io.pem.PemReader
+import org.bouncycastle.util.io.pem.PemWriter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
@@ -29,13 +32,13 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.security.*
 import java.security.cert.Certificate
-import java.security.cert.X509Certificate
+import java.security.interfaces.RSAPrivateKey
+import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
 import javax.annotation.PostConstruct
 import javax.crypto.Cipher
-import javax.crypto.SecretKey
 
 
 @Service
@@ -86,23 +89,6 @@ class SecurityService() {
                 logger.info("Admin key pair not found on database, generating new one...")
                 generateRSSKeyPairToUser(UserService.ADMIN_USER_ID)
             }
-    }
-
-    private fun getSerializedKeyPair() : KeyPair {
-        val serializedFile : File? = temporaryFilesRepository.getTempFile(SERIALIZED_KEYPAIR_FILE);
-        if(serializedFile != null) {
-            return readSerializedKeyPair(serializedFile)
-        }
-        logger.info("Key pair not found, generating new one...")
-
-        return generateRSSKeyPair().also { kp ->
-            temporaryFilesRepository.writeToTempFile(
-                SERIALIZED_KEYPAIR_FILE,
-                deleteAutomatically = false
-            ) { out ->
-                serializeKeyPair(kp, out)
-            }
-        }
     }
 
     fun getLoggedInUser() : User? {
@@ -161,20 +147,21 @@ class SecurityService() {
     }
 
     fun setupKeyChainForUser(user : User) {
-        if(pAdESKeyRepository.existsById(user.userId))
-            return;
+        if(!pAdESKeyRepository.existsById(user.userId)) {
+            val padesRsaKeyPair = generateRSAKeyPair();
 
-        val padesRsaKeyPair = generateRSAKeyPair();
+            val userCertificate = generateUserCertificate(user, padesRsaKeyPair.public);
 
-        val userCertificate = generateUserCertificate(user, padesRsaKeyPair.public);
+            //TODO encrypt private keys
 
-        //TODO encrypt private keys
+            pAdESKeyRepository.save(
+                PAdESKeyEntity(user.userId, padesRsaKeyPair.private as RSAPrivateKey, userCertificate)
+            )
+        }
 
-        pAdESKeyRepository.save(
-            PAdESKeyEntity(user.userId, padesRsaKeyPair.private, userCertificate)
-        )
-
-        //TODO RSS keys
+        if(!rssKeyPairRepository.existsById(user.userId)) {
+            generateRSSKeyPairToUser(user.userId)
+        }
     }
 
     fun generateUserCertificate(user : User, userPublicKey: PublicKey) : Certificate {
@@ -224,16 +211,6 @@ class SecurityService() {
         return keyGen.generateKeyPair()
     }
 
-    @Throws(IOException::class)
-    private fun serializeKeyPair(keyPair: KeyPair, outputStream: OutputStream) {
-        outputStream.use {
-            ObjectOutputStream(it).use { out ->
-                out.writeObject(keyPair.public)
-                out.writeObject(keyPair.private)
-            }
-        }
-    }
-
     fun readSerializedKeyPair(serializedFile : File) : KeyPair {
         return ObjectInputStream(FileInputStream(serializedFile))
         .use { objIn ->
@@ -260,21 +237,26 @@ class SecurityService() {
         return keyFactory.generatePublic(keySpec) as PublicKey
     }
 
-    fun readPKCS8PrivateKey(filePath: String): PrivateKey {
-        val file = File(filePath);
-        val key = String(Files.readAllBytes(file.toPath()), Charset.defaultCharset())
-        val privateKeyPEM = key
-            .replace("-----BEGIN PRIVATE KEY-----", "")
-            .replace(System.lineSeparator().toRegex(), "")
-            .replace("-----END PRIVATE KEY-----", "")
-
-        val encoded: ByteArray = Base64
-            .getDecoder()
-            .decode(privateKeyPEM)
-
+    fun fromPKCS8RSAPrivateKey(privateKeyData : ByteArray): RSAPrivateKey {
         val keyFactory = KeyFactory.getInstance("RSA")
-        val keySpec = PKCS8EncodedKeySpec(encoded)
-        return keyFactory.generatePrivate(keySpec) as PrivateKey
+
+        privateKeyData.inputStream().use {
+            PemReader(it.bufferedReader()).use { pemReader ->
+                val pemObject: PemObject = pemReader.readPemObject()
+                val content = pemObject.content
+                val privateKeySpec = PKCS8EncodedKeySpec(content)
+                return keyFactory.generatePrivate(privateKeySpec) as RSAPrivateKey
+            }
+        }
+    }
+
+    fun toPKCS8RSAPrivateKey(privateKey : RSAPrivateKey) : ByteArray {
+        ByteArrayOutputStream().use {
+            PemWriter(it.bufferedWriter()).use { pemWriter ->
+                pemWriter.writeObject(PemObject("RSA Private Key", privateKey.encoded))
+            }
+            return it.toByteArray()
+        }
     }
 
     private fun toGenericHash(hashAlgorithm : String, stream : InputStream) : String {
