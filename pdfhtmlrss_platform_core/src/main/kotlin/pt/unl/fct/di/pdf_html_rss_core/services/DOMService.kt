@@ -1,11 +1,15 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.Dereferencer
+import org.jsoup.Jsoup
+import org.jsoup.helper.W3CDom
+import org.jsoup.safety.Cleaner
+import org.jsoup.safety.Safelist
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 import org.w3c.dom.Node
-import pt.unl.fct.di.pdf_html_rss_core.components.W3CCacheEntityResolver
+import pt.unl.fct.di.pdf_html_rss_core.components.DomEntityResolver
 import java.io.*
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
@@ -29,7 +33,7 @@ class DOMService {
     }
 
     @Autowired
-    lateinit var w3CCacheEntityResolver: W3CCacheEntityResolver;
+    lateinit var domEntityResolver: DomEntityResolver;
 
     //    val documentBuilderFactory = DocumentBuilderFactory.newInstance()
     @Autowired
@@ -38,7 +42,7 @@ class DOMService {
     private fun createDocumentBuilder(): DocumentBuilder {
         return documentBuilderFactory.newDocumentBuilder()
             .also {
-                it.setEntityResolver(w3CCacheEntityResolver)
+                it.setEntityResolver(domEntityResolver)
             }
     }
 
@@ -67,7 +71,7 @@ class DOMService {
 
     @Throws(TransformerException::class)
     fun printDocument(document: Document) {
-        writeDocumentToStream(document, System.out)
+        writeDocumentToStream(document, System.out, true)
     }
 
     @Throws(TransformerException::class)
@@ -77,23 +81,31 @@ class DOMService {
         }
     }
 
-    fun writeDocumentToStream(document: Document, out : OutputStream) {
+    fun writeDocumentToStream(document: Document, out : OutputStream, indentation : Boolean = false) {
         val tf = TransformerFactory.newInstance()
         val trans = tf.newTransformer()
-        trans.setOutputProperty(OutputKeys.INDENT, "yes");
-        trans.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "5");
+        trans.setOutputProperty(OutputKeys.METHOD, "xml")
+//        trans.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "rss.dtd");
+        if(indentation) {
+            trans.setOutputProperty(OutputKeys.INDENT, "yes");
+            trans.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");
+        } else {
+            trans.setOutputProperty(OutputKeys.INDENT, "no");
+            trans.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no")
+        }
         trans.transform(DOMSource(document), StreamResult(out))
     }
 
     fun parseDocument(inputStream : InputStream) : Document {
         val documentBuilder = createDocumentBuilder();
+
         return documentBuilder.parse(inputStream);
     }
 
     fun parseDocument(file : File) : Document {
 //        return W3CDom()
 //            .fromJsoup(Jsoup.parse(file));
-        FileInputStream(file).use {
+        file.inputStream().use {
             return parseDocument(it)
         }
     }

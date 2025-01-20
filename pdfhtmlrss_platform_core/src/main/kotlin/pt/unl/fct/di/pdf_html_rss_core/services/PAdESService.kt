@@ -28,23 +28,9 @@ class PAdESService {
     @Autowired
     private lateinit var bcProvider: BouncyCastleProvider
 
-//    @Value("\${pdfhtmlrss.keystore.path}")
-//    private lateinit var keystorePath: String;
-//
-//    @Value("\${pdfhtmlrss.keystore.password}")
-//    private lateinit var keystorePassword: String;
-//
-    private lateinit var keystore: KeyStore;
-
     companion object {
         const val SIGNATURE_FIELD = "PDFHTMLRSS"
     }
-
-//    fun signDocument(pdfFile : PDFFileWrapper) : ByteArray {
-//        ByteArrayOutputStream().use { baos ->
-//            signDocument(pdfFile, baos);
-//        }
-//    }
 
     //https://github.com/itext/itext-publications-signatures-java/blob/develop/src/test/java/com/itextpdf/samples/signatures/chapter02/C2_01_SignHelloWorld.java
     fun signDocument(pdfFile : PDFFileWrapper, outputStream: OutputStream) {

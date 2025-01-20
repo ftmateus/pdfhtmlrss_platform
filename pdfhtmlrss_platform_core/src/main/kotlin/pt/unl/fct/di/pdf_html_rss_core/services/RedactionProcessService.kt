@@ -22,6 +22,10 @@ import java.util.*
 @Service
 class RedactionProcessService {
 
+    companion object {
+
+    }
+
     @Autowired
     private lateinit var securityService: SecurityService
 
@@ -195,7 +199,7 @@ class RedactionProcessService {
 
         val pdfWithRSSAttachment = pdfManipulationService.addAttachmentsToPdf(
             pdf, mapOf(
-                "rss.html.gz"
+                PDFManipulationService.ATTACHED_FULL_RSS_FILE_NAME
                         to compressedHtml.inputStream()
             )
         ).let { PDFFileWrapper("", it) }

@@ -35,7 +35,7 @@ class GeneralConfig {
             .newInstance()
 
         dbFactory.isValidating = true;
-//        dbFactory.isNamespaceAware = true
+        dbFactory.isNamespaceAware = true
 
         //https://github.com/qzind/tray/commit/c04b510515246954a5a26475ae46434b7f127437
 //        dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);

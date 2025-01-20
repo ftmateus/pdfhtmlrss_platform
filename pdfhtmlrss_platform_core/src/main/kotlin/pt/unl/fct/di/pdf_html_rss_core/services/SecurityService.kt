@@ -95,7 +95,9 @@ class SecurityService() {
         val securityContext: SecurityContext = SecurityContextHolder.getContext()
         val authentication: Authentication = securityContext.authentication
         val principal: Any = authentication.principal
-        return if (principal is User) principal else null
+        return if (principal is pt.unl.fct.di.pdf_html_rss_core.dto.User)
+            principal
+        else null
     }
 
     fun getRSSKeyPairFromLoggedInUser() : RSSKeyPairEntity {
@@ -147,19 +149,17 @@ class SecurityService() {
     }
 
     fun setupKeyChainForUser(user : User) {
-        if(!pAdESKeyRepository.existsById(user.userId)) {
+        if(pAdESKeyRepository.existsById(user.userId).not()) {
             val padesRsaKeyPair = generateRSAKeyPair();
 
             val userCertificate = generateUserCertificate(user, padesRsaKeyPair.public);
-
-            //TODO encrypt private keys
 
             pAdESKeyRepository.save(
                 PAdESKeyEntity(user.userId, padesRsaKeyPair.private as RSAPrivateKey, userCertificate)
             )
         }
 
-        if(!rssKeyPairRepository.existsById(user.userId)) {
+        if(rssKeyPairRepository.existsById(user.userId).not()) {
             generateRSSKeyPairToUser(user.userId)
         }
     }
@@ -301,21 +301,4 @@ class SecurityService() {
     fun verifySha256(data : ByteArray, hash : String) : Boolean {
         return toSha256(data) == hash;
     }
-
-//    @PostConstruct
-//    fun loadRootCertificate() {
-//        val keyStoreFile = File(keystorePath)
-//        if(!keyStoreFile.exists())
-//            throw FileNotFoundException("Keystore not found")
-//
-//        keystore = KeyStore.getInstance(when(keyStoreFile.extension) {
-//            "jks" -> "JKS";
-//            "pem" -> "PKCS12"
-//            else -> TODO()
-//        });
-//
-//        keyStoreFile.inputStream().use {
-//            keystore.load(it, keystorePassword.toCharArray())
-//        }
-//    }
 }

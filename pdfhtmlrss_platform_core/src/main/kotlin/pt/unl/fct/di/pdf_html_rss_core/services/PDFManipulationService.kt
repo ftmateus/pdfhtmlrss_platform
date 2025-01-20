@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import java.io.*
 
 
@@ -19,8 +20,19 @@ import java.io.*
 class PDFManipulationService {
 
     companion object {
-        const val ATTACHED_RSS_FILE_NAME = "rss.xml"
+        /**
+         * Used on better compatibility mode
+         */
+        const val ATTACHED_FULL_RSS_FILE_NAME = "rss.html.gz"
+
+        /**
+         * Used in smaller file size mode
+         */
+        const val ATTACHED_SHORT_RSS_FILE_NAME = "rss.xml"
     }
+
+    @Autowired
+    private lateinit var compressionService: CompressionService
 
     @Autowired
     lateinit var fileConversionService : FileConversionService;
@@ -73,10 +85,13 @@ class PDFManipulationService {
     fun getAttachments(pdf : PDFFileWrapper) = sequence {
         val embeddedFiles = pdf.useItextPdfReader {
              it.catalog
-                .getAsDict(PdfName.NAMES)
-                .getAsDict(PdfName.EMBEDDEDFILES)
-                .getAsArray(PdfName.NAMES)
+                ?.getAsDict(PdfName.NAMES)
+                ?.getAsDict(PdfName.EMBEDDEDFILES)
+                ?.getAsArray(PdfName.NAMES)
         }
+
+        if(embeddedFiles == null || embeddedFiles.isEmpty)
+            return@sequence
 
         for ( i in 0 until embeddedFiles.size() step 2) {
             val name : String = embeddedFiles.getAsString(i).toString()
@@ -89,17 +104,30 @@ class PDFManipulationService {
             if (stream == null)
                 continue
 
-            yield(Pair(name, PdfReader.getStreamBytes(stream as PRStream?)))
+            Pair(name, PdfReader.getStreamBytes(stream as PRStream?))
+                .also { yield(it) }
         }
+    }
+
+    fun hasRedactableSignature(pdf : PDFFileWrapper) : Boolean {
+        return getAttachments(pdf)
+            .any { it.first == ATTACHED_FULL_RSS_FILE_NAME }
     }
 
     fun getRedactableSignature(pdf : PDFFileWrapper) : Document {
         val sigData = getAttachments(pdf)
-            .first { it.first == ATTACHED_RSS_FILE_NAME }
+            .first { it.first == ATTACHED_FULL_RSS_FILE_NAME }
             .second;
 
+        if(sigData == null)
+            throw PDFHTMLRSSException()
+
+        val decompressedSig = sigData.inputStream().use {
+            compressionService.decompressGZip(it)
+        }
+
         //TODO Use Signature XMLRSS class
-        return sigData.inputStream().use {
+        return decompressedSig.inputStream().use {
             domService.parseDocument(it)
         }
     }
@@ -116,32 +144,27 @@ class PDFManipulationService {
             domService.parseDocument(it);
         }
 
-        val signatureDom = xhtmlRedactableSignaturesService.signDocumentWithSeparatedSignature(htmlDom);
+        val signatureDom = xhtmlRedactableSignaturesService.signDocument(htmlDom);
 
-        val signedDocumentData = domService.convertDomDocumentToByteArray(signatureDom);
-
+        val compressedHtml = ByteArrayOutputStream().use {
+            compressionService.compressGZip(it) { gzipos ->
+                domService.writeDocumentToStream(signatureDom, gzipos)
+            }
+            it.toByteArray()
+        }
         val newPdfData = addAttachmentsToPdf(pdf, mapOf(
-            ATTACHED_RSS_FILE_NAME to signedDocumentData.inputStream()
+            ATTACHED_FULL_RSS_FILE_NAME to compressedHtml.inputStream()
         ));
-
-        //TODO sign pdf with standard signature
 
         return PDFFileWrapper(pdf.name, newPdfData);
     }
 
     fun verifyPdfFileRedactableSignature(pdf : PDFFileWrapper) : Boolean {
-        val htmlData = fileConversionService.generateHTMLFromPDF(pdf);
-
-        val htmlDom = htmlData.inputStream().use {
-            domService.parseDocument(it);
-        }
-
         val signatureDom = getRedactableSignature(pdf)
 
 //        GSRedactableSignature.GSRSSwithBPAccumulatorAndRSA()
 
-
         return xhtmlRedactableSignaturesService
-            .verifyDocument(htmlDom, signatureDom);
+            .verifyDocument(signatureDom);
     }
 }

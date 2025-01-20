@@ -91,14 +91,20 @@ class RedactableSignaturesRestController {
         val type = MediaType.parseMediaType(file.contentType?: "")
         checkIfFileTypeIsSupported(type)
 
-        val docBytes : ByteArray = file.inputStream.use {
+        val pdfDoc = file.inputStream.use {
             it.readBytes()
-        }
+        }.let { PDFFileWrapper(file.name, it) }
 
-        return when(type) {
-            MediaType.APPLICATION_PDF ->
-                pAdESService
-                    .verifyDocument(PDFFileWrapper(file.name, docBytes))
+        when(type) {
+            MediaType.APPLICATION_PDF -> {
+                if (pAdESService.verifyDocument(pdfDoc).not())
+                    return false
+
+                return if(pdfManipulationService.hasRedactableSignature(pdfDoc))
+                    pdfManipulationService.verifyPdfFileRedactableSignature(pdfDoc)
+                else
+                    true
+            }
             else -> TODO()
         }
     }

@@ -54,7 +54,6 @@ class RedactionProcessTests {
                 out
             )
             assertEquals(p, selectRedactableElemsProcess)
-            out.toByteArray()
         }
 
         assertRedactionProcessWasFinished(selectRedactableElemsProcess)
@@ -87,14 +86,13 @@ class RedactionProcessTests {
 
         assertRedactionProcessWasFinished(selectRedactableElemsProcess)
 
-        assertTrue(processedDoc.isNotEmpty())
-        assertDoesNotThrow {
-            processedDoc.inputStream().use {
-                domService.parseDocument(it)
-            }
+        temporaryFilesRepository.writeToTempFile(htmlFileName + "_unredacted.html", deleteAutomatically = false) {
+            processedDoc.inputStream().copyTo(it)
         }
 
-        val redactProcess = htmlFile.inputStream().use {
+        assertTrue(processedDoc.isNotEmpty())
+
+        val redactProcess = processedDoc.inputStream().use {
             redactionProcessService.initiateXHtmlRedactionProcess(
                 it,
                 RedactionProcessAction.REDACT

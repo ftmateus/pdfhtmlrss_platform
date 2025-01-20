@@ -5,12 +5,15 @@ import org.springframework.stereotype.Component
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
+import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import java.io.File
 import java.io.IOException
+import java.io.StringReader
 import java.net.URL
 
+
 @Component
-class W3CCacheEntityResolver : EntityResolver {
+class DomEntityResolver : EntityResolver {
 
     @Autowired
     lateinit var temporaryFolder : File;
@@ -18,6 +21,13 @@ class W3CCacheEntityResolver : EntityResolver {
     @Throws(SAXException::class, IOException::class)
     override fun resolveEntity(publicId: String?, systemId: String): InputSource? {
         var systemIdUrl : URL? = URL(systemId)
+
+        if (systemId != null && systemId.endsWith("rss.dtd")) {
+            // Provide the DTD content
+            val dtd = javaClass.classLoader.getResource("rss.dtd") ?:
+                    throw AssertionError()
+            return InputSource(dtd.openStream())
+        }
 
         if (systemIdUrl?.protocol == "file") {
             val fileName = File(systemIdUrl.file).name
