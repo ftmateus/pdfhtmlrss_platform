@@ -29,8 +29,18 @@ class GeneralConfig {
     fun passwordEncoder() : PasswordEncoder = BCryptPasswordEncoder(12)
 
     @Bean
+    fun documentBuilderFactoryFileConversion() : DocumentBuilderFactory {
+        return DocumentBuilderFactory
+            .newInstance()
+            .apply {
+                isValidating = false
+                isNamespaceAware = false
+            }
+    }
+
+    @Bean
 //    @Scope("prototype")
-    fun documentBuilderFactory() : DocumentBuilderFactory  {
+    fun documentBuilderFactoryDefault() : DocumentBuilderFactory  {
         val dbFactory = DocumentBuilderFactory
             .newInstance()
 

@@ -11,7 +11,8 @@ RUN gradle build -x test --no-daemon
 #FROM ubuntu:24.04
 FROM openjdk:11-jre-slim
 RUN apt-get update && apt-get install -y \
-    poppler-utils
+    poppler-utils \
+    tidy
 #    openjdk-11-jre-headless \
 ARG JAR_FILE=/home/gradle/src/pdfhtmlrss_platform_core/build/libs/*.jar
 COPY --from=build ${JAR_FILE} pdfhtmlrss.jar

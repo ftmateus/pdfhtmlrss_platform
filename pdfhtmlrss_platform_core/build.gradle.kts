@@ -52,8 +52,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
-	//TODO change to testImplementation
-	implementation("com.h2database:h2:1.3.148")
+//	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")

@@ -1,6 +1,7 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.Dereferencer
+import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.RedactableXMLSignatureException
 import org.jsoup.Jsoup
 import org.jsoup.helper.W3CDom
 import org.jsoup.safety.Cleaner
@@ -37,10 +38,16 @@ class DOMService {
 
     //    val documentBuilderFactory = DocumentBuilderFactory.newInstance()
     @Autowired
-    lateinit var documentBuilderFactory: DocumentBuilderFactory;
+    lateinit var documentBuilderFactoryDefault: DocumentBuilderFactory;
 
-    private fun createDocumentBuilder(): DocumentBuilder {
-        return documentBuilderFactory.newDocumentBuilder()
+    @Autowired
+    lateinit var documentBuilderFactoryFileConversion: DocumentBuilderFactory;
+
+    private fun createDocumentBuilder(fileConversion : Boolean = false): DocumentBuilder {
+        val factory = if (fileConversion) documentBuilderFactoryFileConversion
+        else documentBuilderFactoryDefault
+
+        return factory.newDocumentBuilder()
             .also {
                 it.setEntityResolver(domEntityResolver)
             }
@@ -48,16 +55,20 @@ class DOMService {
 
     fun hasAllXPathElements(document: Document, xPathElems : List<String>): Boolean {
         return xPathElems.stream()
-            .allMatch { xPathElem ->
-                Dereferencer.dereference(xPathElem, document) != null
-            }
+            .allMatch { xPathElementExists(document, it) }
     }
 
     fun hasSomeXPathElements(document: Document, xPathElems : List<String>): Boolean {
         return xPathElems.stream()
-            .anyMatch { xPathElem ->
-                Dereferencer.dereference(xPathElem, document) != null
-            }
+            .anyMatch { xPathElementExists(document, it) }
+    }
+
+    fun xPathElementExists(document: Document, xPathElem : String) : Boolean {
+        return try {
+            Dereferencer.dereference(xPathElem, document) != null
+        } catch (e : RedactableXMLSignatureException) {
+            false
+        }
     }
 
     @Deprecated("Use input stream implementation")
@@ -84,8 +95,10 @@ class DOMService {
     fun writeDocumentToStream(document: Document, out : OutputStream, indentation : Boolean = false) {
         val tf = TransformerFactory.newInstance()
         val trans = tf.newTransformer()
+
         trans.setOutputProperty(OutputKeys.METHOD, "xml")
 //        trans.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "rss.dtd");
+
         if(indentation) {
             trans.setOutputProperty(OutputKeys.INDENT, "yes");
             trans.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");
@@ -96,8 +109,8 @@ class DOMService {
         trans.transform(DOMSource(document), StreamResult(out))
     }
 
-    fun parseDocument(inputStream : InputStream) : Document {
-        val documentBuilder = createDocumentBuilder();
+    fun parseDocument(inputStream : InputStream, fileConversion: Boolean = false) : Document {
+        val documentBuilder = createDocumentBuilder(fileConversion);
 
         return documentBuilder.parse(inputStream);
     }

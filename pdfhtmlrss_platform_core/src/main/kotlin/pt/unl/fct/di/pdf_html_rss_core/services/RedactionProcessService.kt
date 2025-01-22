@@ -15,6 +15,7 @@ import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
@@ -56,6 +57,21 @@ class RedactionProcessService {
     @Autowired
     lateinit var pAdESService: PAdESService
 
+    fun getPdfTemporaryHtmlFile(pdfFile : PDFFileWrapper, action : RedactionProcessAction, taskId : String) : File {
+        val domDoc = when(action) {
+            RedactionProcessAction.SELECT_REDACTABLE_ELEMS ->
+                fileConversionService.generateHTMLFromPDFDoc(pdfFile)
+            RedactionProcessAction.REDACT ->
+                pdfManipulationService.getRedactableSignature(pdfFile)
+            else -> throw AssertionError()
+        }
+
+        return temporaryFilesRepository
+            .writeToTempFile("${taskId}.html") { tmpFileOut ->
+                domService.writeDocumentToStream(domDoc, tmpFileOut)
+            }
+    }
+
     fun initiatePdfRedactionProcess(
         pdfFile : PDFFileWrapper,
         action : RedactionProcessAction
@@ -65,12 +81,7 @@ class RedactionProcessService {
 
         val taskId = UUID.randomUUID().toString();
 
-        val tmpHtmlFile = temporaryFilesRepository
-            .writeToTempFile("${taskId}.html") { tmpFileOut ->
-            val docBytes = fileConversionService
-                .generateHTMLFromPDF(pdfFile)
-            tmpFileOut.write(docBytes)
-        }
+        val tmpHtmlFile = getPdfTemporaryHtmlFile(pdfFile, action, taskId);
 
         val tmpPdfFile = temporaryFilesRepository
             .writeToTempFile("${taskId}.pdf") { tmpFileOut ->
@@ -188,7 +199,9 @@ class RedactionProcessService {
             process.tmpPdfFile ?: ""
         ) ?: throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR)
 
-        val pdf = PDFFileWrapper(tmpPdfFile);
+        val pdf = if(process.action == RedactionProcessAction.REDACT) {
+            fileConversionService.generatePDFFromHTML(processedSignedDoc)
+        } else PDFFileWrapper(tmpPdfFile)
 
         val compressedHtml = ByteArrayOutputStream().use {
             compressionService.compressGZip(it) { gzipos ->
@@ -208,7 +221,6 @@ class RedactionProcessService {
             pAdESService.signDocument(pdfWithRSSAttachment, it)
             it.toByteArray()
         }
-
 
         tmpPdfFile.delete()
 

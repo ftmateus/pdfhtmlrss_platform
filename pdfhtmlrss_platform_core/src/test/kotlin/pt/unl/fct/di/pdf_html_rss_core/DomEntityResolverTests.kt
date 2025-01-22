@@ -19,7 +19,7 @@ class DomEntityResolverTests {
     lateinit var domEntityResolver: DomEntityResolver;
 
     @Autowired
-    lateinit var documentBuilderFactory: DocumentBuilderFactory;
+    lateinit var documentBuilderFactoryDefault: DocumentBuilderFactory;
 
     @Autowired
     lateinit var temporaryFilesRepository: TemporaryFilesRepository
@@ -34,7 +34,7 @@ class DomEntityResolverTests {
         temporaryFilesRepository.getTempFile("www.w3.org")
             ?.deleteRecursively()
 
-        val dbBuilder = documentBuilderFactory.newDocumentBuilder()
+        val dbBuilder = documentBuilderFactoryDefault.newDocumentBuilder()
             .also {
                 it.setEntityResolver(domEntityResolver)
             }
