@@ -44,6 +44,9 @@ class RedactableSignaturesRestController {
     lateinit var redactionProcessService: RedactionProcessService
 
     @Autowired
+    lateinit var pAdESService: PAdESService;
+
+    @Autowired
     lateinit var domService: DOMService;
 
     @GetMapping("/auth/status", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -85,17 +88,25 @@ class RedactableSignaturesRestController {
         @RequestParam("file") file: MultipartFile,
         @RequestParam("type") type: MediaType,
     ) : Boolean {
-        //TODO extract function
-        if(SUPPORTED_UPLOAD_MIME_TYPES.none { it == type })
-            throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+        val type = MediaType.parseMediaType(file.contentType?: "")
+        checkIfFileTypeIsSupported(type)
 
-        val docBytes : ByteArray = file.inputStream.use {
+        val pdfDoc = file.inputStream.use {
             it.readBytes()
+        }.let { PDFFileWrapper(file.name, it) }
+
+        when(type) {
+            MediaType.APPLICATION_PDF -> {
+                if (pAdESService.verifyDocument(pdfDoc).not())
+                    return false
+
+                return if(pdfManipulationService.hasRedactableSignature(pdfDoc))
+                    pdfManipulationService.verifyPdfFileRedactableSignature(pdfDoc)
+                else
+                    true
+            }
+            else -> TODO()
         }
-
-        TODO()
-
-        return false;
     }
 
     @PostMapping("/sign/prepare")
@@ -181,31 +192,43 @@ class RedactableSignaturesRestController {
             it.readBytes()
         }
 
-        val resource = InputStreamResource(
-            when(type) {
-                MediaType.APPLICATION_PDF -> {
-                    val signedDoc = pdfManipulationService
-                        .signPdfFileRedactableSignature(PDFFileWrapper(file.name, docBytes))
-
-                    ByteArrayInputStream(signedDoc.getData())
+        var resource = when(type) {
+            MediaType.APPLICATION_PDF -> {
+                ByteArrayOutputStream().use {
+                    pAdESService
+                        .signDocument(
+                            PDFFileWrapper(file.name, docBytes),
+                            outputStream = it
+                        )
+                    it.toByteArray()
                 }
-                MediaType.TEXT_XML,
-                MediaType.TEXT_HTML -> {
-                    val domDoc = docBytes.inputStream().use {
-                         domService.parseDocument(it)
-                    }
-
-                    val signedDoc = redactableSignaturesService.signDocument(domDoc)
-
-                    ByteArrayInputStream(domService.convertDomDocumentToByteArray(signedDoc));
-                }
-                else -> throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
             }
-        );
+            MediaType.TEXT_XML,
+            MediaType.TEXT_HTML -> {
+                val domDoc = docBytes.inputStream().use {
+                     domService.parseDocument(it)
+                }
 
+                val signedDoc = redactableSignaturesService.signDocument(domDoc)
+
+                domService.convertDomDocumentToByteArray(signedDoc);
+            }
+            else -> throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+        }
+
+//        if (type == MediaType.APPLICATION_PDF) {
+//            resource = ByteArrayOutputStream().use {
+//                pAdESService.signDocument(
+//                    PDFFileWrapper(file.name + "_signed", resource),
+//                    it);
+//            }
+//        }
+
+
+        //InputStreamResource
         return ResponseEntity.ok()
             .contentType(type)
-            .body(resource)
+            .body(InputStreamResource(resource.inputStream()))
     }
 
 

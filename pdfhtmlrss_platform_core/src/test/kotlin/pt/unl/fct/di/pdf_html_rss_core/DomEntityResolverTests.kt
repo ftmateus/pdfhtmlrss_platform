@@ -8,18 +8,18 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
-import pt.unl.fct.di.pdf_html_rss_core.services.W3CCacheEntityResolver
+import pt.unl.fct.di.pdf_html_rss_core.components.DomEntityResolver
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.system.measureTimeMillis
 
 @SpringBootTest
-class W3CCacheEntityResolverTests {
+class DomEntityResolverTests {
 
     @Autowired
-    lateinit var w3CCacheEntityResolver: W3CCacheEntityResolver;
+    lateinit var domEntityResolver: DomEntityResolver;
 
     @Autowired
-    lateinit var documentBuilderFactory: DocumentBuilderFactory;
+    lateinit var documentBuilderFactoryDefault: DocumentBuilderFactory;
 
     @Autowired
     lateinit var temporaryFilesRepository: TemporaryFilesRepository
@@ -34,9 +34,9 @@ class W3CCacheEntityResolverTests {
         temporaryFilesRepository.getTempFile("www.w3.org")
             ?.deleteRecursively()
 
-        val dbBuilder = documentBuilderFactory.newDocumentBuilder()
+        val dbBuilder = documentBuilderFactoryDefault.newDocumentBuilder()
             .also {
-                it.setEntityResolver(w3CCacheEntityResolver)
+                it.setEntityResolver(domEntityResolver)
             }
 
         val durationWithoutCache = measureTimeMillis {

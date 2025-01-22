@@ -1,7 +1,11 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
+  <div id="warning">
+    Attention: This is a proof of concept application intended solely for demonstration and research purposes.
+    Never use this in real world applications!
+  </div>
+  <img alt="Vue logo" src="./assets/logo.png" style="margin-top: 20px">
   <h1>PDF HTML Redactable Signatures Platform</h1>
-  <RouterView />
+  <RouterView/>
 </template>
 
 <script setup lang="ts">
@@ -28,6 +32,14 @@
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+}
+
+#warning {
+  width: 100%;
+  background-color: yellow;
+  top: 0;
+  left: 0;
+  position: absolute;
+  text-align: center;
 }
 </style>

@@ -5,16 +5,11 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
-import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.core.Authentication
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import pt.unl.fct.di.pdf_html_rss_core.services.UserService
-import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 
@@ -22,6 +17,18 @@ import javax.servlet.http.HttpServletResponse
 @EnableWebSecurity
 @Configuration
 class SecurityConfig {
+
+    val SWAGGER_AUTH_WHITELIST: Array<String> = arrayOf( // -- Swagger UI v2
+        "/v2/api-docs",
+        "/swagger-resources",
+        "/swagger-resources/**",
+        "/configuration/ui",
+        "/configuration/security",
+        "/swagger-ui.html",
+        "/webjars/**",  // -- Swagger UI v3 (OpenAPI)
+        "/v3/api-docs/**",
+        "/swagger-ui/**" // other public endpoints of your API may be appended to this array
+    )
 
     @Autowired
     private val userService: UserService? = null
@@ -33,7 +40,6 @@ class SecurityConfig {
     fun authenticationProvider(): DaoAuthenticationProvider {
         return DaoAuthenticationProvider().also {
             it.setUserDetailsService(userService)
-            //TODO move password encoder to bean?
             it.setPasswordEncoder(passwordEncoder)
         }
     }
@@ -42,6 +48,8 @@ class SecurityConfig {
     @Throws(Exception::class)
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http.authorizeRequests()
+            .antMatchers(*SWAGGER_AUTH_WHITELIST)
+                .permitAll()
             .antMatchers("/test")
                 .permitAll()
             .antMatchers("/login*")

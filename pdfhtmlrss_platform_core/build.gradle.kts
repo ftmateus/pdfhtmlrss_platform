@@ -52,8 +52,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
-	//TODO change to testImplementation
-	implementation("com.h2database:h2:1.3.148")
+//	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -61,20 +60,26 @@ dependencies {
 	//developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 	annotationProcessor("org.projectlombok:lombok")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
-	implementation("org.apache.pdfbox:pdfbox-tools:2.0.25")
+//	implementation("org.apache.pdfbox:pdfbox-tools:2.0.25")
 	implementation("net.sf.cssbox:pdf2dom:2.0.1")
 	implementation("com.itextpdf:itextpdf:5.5.10")
-	implementation("com.itextpdf:itext7-core:7.1.15")
+	implementation("com.itextpdf:bouncy-castle-adapter:9.0.0")
+	implementation("com.itextpdf:sign:8.0.5")
+	implementation("com.itextpdf:itext7-core:7.2.5")
 	implementation("com.itextpdf.tool:xmlworker:5.5.10")
 	implementation("org.apache.poi:poi-ooxml:3.15")
 	implementation("org.apache.poi:poi-scratchpad:3.15")
 	implementation("org.apache.santuario:xmlsec:2.0.8")
+
 	implementation("org.bouncycastle:bcprov-jdk18on:1.76")
-	compileOnly("eu.europa.ec.joinup.sd-dss:dss-pades:6.0")
+	implementation("org.bouncycastle:bcpkix-jdk18on:1.76")
+	//implementation("org.bouncycastle:bcprov-jdk15on:1.70")
+//	compileOnly("eu.europa.ec.joinup.sd-dss:dss-pades:6.0")
 //	implementation("com.e-iceblue:spire.pdf:10.6.2")
 
 	implementation("org.jsoup:jsoup:1.16.2")
 	implementation("org.xhtmlrenderer:flying-saucer-pdf-openpdf:9.3.1")
+	testImplementation(kotlin("test"))
 
 }
 

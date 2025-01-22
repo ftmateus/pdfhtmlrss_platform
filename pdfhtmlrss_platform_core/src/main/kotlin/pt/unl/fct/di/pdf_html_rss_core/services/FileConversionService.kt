@@ -30,25 +30,38 @@ class FileConversionService {
     fun generateHTMLFromPDFDoc(pdfFile : PDFFileWrapper) : Document {
         val pdfToHtmlProcess = ProcessBuilder()
 //            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "/dev/stdin", "/dev/stdout")
-            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "-", "-")
+            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "-zoom", "2.0", "-p", "-nomerge", "-", "-")
             .redirectInput(ProcessBuilder.Redirect.PIPE)
             .start();
 
+        val tidyProcess = ProcessBuilder()
+            .command("/usr/bin/tidy", "-q", "-c", "-m", "-utf8",
+                "--numeric-entities", "yes",
+                "--drop-proprietary-attributes", "yes",
+                "--drop-empty-elements", "no",
+                "--doctype", "html5",
+//                "--fix-bad-comments", "yes",
+//                "--hide-comments", "yes",
+                "--quote-nbsp", "no")
+            .redirectInput(ProcessBuilder.Redirect.PIPE)
+            .start()
+
         pdfFile.getInputStream().use { inS ->
-            pdfToHtmlProcess.outputStream.use { outS ->
-                inS.copyTo(outS)
+            tidyProcess.outputStream.use {
+                pdfToHtmlProcess.outputStream.use { outS ->
+                    inS.copyTo(outS)
+                }
+                pdfToHtmlProcess.inputStream.copyTo(it)
             }
         }
 
-//        pdfToHtmlProcess.outputStream.use {
-//            it.write(pdfFile.getData());
-//        }
-
 
         // TODO improve performance?
-        val domDoc = pdfToHtmlProcess.inputStream.use {
-            domService.parseDocument(it)
+        val domDoc = tidyProcess.inputStream.use {
+            domService.parseDocument(it, true)
         }
+
+        domDoc.documentElement.removeAttribute("xmlns")
 
         domService.removeDateMetaHtmlElement(domDoc)
 

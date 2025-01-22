@@ -1,0 +1,4 @@
+<!ELEMENT html (head, body, Signature?)>
+<!ELEMENT head ANY>
+<!ELEMENT body ANY>
+<!ELEMENT Signature ANY>

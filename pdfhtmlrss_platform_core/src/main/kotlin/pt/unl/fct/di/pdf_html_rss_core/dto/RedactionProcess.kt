@@ -30,4 +30,16 @@ class RedactionProcess(
 
     }
 
+    override fun equals(other: Any?): Boolean {
+        if(other !is RedactionProcess)
+            return false
+
+        return (taskId == other.taskId)
+            .and(userId == other.userId)
+            .and(fileType == other.fileType)
+            .and(tmpHtmlFile == other.tmpHtmlFile)
+            .and(tmpPdfFile.equals(other.tmpPdfFile))
+            .and(action == other.action)
+    }
+
 }

@@ -1,5 +1,6 @@
 package pt.unl.fct.di.pdf_html_rss_core.dto
 
+import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.PdfStamper
 import org.springframework.core.io.ByteArrayResource
@@ -74,6 +75,20 @@ class PDFFileWrapper {
     }
 
     fun toItextPdfReader(): PdfReader = PdfReader(getData().inputStream());
+
+    fun<T> useItextKernelPdfDocument(block : (PdfDocument) -> T) : T {
+        val io = getInputStream();
+        val reader = com.itextpdf.kernel.pdf.PdfReader(io);
+        val doc = com.itextpdf.kernel.pdf.PdfDocument(reader);
+
+        try {
+            return block(doc);
+        } finally {
+            doc.close();
+            reader.close();
+            io.close();
+        }
+    }
 
     fun<T> useItextPdfReader(block: (PdfReader) -> T) : T {
         val itextPdfReader = this.toItextPdfReader();

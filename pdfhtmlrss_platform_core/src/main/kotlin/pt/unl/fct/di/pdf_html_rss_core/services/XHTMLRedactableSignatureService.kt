@@ -1,12 +1,7 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
-import de.unipassau.wolfgangpopp.xmlrss.wpprovider.grss.xml.GSSignatureValue
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.utils.XMLUtils
-import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.Dereferencer
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.RedactableXMLSignature
-import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.binding.Signature
-import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.binding.SignatureValue
-import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.binding.SimpleProof
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
@@ -44,7 +39,7 @@ class XHTMLRedactableSignatureService {
 //        signSelectors: List<String> = emptyList(),
     ) : Document {
         val keyPair = securityService
-            .getKeyPairFromLoggedInUser()
+            .getRSSKeyPairFromLoggedInUser()
             .keyPair;
 
         val rss = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
@@ -66,7 +61,7 @@ class XHTMLRedactableSignatureService {
         val rss = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
 
         val keyPair = securityService
-            .getKeyPairFromLoggedInUser()
+            .getRSSKeyPairFromLoggedInUser()
             .keyPair;
 
         rss.initSign(keyPair);
@@ -85,7 +80,7 @@ class XHTMLRedactableSignatureService {
         val rss = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
 
         val publicKey = securityService
-            .getKeyPairFromLoggedInUser()
+            .getRSSKeyPairFromLoggedInUser()
             .publicKey;
 
         rss.initRedact(publicKey)
@@ -102,7 +97,7 @@ class XHTMLRedactableSignatureService {
 
         //TODO get public key from document instead of logged in user
         val publicKey = securityService
-            .getKeyPairFromLoggedInUser()
+            .getRSSKeyPairFromLoggedInUser()
             .publicKey;
 
         sig.initVerify(publicKey);

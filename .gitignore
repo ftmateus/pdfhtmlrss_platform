@@ -1,4 +1,3 @@
-*.pem
 *.log
 
 HELP.md
@@ -42,3 +41,9 @@ out/
 .vscode/
 
 keyPair.ser
+
+*.csr
+*.key
+*.pem
+*.srl
+*.jks

@@ -101,6 +101,10 @@ class PDFHTMLRSSApplicationTests {
 
 		val signatureDom = redactableSignaturesService.signAndRedactDocument(htmlDom);
 
+		temporaryFilesRepository.writeToTempFile("${pdfFile.name}_1.html", deleteAutomatically = false) {
+			domService.writeDocumentToStream(signatureDom, it);
+		}
+
 		assertTrue(redactableSignaturesService.verifyDocument(htmlDom, signatureDom))
 	}
 
@@ -111,9 +115,15 @@ class PDFHTMLRSSApplicationTests {
 
 		temporaryFilesRepository.writeToTempFile(
 			signedPdf.getInputStream(),
-			"${signedPdf.name}.pdf",
+			"${signedPdf.name}_2.pdf",
 			deleteAutomatically = false
 		)
+
+		val sig = pdfManipulationService.getRedactableSignature(signedPdf)
+
+		temporaryFilesRepository.writeToTempFile("${pdfFile.name}_2.html", deleteAutomatically = false) {
+			domService.writeDocumentToStream(sig, it);
+		}
 
 		pdfManipulationService.verifyPdfFileRedactableSignature(signedPdf)
 			.also { assertTrue(it) }

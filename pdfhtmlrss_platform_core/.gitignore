@@ -37,3 +37,4 @@ out/
 .vscode/
 
 *.hprof
+/src/main/resources/application-override.properties
