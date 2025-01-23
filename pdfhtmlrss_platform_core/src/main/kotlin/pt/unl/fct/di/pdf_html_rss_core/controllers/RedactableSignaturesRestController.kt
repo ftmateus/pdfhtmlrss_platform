@@ -159,14 +159,26 @@ class RedactableSignaturesRestController {
         if(elementsToRedact.isEmpty())
             throw ResponseStatusException(HttpStatus.BAD_REQUEST)
 
-        response.outputStream.use { out ->
-            val process = redactionProcessService
-                .finalizeRedactionProcess(
-                    processId,
-                    elementsToRedact,
-                    out
-                )
-            response.contentType = process.fileType
+        try {
+            ByteArrayOutputStream().use { out ->
+                val process = redactionProcessService
+                    .finalizeRedactionProcess(
+                        processId,
+                        elementsToRedact,
+                        out
+                    )
+
+                response.contentType = process.fileType
+
+                val docBytes = out.toByteArray()
+
+                response.outputStream.use {
+                    docBytes.inputStream().copyTo(it)
+                }
+            }
+        } catch(e : Exception) {
+            e.printStackTrace()
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.localizedMessage)
         }
     }
 

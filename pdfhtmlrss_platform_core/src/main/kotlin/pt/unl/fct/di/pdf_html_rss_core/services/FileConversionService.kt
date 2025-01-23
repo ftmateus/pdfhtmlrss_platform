@@ -30,7 +30,7 @@ class FileConversionService {
     fun generateHTMLFromPDFDoc(pdfFile : PDFFileWrapper) : Document {
         val pdfToHtmlProcess = ProcessBuilder()
 //            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "/dev/stdin", "/dev/stdout")
-            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "-zoom", "2.0", "-p", "-nomerge", "-", "-")
+            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "-zoom", "1.125", "-p", "-nomerge", "-", "-")
             .redirectInput(ProcessBuilder.Redirect.PIPE)
             .start();
 

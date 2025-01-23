@@ -17,14 +17,18 @@
         <button style="width: 150px" :disabled="!file" @click.prevent="handleOpenDocumentView">Open document view</button>
         Paste the XPath elements URLs you want to redact separated by lines. Hint: Use your browser DevTools.
         <textarea v-model="redactedElemsTextBoxRef" style="width: 300px; height: 100px"></textarea>
-        <fieldset v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">
-          <legend>Signature Options</legend>
-          <input type="radio" name="sign_option" id="improved_compatibility" checked>
-          <label for="improved_compatibility">Improved compatibility</label>
-          <input type="radio" name="sign_option" id="smaller_size">
-          <label for="smaller_size">Smaller file</label>
-        </fieldset>
+<!--        <fieldset v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">-->
+<!--          <legend>Signature Options</legend>-->
+<!--          <input type="radio" name="sign_option" id="improved_compatibility" checked>-->
+<!--          <label for="improved_compatibility">Improved compatibility</label>-->
+<!--          <input type="radio" name="sign_option" id="smaller_size">-->
+<!--          <label for="smaller_size">Smaller file</label>-->
+<!--        </fieldset>-->
       </form>
+      <label v-if="alertMessage"
+             :style="{ color : alertType ? 'red' : 'black'}">
+        {{ alertMessage }}
+      </label>
       <button
           :disabled="isSubmitButtonDisabled()"
           @click="handleOperationButtonClick"
@@ -61,6 +65,8 @@ import {RedactionProcess} from "@/dto/RedactionProcess";
 
 const file = ref<File>();
 const operation = ref(Operation.SIGN_SELECT_REDACTABLE_ELEMS)
+const alertMessage = ref<String | undefined>()
+const alertType = ref<Boolean>(false)
 const redactionProcess = ref<RedactionProcess>();
 // const redactableSignatureOption = ref<RedactableSignatureOption>(
 //     RedactableSignatureOption.IMPROVED_COMPATIBILITY
@@ -125,6 +131,11 @@ function clearForm() {
   redactedElemsTextBoxRef.value = ""
 }
 
+function handleAlertMessage(message : String, error : Boolean) {
+  alertMessage.value = message
+  alertType.value = error
+}
+
 async function handleOperationButtonClick() {
   if(!file.value)
     return
@@ -141,8 +152,14 @@ async function handleOperationButtonClick() {
           ?.map(e => `#xpath(${e})`) ?? []
 
       await finishRedactionProcess(redactionProcess.value.taskId, redactElems)
-          .then(res => res.blob())
-          .then(blob => downloadBlobRequest(blob))
+          .then(res =>  {
+            if(res.ok)
+              return res?.blob()
+
+            res.json()
+                .then(j => handleAlertMessage(`Error: ${j?.message}`, true))
+          })
+          .then(blob => blob && downloadBlobRequest(blob))
           .then(() => clearForm())
       break;
     }
@@ -154,9 +171,15 @@ async function handleOperationButtonClick() {
     }
     case Operation.VERIFY : {
       await verifyDocument(file.value!)
-          .then(res => res.blob())
-          .then(b => b.text())
-          .then(t => alert(t))
+          .then(res => res.text())
+          .then(t => {
+              if(t === "true")
+                handleAlertMessage("Document has valid signature!", false)
+              else if (t === "false")
+                handleAlertMessage("Document was not signed or has invalid signature!", true)
+              else
+                handleAlertMessage(`Error: ${t}`, true)
+          })
     }
   }
 }
