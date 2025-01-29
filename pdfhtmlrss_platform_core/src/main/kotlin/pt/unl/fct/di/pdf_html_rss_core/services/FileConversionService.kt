@@ -55,8 +55,6 @@ class FileConversionService {
             }
         }
 
-
-        // TODO improve performance?
         val domDoc = tidyProcess.inputStream.use {
             domService.parseDocument(it, true)
         }

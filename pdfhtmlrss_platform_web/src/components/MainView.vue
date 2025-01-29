@@ -15,7 +15,7 @@
           style="display: flex; flex-direction: column; align-items: center; width: 500px"
       >
         <button style="width: 150px" :disabled="!file" @click.prevent="handleOpenDocumentView">Open document view</button>
-        Paste the XPath elements URLs you want to redact separated by lines. Hint: Use your browser DevTools.
+        Paste the XPath URLs of the HTML elements you want to redact separated by lines. Hint: Use your browser DevTools.
         <textarea v-model="redactedElemsTextBoxRef" style="width: 300px; height: 100px"></textarea>
 <!--        <fieldset v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">-->
 <!--          <legend>Signature Options</legend>-->
@@ -28,6 +28,7 @@
       <label v-if="alertMessage"
              :style="{ color : alertType ? 'red' : 'black'}">
         {{ alertMessage }}
+        <a href="#" v-if="signatureVerificationReport != null">Details</a>
       </label>
       <button
           :disabled="isSubmitButtonDisabled()"
@@ -59,6 +60,7 @@ import {
   submitRedactionProcess, verifyDocument
 } from "@/api";
 import {RedactionProcess} from "@/dto/RedactionProcess";
+import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
 // import { RefSymbol } from '@vue/reactivity';
 
 
@@ -68,6 +70,7 @@ const operation = ref(Operation.SIGN_SELECT_REDACTABLE_ELEMS)
 const alertMessage = ref<String | undefined>()
 const alertType = ref<Boolean>(false)
 const redactionProcess = ref<RedactionProcess>();
+const signatureVerificationReport = ref<SignatureVerificationReport>()
 // const redactableSignatureOption = ref<RedactableSignatureOption>(
 //     RedactableSignatureOption.IMPROVED_COMPATIBILITY
 // )c
@@ -171,14 +174,12 @@ async function handleOperationButtonClick() {
     }
     case Operation.VERIFY : {
       await verifyDocument(file.value!)
-          .then(res => res.text())
-          .then(t => {
-              if(t === "true")
+          .then(report => {
+              signatureVerificationReport.value = report
+              if(report.padesNotModified && (!report.hasRSSSignature || report.rssNotModified))
                 handleAlertMessage("Document has valid signature!", false)
-              else if (t === "false")
-                handleAlertMessage("Document was not signed or has invalid signature!", true)
               else
-                handleAlertMessage(`Error: ${t}`, true)
+                handleAlertMessage("Document was not signed or has invalid signature!", true)
           })
     }
   }

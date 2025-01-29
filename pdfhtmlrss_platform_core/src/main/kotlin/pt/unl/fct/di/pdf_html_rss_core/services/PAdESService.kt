@@ -9,11 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import java.io.OutputStream
-import java.security.KeyStore
-import java.security.Security
 import java.security.cert.Certificate
 import com.itextpdf.signatures.SignatureUtil;
-import java.io.ByteArrayOutputStream
 
 
 @Service
@@ -53,12 +50,16 @@ class PAdESService {
         }
     }
 
+    fun verifyDocument(sigUtil : SignatureUtil) : Boolean {
+        val pkcs7 = sigUtil.readSignatureData(SIGNATURE_FIELD)
+        return sigUtil.signatureCoversWholeDocument(SIGNATURE_FIELD)
+                && pkcs7.verifySignatureIntegrityAndAuthenticity();
+    }
+
     fun verifyDocument(pdfFile : PDFFileWrapper) : Boolean {
         return pdfFile.useItextKernelPdfDocument {
             val sigUtil = SignatureUtil(it);
-            val pkcs7 = sigUtil.readSignatureData(SIGNATURE_FIELD)
-            sigUtil.signatureCoversWholeDocument(SIGNATURE_FIELD)
-                    && pkcs7.verifySignatureIntegrityAndAuthenticity();
+            verifyDocument(sigUtil)
         }
     }
 }

@@ -57,7 +57,6 @@ class RedactableSignaturesRestController {
         return "{\"loggedIn\":true,\"user\":\"${loggedInUser.username}\"}"
     }
 
-    //TODO html file type?
     @GetMapping("/tmp/{filePath}")
     fun getTempFile(@PathVariable filePath: String): ResponseEntity<InputStreamResource> {
         val normalizedPath: String = Paths.get(filePath).normalize().toString()
@@ -86,8 +85,8 @@ class RedactableSignaturesRestController {
     @PostMapping("/verify")
     fun verifyDocument(
         @RequestParam("file") file: MultipartFile,
-        @RequestParam("type") type: MediaType,
-    ) : Boolean {
+//        @RequestParam("type") type: MediaType,
+    ) : SignatureVerificationReport {
         val type = MediaType.parseMediaType(file.contentType?: "")
         checkIfFileTypeIsSupported(type)
 
@@ -95,15 +94,9 @@ class RedactableSignaturesRestController {
             it.readBytes()
         }.let { PDFFileWrapper(file.name, it) }
 
-        when(type) {
+        return when(type) {
             MediaType.APPLICATION_PDF -> {
-                if (pAdESService.verifyDocument(pdfDoc).not())
-                    return false
-
-                return if(pdfManipulationService.hasRedactableSignature(pdfDoc))
-                    pdfManipulationService.verifyPdfFileRedactableSignature(pdfDoc)
-                else
-                    true
+                pdfManipulationService.verifyPdfDocumentSignatures(pdfDoc)
             }
             else -> TODO()
         }
@@ -204,7 +197,7 @@ class RedactableSignaturesRestController {
             it.readBytes()
         }
 
-        var resource = when(type) {
+        val resource = when(type) {
             MediaType.APPLICATION_PDF -> {
                 ByteArrayOutputStream().use {
                     pAdESService
@@ -225,19 +218,9 @@ class RedactableSignaturesRestController {
 
                 domService.convertDomDocumentToByteArray(signedDoc);
             }
-            else -> throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+            else -> throw AssertionError()
         }
 
-//        if (type == MediaType.APPLICATION_PDF) {
-//            resource = ByteArrayOutputStream().use {
-//                pAdESService.signDocument(
-//                    PDFFileWrapper(file.name + "_signed", resource),
-//                    it);
-//            }
-//        }
-
-
-        //InputStreamResource
         return ResponseEntity.ok()
             .contentType(type)
             .body(InputStreamResource(resource.inputStream()))

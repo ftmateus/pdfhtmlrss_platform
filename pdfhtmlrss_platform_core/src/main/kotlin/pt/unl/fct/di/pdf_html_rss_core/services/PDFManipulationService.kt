@@ -1,5 +1,6 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
+import com.itextpdf.signatures.SignatureUtil
 import com.itextpdf.text.pdf.PRStream
 import com.itextpdf.text.pdf.PdfFileSpecification
 import com.itextpdf.text.pdf.PdfName
@@ -12,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.dto.SignatureVerificationReport
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
+import pt.unl.fct.di.pdf_html_rss_core.services.PAdESService.Companion.SIGNATURE_FIELD
 import java.io.*
 
 
@@ -39,6 +42,9 @@ class PDFManipulationService {
 
     @Autowired
     lateinit var domService: DOMService;
+
+    @Autowired
+    lateinit var pAdESService: PAdESService;
 
     @Autowired
     lateinit var xhtmlRedactableSignaturesService: XHTMLRedactableSignatureService;
@@ -166,5 +172,31 @@ class PDFManipulationService {
 
         return xhtmlRedactableSignaturesService
             .verifyDocument(signatureDom);
+    }
+
+    fun verifyPdfDocumentSignatures(pdf : PDFFileWrapper) : SignatureVerificationReport {
+        return pdf.useItextKernelPdfDocument {
+            val sigUtil = SignatureUtil(it);
+            val pkcs7 = sigUtil.readSignatureData(SIGNATURE_FIELD)
+            val padesNotModified = sigUtil.signatureCoversWholeDocument(SIGNATURE_FIELD)
+                    && pkcs7.verifySignatureIntegrityAndAuthenticity();
+
+            if(!hasRedactableSignature(pdf))
+                return@useItextKernelPdfDocument SignatureVerificationReport(
+                    padesNotModified, hasRSSSignature = false,
+                    rssNotModified = true, signatureDate = pkcs7.signDate.time,
+                    issuedBy = pkcs7.signName, padesAlgorithm = pkcs7.signatureAlgorithmName,
+                    rssAlgorithm = null
+                )
+
+            val rssSignature = getRedactableSignature(pdf)
+            val rssNotModified = xhtmlRedactableSignaturesService.verifyDocument(rssSignature)
+            return@useItextKernelPdfDocument SignatureVerificationReport(
+                padesNotModified, hasRSSSignature = true,
+                rssNotModified, signatureDate = pkcs7.signDate.time,
+                issuedBy = pkcs7.signName ?: "", padesAlgorithm = "${pkcs7.signatureAlgorithmName}+${pkcs7.digestAlgorithmName}",
+                rssAlgorithm = null //TODO get RSS algorithm
+            )
+        }
     }
 }

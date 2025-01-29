@@ -1,6 +1,7 @@
 // let apiPrefix = process.env.NODE_ENV === "development" ? "http://localhost:8080" : "/api"
 import {RedactionProcess, RedactionProcessAction} from "@/dto/RedactionProcess";
 import {Operation} from "@/components/Operations";
+import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
 
 export enum RedactableSignatureOption {
     IMPROVED_COMPATIBILITY = "improved_compatibility",
@@ -54,7 +55,7 @@ export function signOnly(file : File)  {
     })
 }
 
-export function verifyDocument(file : File)  {
+export function verifyDocument(file : File) : Promise<SignatureVerificationReport>  {
     const formData = new FormData()
 
     formData.set("file", file)
@@ -64,7 +65,7 @@ export function verifyDocument(file : File)  {
         method : 'POST',
         // contentType : "multipart/form-data",
         body : formData
-    })
+    }).then(r => r.json())
 }
 
 export function submitRedactionProcess(
