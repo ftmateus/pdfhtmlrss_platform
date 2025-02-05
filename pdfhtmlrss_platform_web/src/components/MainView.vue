@@ -1,5 +1,5 @@
 <template>
-  <div class="hello">
+  <div>
     <div style="
       display: flex;
       flex-direction: column;
@@ -28,7 +28,7 @@
       <label v-if="alertMessage"
              :style="{ color : alertType ? 'red' : 'black'}">
         {{ alertMessage }}
-        <a href="#" v-if="signatureVerificationReport != null">Details</a>
+        <a href="#" v-if="signatureVerificationReport != null" @click="() => openWindow = true">Details</a>
       </label>
       <button
           :disabled="isSubmitButtonDisabled()"
@@ -36,6 +36,11 @@
       >
         {{opToButtonTitle(operation)}}
       </button>
+      <SignatureVerificationReportWindow
+          v-if="openWindow && signatureVerificationReport"
+          :closeWindow="() => openWindow = false"
+          :report="signatureVerificationReport"
+      />
 <!--      <OperationButton-->
 <!--          :operation="operation"-->
 <!--          @click="handleOperationButtonClick"-->
@@ -61,6 +66,7 @@ import {
 } from "@/api";
 import {RedactionProcess} from "@/dto/RedactionProcess";
 import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
+import SignatureVerificationReportWindow from "@/components/SignatureVerificationReportWindow.vue";
 // import { RefSymbol } from '@vue/reactivity';
 
 
@@ -70,7 +76,8 @@ const operation = ref(Operation.SIGN_SELECT_REDACTABLE_ELEMS)
 const alertMessage = ref<String | undefined>()
 const alertType = ref<Boolean>(false)
 const redactionProcess = ref<RedactionProcess>();
-const signatureVerificationReport = ref<SignatureVerificationReport>()
+const openWindow = ref<Boolean>(false);
+const signatureVerificationReport = ref<SignatureVerificationReport | undefined>(undefined);
 // const redactableSignatureOption = ref<RedactableSignatureOption>(
 //     RedactableSignatureOption.IMPROVED_COMPATIBILITY
 // )c
@@ -201,4 +208,9 @@ li {
 a {
   color: #42b983;
 }
+
+.modal-darken-background {
+  background: rgba(0, 0, 0, 0.5);
+}
+
 </style>

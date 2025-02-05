@@ -50,7 +50,7 @@ class XHTMLRedactableSignatureService {
         for (selector in redactSelectors)
             rss.addSignSelector(selector, true)
 
-        return rss.sign();
+        return rss.sign(true);
     }
 
     fun signDocumentWithSeparatedSignature(
@@ -70,7 +70,7 @@ class XHTMLRedactableSignatureService {
         for (selector in redactSelectors)
             rss.addSignSelector(selector, true)
 
-        return rss.signSeparate();
+        return rss.signSeparate(true);
     }
 
     fun redactDocument(
@@ -100,7 +100,7 @@ class XHTMLRedactableSignatureService {
             .getRSSKeyPairFromLoggedInUser()
             .publicKey;
 
-        sig.initVerify(publicKey);
+        sig.initVerify(null);
 
         sig.setDocument(signedDoc)
 

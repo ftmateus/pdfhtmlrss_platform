@@ -17,7 +17,7 @@ java {
 }
 
 tasks.register<Wrapper>("wrapper") {
-	gradleVersion = "5.6.4"
+	gradleVersion = "7.0"
 }
 tasks.register("prepareKotlinBuildScriptModel"){}
 
