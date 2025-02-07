@@ -35,8 +35,10 @@ services:
     networks:
       backend:
     depends_on:
-      - redisdb
-      - mariadb
+      mariadb:
+          condition: service_healthy
+      redisdb:
+          condition: service_healthy
   redisdb :
     image: redis:latest
     restart: always
@@ -45,6 +47,11 @@ services:
       backend:
     volumes:
       - rediscache:/data
+    healthcheck:
+        test: ["CMD", "redis-cli","ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
   mariadb :
     image: mariadb:latest
     restart: always
@@ -55,6 +62,13 @@ services:
       backend:
     volumes:
       - database:/var/lib/mysql
+    #https://mariadb.com/kb/en/using-healthcheck-sh/
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
 networks:
   frontend:
     internal: false
