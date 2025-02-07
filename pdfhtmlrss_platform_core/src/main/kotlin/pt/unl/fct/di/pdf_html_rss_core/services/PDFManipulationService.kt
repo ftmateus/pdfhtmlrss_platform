@@ -178,24 +178,36 @@ class PDFManipulationService {
         return pdf.useItextKernelPdfDocument {
             val sigUtil = SignatureUtil(it);
             val pkcs7 = sigUtil.readSignatureData(SIGNATURE_FIELD)
+                ?: return@useItextKernelPdfDocument SignatureVerificationReport(
+                    isSigned = false
+                )
+
             val padesNotModified = sigUtil.signatureCoversWholeDocument(SIGNATURE_FIELD)
                     && pkcs7.verifySignatureIntegrityAndAuthenticity();
 
             if(!hasRedactableSignature(pdf))
                 return@useItextKernelPdfDocument SignatureVerificationReport(
-                    padesNotModified, hasRSSSignature = false,
-                    rssNotModified = true, signatureDate = pkcs7.signDate.time,
-                    issuedBy = pkcs7.signName, padesAlgorithm = pkcs7.signatureAlgorithmName,
+                    isSigned = true,
+                    padesNotModified,
+                    hasRSSSignature = false,
+                    rssNotModified = true,
+                    signatureDate = pkcs7.signDate.time,
+                    issuedBy = pkcs7.signName,
+                    padesAlgorithm = "${pkcs7.signatureAlgorithmName}+${pkcs7.digestAlgorithmName}",
                     rssAlgorithm = null
                 )
 
             val rssSignature = getRedactableSignature(pdf)
-            val rssNotModified = xhtmlRedactableSignaturesService.verifyDocument(rssSignature)
+
             return@useItextKernelPdfDocument SignatureVerificationReport(
-                padesNotModified, hasRSSSignature = true,
-                rssNotModified, signatureDate = pkcs7.signDate.time,
-                issuedBy = pkcs7.signName ?: "", padesAlgorithm = "${pkcs7.signatureAlgorithmName}+${pkcs7.digestAlgorithmName}",
-                rssAlgorithm = null //TODO get RSS algorithm
+                isSigned = true,
+                padesNotModified = padesNotModified,
+                hasRSSSignature = true,
+                signatureDate = pkcs7.signDate.time,
+                issuedBy = pkcs7.signName ?: "",
+                padesAlgorithm = "${pkcs7.signatureAlgorithmName}+${pkcs7.digestAlgorithmName}",
+                rssAlgorithm = null, //TODO get RSS algorithm
+                rssNotModified = xhtmlRedactableSignaturesService.verifyDocument(rssSignature)
             )
         }
     }

@@ -8,7 +8,7 @@
       height: 225px;
     ">
       <UserArea/>
-      <OperationsSelector v-model="operation"/>
+      <OperationsSelector v-model="operation" @update:modelValue="dismissAlertMessage"/>
       <FileSelector :set-file="setFile"/>
       <form
           v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS || operation == Operation.REDACT"
@@ -25,11 +25,19 @@
 <!--          <label for="smaller_size">Smaller file</label>-->
 <!--        </fieldset>-->
       </form>
-      <label v-if="alertMessage"
-             :style="{ color : alertType ? 'red' : 'black'}">
-        {{ alertMessage }}
-        <a href="#" v-if="signatureVerificationReport != null" @click="() => openWindow = true">Details</a>
-      </label>
+      <ToastNotification
+          v-if="toastNotificationMessage && signatureVerificationReport != null"
+          :message="toastNotificationMessage"
+          :type="toastNotificationType"
+          :detailsClick="() => openWindow = true"
+          :dismissClick="dismissAlertMessage"
+      />
+      <ToastNotification
+          v-if="toastNotificationMessage && signatureVerificationReport == null"
+          :message="toastNotificationMessage"
+          :type="toastNotificationType"
+          :dismissClick="dismissAlertMessage"
+      />
       <button
           :disabled="isSubmitButtonDisabled()"
           @click="handleOperationButtonClick"
@@ -51,6 +59,7 @@
 </template>
 
 <script setup lang="ts">
+
 import {ref} from 'vue'
 import FileSelector from "@/components/FileSelector.vue";
 import OperationsSelector from "@/components/OperationsSelector.vue";
@@ -58,23 +67,26 @@ import OperationsSelector from "@/components/OperationsSelector.vue";
 import {Operation, opToButtonTitle} from "@/components/Operations";
 import UserArea from "@/components/UserArea.vue";
 import {
-  cancelRedactionProcess, finishRedactionProcess,
+  cancelRedactionProcess,
+  finishRedactionProcess,
   getTemporaryFileURL,
-  // RedactableSignatureOption,
   signOnly,
-  submitRedactionProcess, verifyDocument
+  submitRedactionProcess,
+  verifyDocument
 } from "@/api";
 import {RedactionProcess} from "@/dto/RedactionProcess";
 import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
 import SignatureVerificationReportWindow from "@/components/SignatureVerificationReportWindow.vue";
+import ToastNotification from "@/components/ToastNotification.vue";
+import {ToastType} from "@/components/ToastNotificationType";
 // import { RefSymbol } from '@vue/reactivity';
 
 
 
 const file = ref<File>();
 const operation = ref(Operation.SIGN_SELECT_REDACTABLE_ELEMS)
-const alertMessage = ref<String | undefined>()
-const alertType = ref<Boolean>(false)
+const toastNotificationMessage = ref<String | undefined>()
+const toastNotificationType = ref<ToastType | undefined>(undefined)
 const redactionProcess = ref<RedactionProcess>();
 const openWindow = ref<Boolean>(false);
 const signatureVerificationReport = ref<SignatureVerificationReport | undefined>(undefined);
@@ -122,6 +134,10 @@ async function handleOpenDocumentView() {
       ?.focus()
 }
 
+function isSignatureValid(report : SignatureVerificationReport) : boolean {
+    return report.padesNotModified && (!report.hasRSSSignature || report.rssNotModified);
+}
+
 function isSubmitButtonDisabled() {
   if(!file.value)
     return true;
@@ -141,14 +157,21 @@ function clearForm() {
   redactedElemsTextBoxRef.value = ""
 }
 
-function handleAlertMessage(message : String, error : Boolean) {
-  alertMessage.value = message
-  alertType.value = error
+function dismissAlertMessage() {
+  toastNotificationMessage.value = ""
+  toastNotificationType.value = undefined
+}
+
+function showToastNotification(message : String, toastType : ToastType) {
+  toastNotificationMessage.value = message
+  toastNotificationType.value = toastType
 }
 
 async function handleOperationButtonClick() {
   if(!file.value)
     return
+
+  dismissAlertMessage()
 
   switch (operation.value) {
     case Operation.SIGN_SELECT_REDACTABLE_ELEMS:
@@ -167,27 +190,32 @@ async function handleOperationButtonClick() {
               return res?.blob()
 
             res.json()
-                .then(j => handleAlertMessage(`Error: ${j?.message}`, true))
+                .then(j => showToastNotification(`Error: ${j?.message}`, ToastType.ERROR))
           })
           .then(blob => blob && downloadBlobRequest(blob))
-          .then(() => clearForm())
+          .finally(() => clearForm())
       break;
     }
     case Operation.SIGN_ONLY : {
       await signOnly(file.value!)
-          .then(res => res.blob())
-          .then(blob => downloadBlobRequest(blob))
+          .then(blob => blob && downloadBlobRequest(blob))
+          .catch(e => showToastNotification(`Error: ${e.message}`, ToastType.ERROR))
+          .finally(() => clearForm())
       break;
     }
     case Operation.VERIFY : {
       await verifyDocument(file.value!)
           .then(report => {
-              signatureVerificationReport.value = report
-              if(report.padesNotModified && (!report.hasRSSSignature || report.rssNotModified))
-                handleAlertMessage("Document has valid signature!", false)
+              if(!report.isSigned)
+                showToastNotification("Document is not signed!", ToastType.ERROR)
+              else if(isSignatureValid(report))
+                showToastNotification("Document has valid signature!", ToastType.SUCCESS)
               else
-                handleAlertMessage("Document was not signed or has invalid signature!", true)
+                showToastNotification("Document has invalid signature!", ToastType.ERROR)
+
+              signatureVerificationReport.value = report.isSigned ? report : undefined;
           })
+          .catch(e => showToastNotification("Error: " + e.message, ToastType.ERROR))
     }
   }
 }
@@ -204,9 +232,6 @@ ul {
 li {
   display: inline-block;
   margin: 0 10px;
-}
-a {
-  color: #42b983;
 }
 
 .modal-darken-background {

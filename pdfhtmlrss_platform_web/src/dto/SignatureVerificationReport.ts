@@ -1,4 +1,5 @@
 export default interface SignatureVerificationReport {
+    isSigned : boolean;
     padesNotModified: boolean,
     hasRSSSignature : boolean,
     rssNotModified : boolean,

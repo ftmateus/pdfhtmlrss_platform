@@ -1,12 +1,38 @@
 <script setup lang="ts">
 
-import {ref} from "vue";
 import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
+import { defineProps } from "vue"
 
-defineProps<{
+const props = defineProps<{
   closeWindow : Function;
   report : SignatureVerificationReport
 }>();
+
+const generalSignatureProperties = [
+  ["Issued by: ", () => props.report.issuedBy],
+  ["Signature Date: ", () => props.report.signatureDate],
+]
+
+const padesSignatureProperties = [
+  ["Algorithm: ", () => props.report.padesAlgorithm],
+  ["Signature violated: ", () => !props.report.rssNotModified],
+]
+
+const rssSignatureProperties = [
+  ["Algorithm: ", () => props.report.rssAlgorithm],
+  ["Signature violated: ", () => !props.report.rssNotModified],
+]
+
+function renderSignatureProperties(sigProps : Array<[string, Function]>) {
+    return sigProps.map(([label, value]) => {
+      return `
+          <div>
+              <label>${label}</label>
+              ${value()}
+          </div>
+      `
+    }).join("\n")
+}
 
 // const redactedElemsTextBoxRef = ref<String>()
 
@@ -14,43 +40,31 @@ defineProps<{
 
 <template>
   <dialog open>
-    <div>
-      <label>Issued by:</label>
-      {{ report.issuedBy }}
-    </div>
-    <div>
-      <label>Signature date:</label>
-      {{ report.signatureDate }}
-    </div>
+    <div v-html="renderSignatureProperties(generalSignatureProperties)"/>
     <div>
       <h4>PAdES</h4>
-      <div>
-        <label>Algorithm:</label>
-        {{ report.padesAlgorithm }}
-      </div>
-      <div>
-        <label>Signature violated:</label>
-        {{ !report.padesNotModified }}
-      </div>
+      <div v-html="renderSignatureProperties(padesSignatureProperties)"/>
     </div>
-    <div>
+<!--    <label v-else>No PAdES Signature is present</label>-->
+    <div v-if="report.hasRSSSignature">
       <h4>RSS</h4>
-      <div>
-        <label>Algorithm:</label>
-        {{ report.rssAlgorithm }}
-      </div>
-      <div>
-        <label>Signature violated:</label>
-        {{ !report.rssNotModified }}
-      </div>
+      <div v-html="renderSignatureProperties(rssSignatureProperties)"/>
     </div>
+    <label v-else>No RSS Signature is present</label>
     <button @click="closeWindow">Close</button>
   </dialog>
 </template>
 
-<style scoped>
+<style>
   dialog::backdrop {
     background: rgba(0, 0, 0, 0.5);
   }
 
+  dialog {
+    border-radius: 30px;
+  }
+
+  closeBtn {
+    right: 0px !important;
+  }
 </style>

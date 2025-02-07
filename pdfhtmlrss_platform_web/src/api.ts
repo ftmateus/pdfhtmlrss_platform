@@ -42,17 +42,22 @@ export function logout() : Promise<Response> {
     });
 }
 
-export function signOnly(file : File)  {
+export async function signOnly(file : File) : Promise<Blob> {
     const formData = new FormData()
 
     formData.set("file", file)
     formData.set("type", file.type)
 
-    return fetch(`${apiPrefix}/sign`, {
+    const res = await fetch(`${apiPrefix}/sign`, {
         method : 'POST',
         // contentType : "multipart/form-data",
         body : formData
     })
+    if(!res.ok) {
+        const error = await res.json()
+        throw Error(error.message)
+    }
+    return res.blob()
 }
 
 export function verifyDocument(file : File) : Promise<SignatureVerificationReport>  {
@@ -65,7 +70,13 @@ export function verifyDocument(file : File) : Promise<SignatureVerificationRepor
         method : 'POST',
         // contentType : "multipart/form-data",
         body : formData
-    }).then(r => r.json())
+    }).then(r => {
+        return r.json().then(j => {
+            if(!r.ok)
+                throw Error(j.message)
+            return j;
+        })
+    })
 }
 
 export function submitRedactionProcess(
