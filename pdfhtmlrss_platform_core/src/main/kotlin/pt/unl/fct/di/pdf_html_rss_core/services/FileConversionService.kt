@@ -7,15 +7,22 @@ import org.fit.pdfdom.PDFDomTree
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
+import org.w3c.dom.Node
+import org.w3c.dom.html.HTMLBodyElement
 import org.xhtmlrenderer.context.StyleReference
 import org.xhtmlrenderer.pdf.ITextRenderer
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
+import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.*
 import java.nio.charset.StandardCharsets
 import kotlin.concurrent.thread
 
 @Service
 class FileConversionService {
+
+    @Autowired
+    private lateinit var temporaryFilesRepository: TemporaryFilesRepository
 
     @Autowired
     lateinit var domService: DOMService;
@@ -28,42 +35,51 @@ class FileConversionService {
     }
 
     fun generateHTMLFromPDFDoc(pdfFile : PDFFileWrapper) : Document {
-        val pdfToHtmlProcess = ProcessBuilder()
-//            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "/dev/stdin", "/dev/stdout")
-            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "-zoom", "1.125", "-p", "-nomerge", "-", "-")
-            .redirectInput(ProcessBuilder.Redirect.PIPE)
-            .start();
+        val tmpFile = temporaryFilesRepository.getNewTmpFileWithoutCreating(".html");
+        try {
+            val pdfToHtmlProcess = ProcessBuilder()
+    //            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "/dev/stdin", "/dev/stdout")
+    //            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "-zoom", "1.125", "-p", "-nomerge", "-", "-")
+                .command("/usr/bin/pdftohtml", "-c", "-q", "-dataurls", "-noframes", "-", tmpFile.path)
+                .redirectInput(ProcessBuilder.Redirect.PIPE)
+                .start()
 
-        val tidyProcess = ProcessBuilder()
-            .command("/usr/bin/tidy", "-q", "-c", "-m", "-utf8",
-                "--numeric-entities", "yes",
-                "--drop-proprietary-attributes", "yes",
-                "--drop-empty-elements", "no",
-                "--doctype", "html5",
-//                "--fix-bad-comments", "yes",
-//                "--hide-comments", "yes",
-                "--quote-nbsp", "no")
-            .redirectInput(ProcessBuilder.Redirect.PIPE)
-            .start()
-
-        pdfFile.getInputStream().use { inS ->
-            tidyProcess.outputStream.use {
+            pdfFile.getInputStream().use { inS ->
                 pdfToHtmlProcess.outputStream.use { outS ->
                     inS.copyTo(outS)
                 }
-                pdfToHtmlProcess.inputStream.copyTo(it)
             }
+
+            pdfToHtmlProcess.waitFor()
+
+            val tidyProcess = ProcessBuilder()
+                .command(
+                    "/usr/bin/tidy", "-q",
+                    "--numeric-entities", "yes",
+//                    "-c", "-m", "-utf8",
+//                    "--drop-proprietary-attributes", "yes",
+//                    "--drop-empty-elements", "no",
+//                    "--doctype", "html5",
+    //                "--fix-bad-comments", "yes",
+    //                "--hide-comments", "yes",
+//                    "--quote-nbsp", "no",
+                    "-output", "/dev/stdout",
+                    tmpFile.path
+                    )
+                .start()
+
+            val domDoc = tidyProcess.inputStream.use {
+                domService.parseDocument(it, true)
+            }
+
+            tidyProcess.waitFor();
+
+            domService.cleanDocument(domDoc)
+            return domDoc;
         }
-
-        val domDoc = tidyProcess.inputStream.use {
-            domService.parseDocument(it, true)
+        finally {
+            tmpFile.delete()
         }
-
-        domDoc.documentElement.removeAttribute("xmlns")
-
-        domService.removeDateMetaHtmlElement(domDoc)
-
-        return domDoc;
     }
 
     private fun replaceInvalidCharacters(bytes : ByteArray) : ByteArray

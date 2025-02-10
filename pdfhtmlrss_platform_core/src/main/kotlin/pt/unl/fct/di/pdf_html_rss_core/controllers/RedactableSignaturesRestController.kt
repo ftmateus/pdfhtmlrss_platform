@@ -11,6 +11,7 @@ import pt.unl.fct.di.pdf_html_rss_core.dto.*
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.*
 import java.io.*
+import java.net.URLConnection
 import java.nio.file.Paths
 import javax.servlet.http.HttpServletResponse
 
@@ -68,14 +69,16 @@ class RedactableSignaturesRestController {
         if(tempFile == null)
             throw ResponseStatusException(HttpStatus.NOT_FOUND)
 
-        val contentType = when(tempFile.extension) {
-            "pdf" -> MediaType.APPLICATION_PDF
-            "html" -> MediaType.TEXT_HTML
-            else -> MediaType.TEXT_PLAIN
-        }
+        val contentType = URLConnection.guessContentTypeFromName(tempFile.name)
+            .let { MediaType.valueOf(it) }
+
+//        val contentType = when(tempFile.extension) {
+//            "pdf" -> MediaType.APPLICATION_PDF
+//            "html" -> MediaType.TEXT_HTML
+//            else -> MediaType.TEXT_PLAIN
+//        }
 
         return ResponseEntity.ok()
-//            .cacheControl(CacheControl.maxAge())
             .contentType(contentType)
             .body(InputStreamResource(tempFile.inputStream()));
     }

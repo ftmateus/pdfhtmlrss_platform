@@ -53,6 +53,29 @@ class DOMService {
             }
     }
 
+    fun cleanDocument(document : Document) {
+        val aElems = document.getElementsByTagName("a")
+        val elemsToRemove = mutableListOf<Node>();
+
+        for(i in 0 until aElems.length) {
+            val aElem = aElems.item(i) ?: continue;
+
+            if(aElem.parentNode.nodeName != "body") continue;
+            if(aElem.attributes.getNamedItem("href") != null) continue;
+            if(aElem.hasChildNodes()) continue;
+
+            elemsToRemove.add(aElem)
+        }
+
+        elemsToRemove.forEach {
+            it.parentNode.removeChild(it)
+        }
+
+        document.documentElement.removeAttribute("xmlns")
+
+        removeDateMetaHtmlElement(document)
+    }
+
     fun hasAllXPathElements(document: Document, xPathElems : List<String>): Boolean {
         return xPathElems.stream()
             .allMatch { xPathElementExists(document, it) }

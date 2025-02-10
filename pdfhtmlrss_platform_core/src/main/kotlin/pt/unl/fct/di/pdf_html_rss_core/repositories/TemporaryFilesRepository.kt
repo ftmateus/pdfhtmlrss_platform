@@ -3,7 +3,6 @@ package pt.unl.fct.di.pdf_html_rss_core.repositories
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Repository
-import org.springframework.stereotype.Service
 import pt.unl.fct.di.pdf_html_rss_core.services.SecurityService
 import java.io.File
 import java.io.InputStream
@@ -104,5 +103,18 @@ class TemporaryFilesRepository {
                 file.delete()
             }
         }
+    }
+
+    fun createUnixNamedPipe() : File {
+        val pipeFile = File(temporaryFolder, "fifo" + UUID.randomUUID().toString())
+
+        ProcessBuilder("mkfifo", pipeFile.absolutePath).start().waitFor()
+
+        pipeFile.deleteOnExit();
+        return pipeFile
+    }
+
+    fun getNewTmpFileWithoutCreating(fileExtension : String = "") : File {
+        return File(temporaryFolder, "${UUID.randomUUID()}${fileExtension}")
     }
 }
