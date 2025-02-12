@@ -126,7 +126,7 @@ class PDFManipulationService {
             .second;
 
         if(sigData == null)
-            throw PDFHTMLRSSException()
+            throw PDFHTMLRSSException("")
 
         val decompressedSig = sigData.inputStream().use {
             compressionService.decompressGZip(it)

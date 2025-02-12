@@ -66,6 +66,7 @@ dependencies {
 	implementation("com.itextpdf:bouncy-castle-adapter:9.0.0")
 	implementation("com.itextpdf:sign:8.0.5")
 	implementation("com.itextpdf:itext7-core:7.2.5")
+	implementation("com.itextpdf:html2pdf:4.0.2")
 	implementation("com.itextpdf.tool:xmlworker:5.5.10")
 	implementation("org.apache.poi:poi-ooxml:3.15")
 	implementation("org.apache.poi:poi-scratchpad:3.15")

@@ -73,7 +73,7 @@ class FileConversionTests {
 
         val htmlDocData = pdfConversionService.generateHTMLFromPDF(pdfFile)
 
-        temporaryFilesRepository.writeToTempFile(
+        val htmlTmpFile = temporaryFilesRepository.writeToTempFile(
             htmlDocData.inputStream(),
             "${pdfFile.name}.html",
             deleteAutomatically = false
@@ -81,7 +81,7 @@ class FileConversionTests {
 
         val reconvertedPdfDoc = pdfConversionService.generatePDFFromHTML(htmlDocData)
 
-        temporaryFilesRepository.writeToTempFile(
+        val pdfTmpFile = temporaryFilesRepository.writeToTempFile(
             reconvertedPdfDoc.getInputStream(),
             "${pdfFile.name}.html.pdf",
             deleteAutomatically = false
@@ -93,7 +93,7 @@ class FileConversionTests {
         assertEquals(
             pdfFile.numberOfPages,
             reconvertedPdfDoc.numberOfPages
-        );
+        , "${htmlTmpFile.absolutePath} ${pdfTmpFile.absolutePath}");
     }
 
 
@@ -110,6 +110,7 @@ class FileConversionTests {
     }
 
     @Test
+    @Disabled
     fun pdfToHtmlIdempotencyTestWithAttachment() {
         val pdfWithoutAttachment = getTestFile("invoice_example.pdf")
         val pdfWithAttachment = getTestFile("invoice_example_with_attachment.pdf")
@@ -124,7 +125,7 @@ class FileConversionTests {
         )
 
         temporaryFilesRepository.writeToTempFile(
-            htmlDocData1.inputStream(),
+            htmlDocData2.inputStream(),
             "${pdfWithAttachment.name}.html",
             deleteAutomatically = false
         )

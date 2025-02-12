@@ -1,22 +1,19 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
-import com.itextpdf.text.pdf.PdfWriter
-import com.itextpdf.tool.xml.XMLWorkerHelper
-import org.apache.pdfbox.pdmodel.PDDocument
-import org.fit.pdfdom.PDFDomTree
+import com.itextpdf.kernel.geom.PageSize
+import com.itextpdf.kernel.pdf.PdfDocument
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
-import org.w3c.dom.Node
-import org.w3c.dom.html.HTMLBodyElement
-import org.xhtmlrenderer.context.StyleReference
 import org.xhtmlrenderer.pdf.ITextRenderer
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
-import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
+import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.*
 import java.nio.charset.StandardCharsets
-import kotlin.concurrent.thread
+import com.itextpdf.html2pdf.ConverterProperties;
+import com.itextpdf.html2pdf.HtmlConverter
+import org.w3c.dom.html.HTMLStyleElement
 
 @Service
 class FileConversionService {
@@ -34,13 +31,60 @@ class FileConversionService {
         return domService.convertDomDocumentToByteArray(domDoc)
     }
 
-    fun generateHTMLFromPDFDoc(pdfFile : PDFFileWrapper) : Document {
+    fun generateHTMLFromPDFDoc(pdfFile: PDFFileWrapper) : Document {
+        val domDoc = when(pdfFile.numberOfPages) {
+            1 -> generateHTMLFromPDFSinglePage(pdfFile)
+            else -> generateHTMLFromPDFDocMultiplePages(pdfFile)
+        }
+
+        domService.cleanDocument(domDoc)
+
+        return domDoc
+    }
+
+    private fun generateHTMLFromPDFSinglePage(pdfFile : PDFFileWrapper) : Document {
+        assert(pdfFile.numberOfPages == 1)
+
+        val pdfToHtmlProcess = ProcessBuilder()
+            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "-zoom", "1.12", "-p", "-nomerge", "-noframes", "-", "-")
+            .redirectInput(ProcessBuilder.Redirect.PIPE)
+            .start();
+
+        val tidyProcess = ProcessBuilder()
+            .command("/usr/bin/tidy", "-q", "-c", "-m", "-utf8",
+                "--numeric-entities", "yes",
+                "--drop-proprietary-attributes", "yes",
+                "--drop-empty-elements", "no",
+                "--doctype", "html5",
+//                "--fix-bad-comments", "yes",
+//                "--hide-comments", "yes",
+                "--quote-nbsp", "no")
+            .redirectInput(ProcessBuilder.Redirect.PIPE)
+            .start()
+
+        pdfFile.getInputStream().use { inS ->
+            tidyProcess.outputStream.use {
+                pdfToHtmlProcess.outputStream.use { outS ->
+                    inS.copyTo(outS)
+                }
+                pdfToHtmlProcess.inputStream.copyTo(it)
+            }
+        }
+
+        try {
+            return tidyProcess.inputStream.use {
+                domService.parseDocument(it, true)
+            }
+        } catch (ex: Exception) {
+            throw PDFHTMLRSSException("PDF to HTML conversion error.\npdftohtml exit code: ${pdfToHtmlProcess.exitValue()};\ntidy exit code: ${tidyProcess.exitValue()} ", ex);
+        }
+    }
+
+    fun generateHTMLFromPDFDocMultiplePages(pdfFile : PDFFileWrapper) : Document {
         val tmpFile = temporaryFilesRepository.getNewTmpFileWithoutCreating(".html");
         try {
             val pdfToHtmlProcess = ProcessBuilder()
-    //            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "/dev/stdin", "/dev/stdout")
-    //            .command("/usr/bin/pdftohtml", "-s", "-q", "-stdout", "-dataurls", "-zoom", "1.125", "-p", "-nomerge", "-", "-")
-                .command("/usr/bin/pdftohtml", "-c", "-q", "-dataurls", "-noframes", "-", tmpFile.path)
+                .command("/usr/bin/pdftohtml", "-c", "-q", "-dataurls", "-zoom", "1.12", "-noframes", "-", tmpFile.path)
                 .redirectInput(ProcessBuilder.Redirect.PIPE)
                 .start()
 
@@ -56,16 +100,9 @@ class FileConversionService {
                 .command(
                     "/usr/bin/tidy", "-q",
                     "--numeric-entities", "yes",
-//                    "-c", "-m", "-utf8",
-//                    "--drop-proprietary-attributes", "yes",
-//                    "--drop-empty-elements", "no",
-//                    "--doctype", "html5",
-    //                "--fix-bad-comments", "yes",
-    //                "--hide-comments", "yes",
-//                    "--quote-nbsp", "no",
                     "-output", "/dev/stdout",
                     tmpFile.path
-                    )
+                )
                 .start()
 
             val domDoc = tidyProcess.inputStream.use {
@@ -74,7 +111,6 @@ class FileConversionService {
 
             tidyProcess.waitFor();
 
-            domService.cleanDocument(domDoc)
             return domDoc;
         }
         finally {
@@ -116,7 +152,7 @@ class FileConversionService {
         ByteArrayOutputStream().use { out ->
             val renderer = ITextRenderer()
             renderer.sharedContext.apply {
-                this.setPrint(true)
+                this.isPrint = true
 //                this.dpi *= 1.20f;
 //                this.
                 this.isInteractive = false
@@ -126,6 +162,7 @@ class FileConversionService {
                 this.setDocument(domDoc, "")
                 this.layout()
                 this.createPDF(out)
+
                 this.finishPDF()
             }
             return PDFFileWrapper("", out.toByteArray())
