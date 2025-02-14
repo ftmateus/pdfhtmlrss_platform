@@ -142,3 +142,7 @@ export function getTemporaryFileURL(
 
     return `${apiPrefix}/tmp/${tmpFileName}`
 }
+
+export function getRedactJsScriptUrl() {
+    return `${window.location.href}/redact.js`
+}

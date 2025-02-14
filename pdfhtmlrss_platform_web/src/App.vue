@@ -12,9 +12,13 @@
 <!--    <div class="separator" v-if="documentViewToggle" @mousedown="handleSeparatorResize" @touchdown="handleSeparatorResize"/>-->
     <div class="separator" v-if="documentViewToggle"/>
     <div class="document-view" v-if="documentViewToggle" ref="documentView">
-<!--      <iframe src="http://192.168.56.3:8081/lorem_ipsum.html" ></iframe>-->
-<!--      <iframe src="http://192.168.56.3:8081/invoice_example.pdf" ></iframe>-->
-      <iframe :src="documentViewUrl" :width="documentViewWidth ?? 'auto'"></iframe>
+      <iframe
+          :src="documentViewUrl"
+          :width="documentViewWidth ?? 'auto'"
+          ref="documentViewIframe"
+          @load="injectRedactScript"
+          @add-redacted-element="() => console.log('Added Redacted Element')"
+      />
     </div>
 <!--    <div :style="{height : '100%'}" v-if="viewToggle">-->
 <!--    </div>-->
@@ -42,6 +46,7 @@ const documentViewToggle = ref<boolean>(false);
 const documentViewUrl = ref<string>("");
 const documentViewWidth = ref<number | undefined>(undefined);
 const documentView = ref(null)
+const documentViewIframe = ref(null)
 
 function handleOpenDocumentView(url : string) {
   documentViewUrl.value = url;
@@ -51,6 +56,15 @@ function handleOpenDocumentView(url : string) {
 function handleCloseDocumentView() {
   documentViewToggle.value = false;
   documentViewUrl.value = "";
+}
+
+function injectRedactScript() {
+  if(!documentViewIframe.value)
+    return;
+
+  const redactScript = document.createElement("script");
+  redactScript.src = "/redact.js"
+  documentViewIframe.value.contentDocument.body.appendChild(redactScript);
 }
 
 // function handleSeparatorResize(e : MouseEvent) {
