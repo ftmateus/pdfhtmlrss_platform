@@ -49,7 +49,7 @@ const rssSignatureProperties = [
 <!--    <label v-else>No PAdES Signature is present</label>-->
     <div v-if="report.hasRSSSignature">
       <h4>RSS</h4>
-      <div v-for="[label, value] in rssSignatureProperties" v-bind:key="label">
+      <div v-for="[label, value, propColor] in rssSignatureProperties" v-bind:key="label">
         <label>{{ label }}</label>
         <label :style="{color: propColor?.() ?? 'black'}">{{ value() }}</label>
       </div>

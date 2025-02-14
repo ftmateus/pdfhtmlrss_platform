@@ -118,22 +118,6 @@ class FileConversionService {
         }
     }
 
-    private fun replaceInvalidCharacters(bytes : ByteArray) : ByteArray
-    {
-        val content = String(bytes).replace("&nbsp;", "&#160;")
-        return content.toByteArray()
-    }
-
-    private fun replaceInvalidCharacters(htmlFilePath : String)
-    {
-        val html = File(htmlFilePath)
-        var content = String(html.readBytes())
-        content = content.replace("&nbsp;", "&#160;")
-        FileOutputStream(htmlFilePath).use {
-            it.write(content.toByteArray(StandardCharsets.UTF_8))
-        }
-    }
-
     fun generatePDFFromHTML(domDocData : ByteArray) : PDFFileWrapper  {
         val parsedDoc : org.w3c.dom.Document = ByteArrayInputStream(domDocData).use {
             domService.parseDocument(it)

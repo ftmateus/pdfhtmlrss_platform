@@ -2,6 +2,7 @@
 import {RedactionProcess, RedactionProcessAction} from "@/dto/RedactionProcess";
 import {Operation} from "@/components/Operations";
 import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
+import AuthenticationStatus from "@/dto/AuthenticationStatus";
 
 export enum RedactableSignatureOption {
     IMPROVED_COMPATIBILITY = "improved_compatibility",
@@ -20,8 +21,9 @@ function getSubsite() : string {
 
 const apiPrefix : string = `${getSubsite()}api`
 
-export function checkAuthStatus() : Promise<Response> {
+export async function checkAuthStatus() : Promise<AuthenticationStatus> {
     return fetch(`${apiPrefix}/auth/status`)
+        .then(res => res.json())
 }
 
 export function login(user : string, password : string) : Promise<Response> {

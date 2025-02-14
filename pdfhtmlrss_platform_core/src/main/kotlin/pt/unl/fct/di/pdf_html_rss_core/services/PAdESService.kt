@@ -38,15 +38,16 @@ class PAdESService {
             as Certificate;
 
         //TODO close input stream
-        PdfReader(pdfFile.getInputStream()).use { reader ->
-            val signer = PdfSigner(reader, outputStream, StampingProperties())
-            signer.fieldName = SIGNATURE_FIELD;
+        pdfFile.getInputStream().use {
+            PdfReader(it).use { reader ->
+                val signer = PdfSigner(reader, outputStream, StampingProperties())
+                signer.fieldName = SIGNATURE_FIELD;
 
+                val pks = PrivateKeySignature(userKey.privateKey, DigestAlgorithms.SHA256, bcProvider.name)
+                val digest: IExternalDigest = BouncyCastleDigest()
 
-            val pks = PrivateKeySignature(userKey.privateKey, DigestAlgorithms.SHA256, bcProvider.name)
-            val digest: IExternalDigest = BouncyCastleDigest()
-
-            signer.signDetached(digest, pks, arrayOf(userKey.certificate, redactionCACertificate), null, null, null, 0, PdfSigner.CryptoStandard.CADES);
+                signer.signDetached(digest, pks, arrayOf(userKey.certificate, redactionCACertificate), null, null, null, 0, PdfSigner.CryptoStandard.CADES);
+            }
         }
     }
 
