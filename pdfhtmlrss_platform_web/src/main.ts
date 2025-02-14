@@ -7,6 +7,8 @@ import HelloWorld from "@/components/MainView.vue";
 import MainView from "@/components/MainView.vue";
 
 import {checkAuthStatus} from "@/api";
+import ToastNotification from "@/components/ToastNotification.vue";
+import {ToastType} from "@/components/ToastNotificationType";
 
 const routes = [
     {
@@ -16,7 +18,15 @@ const routes = [
             requiresAuth : true
         }
     },
-    { path: '/login', component: Login }
+    { path: '/login', component: Login },
+    {
+        path: '/backend-error',
+        component: ToastNotification,
+        props : {
+            type : ToastType.ERROR,
+            message : "Backend Error"
+        }
+    },
 ]
 
 const router = createRouter({
@@ -25,16 +35,20 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-    if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (!to.matched.some(record => record.meta.requiresAuth)) {
+        next();
+        return;
+    }
+    try {
         const isLoggedIn : boolean = await checkAuthStatus()
-            .then(r => r.json().then(j => j.loggedIn))
-        if (!isLoggedIn) {
-            next({ path: '/login' }); // redirect to home if not logged in
-        } else {
+            .then(j => j.loggedIn)
+        if (isLoggedIn) {
             next();
+        } else {
+            next({ path: '/login' });
         }
-    } else {
-        next(); // always call next()!
+    } catch (error) {
+        next( {path: '/backend-error'} );
     }
 })
 

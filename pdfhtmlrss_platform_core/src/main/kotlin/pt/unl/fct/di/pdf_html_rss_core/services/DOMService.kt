@@ -53,6 +53,53 @@ class DOMService {
             }
     }
 
+    fun cleanDocument(document : Document) {
+        val aElems = document.getElementsByTagName("a")
+        val elemsToRemove = mutableListOf<Node>();
+
+        for(i in 0 until aElems.length) {
+            val aElem = aElems.item(i) ?: continue;
+
+            if(aElem.parentNode.nodeName != "body") continue;
+            if(aElem.attributes.getNamedItem("href") != null) continue;
+            if(aElem.hasChildNodes()) continue;
+
+            elemsToRemove.add(aElem)
+        }
+
+        elemsToRemove.forEach {
+            it.parentNode.removeChild(it)
+        }
+
+        document.documentElement.removeAttribute("xmlns")
+
+        removeDateMetaHtmlElement(document)
+
+        removeOutline(document)
+    }
+
+    fun removeOutline(document : Document) {
+        val bodyElem = document.getElementsByTagName("body").item(0)
+
+        val docOutline = findDocumentOutlineStart(document) ?: return;
+
+        while(docOutline.nextSibling != null) {
+            bodyElem.removeChild(docOutline.nextSibling)
+        }
+
+        bodyElem.removeChild(docOutline)
+    }
+
+    private fun findDocumentOutlineStart(document: Document) : Node? {
+        val h1Elems = document.getElementsByTagName("h1")
+        for(n in 0 until h1Elems.length) {
+            val node = h1Elems.item(n)
+            if(node?.textContent == "Document Outline")
+                return node;
+        }
+        return null;
+    }
+
     fun hasAllXPathElements(document: Document, xPathElems : List<String>): Boolean {
         return xPathElems.stream()
             .allMatch { xPathElementExists(document, it) }

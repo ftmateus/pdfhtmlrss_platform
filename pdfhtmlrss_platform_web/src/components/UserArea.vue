@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import {logout} from "@/api";
+import {checkAuthStatus, logout} from "@/api";
+import {onMounted, ref} from "vue";
 
 let router = useRouter()
+
+const userName = ref<String>("");
+
+onMounted(async () => {
+    let res = await checkAuthStatus()
+    userName.value = res.user;
+})
 
 async function handleLogout() {
   let res = await logout();
@@ -10,11 +18,13 @@ async function handleLogout() {
     await router.push("/login")
   }
 }
+
 </script>
 
 <template>
+  <label>Hello, {{ userName }}!</label>
   <div>
-    <label>Hello, user!</label>
+    <button>Help</button>
     <button @click="handleLogout">Logout</button>
   </div>
 </template>
@@ -23,7 +33,9 @@ async function handleLogout() {
 div {
   display: flex;
   flex-direction: row;
-  width: 150px;
-  justify-content: space-around;
+  width: 175px;
+  justify-content: center;
+  gap: 10px;
+  align-content: center;
 }
 </style>

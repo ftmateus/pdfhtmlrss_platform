@@ -15,24 +15,19 @@ const generalSignatureProperties = [
 
 const padesSignatureProperties = [
   ["Algorithm: ", () => props.report.padesAlgorithm],
-  ["Signature violated: ", () => !props.report.rssNotModified],
+  ["Signature violated: ",
+      () => !props.report.padesNotModified,
+      () => props.report.padesNotModified ? "green" : "red"
+  ],
 ]
 
 const rssSignatureProperties = [
   ["Algorithm: ", () => props.report.rssAlgorithm],
-  ["Signature violated: ", () => !props.report.rssNotModified],
+  ["Signature violated: ",
+      () => !props.report.rssNotModified,
+      () => props.report.rssNotModified ? "green" : "red"
+  ],
 ]
-
-function renderSignatureProperties(sigProps : Array<[string, Function]>) {
-    return sigProps.map(([label, value]) => {
-      return `
-          <div>
-              <label>${label}</label>
-              ${value()}
-          </div>
-      `
-    }).join("\n")
-}
 
 // const redactedElemsTextBoxRef = ref<String>()
 
@@ -40,17 +35,26 @@ function renderSignatureProperties(sigProps : Array<[string, Function]>) {
 
 <template>
   <dialog open>
-    <div v-html="renderSignatureProperties(generalSignatureProperties)"/>
+    <div v-for="[label, value] in generalSignatureProperties" v-bind:key="label">
+      <label>{{ label }}</label>
+      {{ value() }}
+    </div>
     <div>
       <h4>PAdES</h4>
-      <div v-html="renderSignatureProperties(padesSignatureProperties)"/>
+      <div v-for="[label, value, propColor] in padesSignatureProperties" v-bind:key="label">
+        <label>{{ label }}</label>
+        <label :style="{color: propColor?.() ?? 'black'}">{{ value() }}</label>
+      </div>
     </div>
 <!--    <label v-else>No PAdES Signature is present</label>-->
     <div v-if="report.hasRSSSignature">
       <h4>RSS</h4>
-      <div v-html="renderSignatureProperties(rssSignatureProperties)"/>
+      <div v-for="[label, value, propColor] in rssSignatureProperties" v-bind:key="label">
+        <label>{{ label }}</label>
+        <label :style="{color: propColor?.() ?? 'black'}">{{ value() }}</label>
+      </div>
     </div>
-    <label v-else>No RSS Signature is present</label>
+    <h5 v-else style="color: #b9b900">No Redactable Signature is present!</h5>
     <button @click="closeWindow">Close</button>
   </dialog>
 </template>
