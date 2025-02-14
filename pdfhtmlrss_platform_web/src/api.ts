@@ -16,6 +16,7 @@ function getSubsite() : string {
     // Extract the subsite part
     // eslint-disable-next-line no-useless-escape
     const subsiteMatch = path.match(/^\/([^\/]+)\/?/);
+    // return subsiteMatch ? subsiteMatch[0] : window.location.href;
     return subsiteMatch ? subsiteMatch[0] : "/";
 }
 

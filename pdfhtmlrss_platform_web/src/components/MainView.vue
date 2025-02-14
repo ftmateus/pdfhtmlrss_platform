@@ -14,9 +14,11 @@
           v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS || operation == Operation.REDACT"
           style="display: flex; flex-direction: column; align-items: center; width: 500px"
       >
-        <button style="width: 150px" :disabled="!file" @click.prevent="handleOpenDocumentView">Open document view</button>
-        Paste the XPath URLs of the HTML elements you want to redact separated by lines. Hint: Use your browser DevTools.
-        <textarea v-model="redactedElemsTextBoxRef" style="width: 300px; height: 100px"></textarea>
+        <button style="width: 150px" :disabled="!file || documentViewOpened" @click.prevent="handleOpenDocumentView">Open document view</button>
+        <div v-if="documentViewOpened">
+          Paste the XPath URLs of the HTML elements you want to redact separated by lines. Hint: Use your browser DevTools.
+          <textarea v-model="redactedElemsTextBoxRef" style="width: 300px; height: 100px"></textarea>
+        </div>
 <!--        <fieldset v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">-->
 <!--          <legend>Signature Options</legend>-->
 <!--          <input type="radio" name="sign_option" id="improved_compatibility" checked>-->
@@ -29,7 +31,7 @@
           v-if="toastNotificationMessage && signatureVerificationReport != null"
           :message="toastNotificationMessage"
           :type="toastNotificationType"
-          :detailsClick="() => openWindow = true"
+          :detailsClick="() => openSignatureVerifyReportWindow = true"
           :dismissClick="dismissAlertMessage"
       />
       <ToastNotification
@@ -45,8 +47,8 @@
         {{opToButtonTitle(operation)}}
       </button>
       <SignatureVerificationReportWindow
-          v-if="openWindow && signatureVerificationReport"
-          :closeWindow="() => openWindow = false"
+          v-if="openSignatureVerifyReportWindow && signatureVerificationReport"
+          :closeWindow="() => openSignatureVerifyReportWindow = false"
           :report="signatureVerificationReport"
       />
 <!--      <OperationButton-->
@@ -60,7 +62,7 @@
 
 <script setup lang="ts">
 
-import {ref} from 'vue'
+import {defineEmits, ref} from 'vue'
 import FileSelector from "@/components/FileSelector.vue";
 import OperationsSelector from "@/components/OperationsSelector.vue";
 // import OperationButton from "@/components/OperationButton.vue";
@@ -88,8 +90,11 @@ const operation = ref(Operation.SIGN_SELECT_REDACTABLE_ELEMS)
 const toastNotificationMessage = ref<String | undefined>()
 const toastNotificationType = ref<ToastType | undefined>(undefined)
 const redactionProcess = ref<RedactionProcess>();
-const openWindow = ref<Boolean>(false);
+const openSignatureVerifyReportWindow = ref<Boolean>(false);
 const signatureVerificationReport = ref<SignatureVerificationReport | undefined>(undefined);
+const documentViewOpened = ref(false);
+
+const emit = defineEmits(['open-document-view', 'close-document-view'])
 // const redactableSignatureOption = ref<RedactableSignatureOption>(
 //     RedactableSignatureOption.IMPROVED_COMPATIBILITY
 // )c
@@ -130,8 +135,12 @@ async function handleOpenDocumentView() {
 
   let tmpHtmlFile = redactionProcess.value.tmpHtmlFile
 
-  window.open(getTemporaryFileURL(tmpHtmlFile), "_blank")
-      ?.focus()
+  emit("open-document-view", getTemporaryFileURL(tmpHtmlFile));
+
+  documentViewOpened.value = true
+
+  // window.open(getTemporaryFileURL(tmpHtmlFile), "_blank")
+  //     ?.focus()
 }
 
 function isSignatureValid(report : SignatureVerificationReport) : boolean {
@@ -155,6 +164,8 @@ function clearForm() {
   file.value = undefined
   redactionProcess.value = undefined
   redactedElemsTextBoxRef.value = ""
+  documentViewOpened.value = false
+  emit('close-document-view')
 }
 
 function dismissAlertMessage() {
