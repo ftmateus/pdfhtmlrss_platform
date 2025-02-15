@@ -38,7 +38,7 @@ function handleFileDrop(e : DragEvent) {
         type="file"
         id="fileElem"
         accept="application/pdf,text/xml,text/html"
-        class="visually-hidden"
+        style="background-color: transparent; border-radius: 0px"
         ref="fileInputRef"
         @input="handleFileUpload"
     />

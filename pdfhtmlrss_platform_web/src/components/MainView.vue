@@ -33,18 +33,21 @@
           :type="toastNotificationType"
           :detailsClick="() => openSignatureVerifyReportWindow = true"
           :dismissClick="dismissAlertMessage"
-      />
+      >
+        {{ toastNotificationMessage }}
+      </ToastNotification>
       <ToastNotification
           v-if="toastNotificationMessage && signatureVerificationReport == null"
-          :message="toastNotificationMessage"
           :type="toastNotificationType"
           :dismissClick="dismissAlertMessage"
-      />
+      >
+        {{ toastNotificationMessage }}
+      </ToastNotification>
       <button
           :disabled="isSubmitButtonDisabled()"
           @click="handleOperationButtonClick"
       >
-        {{opToButtonTitle(operation)}}
+        {{ opToButtonTitle(operation) }}
       </button>
       <SignatureVerificationReportWindow
           v-if="openSignatureVerifyReportWindow && signatureVerificationReport"

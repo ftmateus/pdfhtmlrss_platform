@@ -5,7 +5,7 @@
   </div>
   <div class="app-view">
     <div class="control-view">
-      <img alt="Vue logo" src="./assets/logo.png" style="margin-top: 20px">
+      <img alt="Vue logo" src="./assets/logo.png" style="margin-top: 20px; height: 200px;"/>
       <h1>PDF HTML Redactable Signatures Platform</h1>
       <RouterView
           @open-document-view="handleOpenDocumentView"
@@ -44,6 +44,8 @@
 
 import { ref } from 'vue';
 import {getRedactJsScriptUrl} from "@/api";
+
+import '@/assets/style.css'
 
 const documentViewToggle = ref<boolean>(false);
 const documentViewUrl = ref<string>("");
@@ -105,7 +107,13 @@ function injectRedactScript() {
 }
 
 .control-view {
-  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+  background-color: aliceblue;
+  padding-left: 30px;
+  padding-right: 30px;
 }
 
 .separator {

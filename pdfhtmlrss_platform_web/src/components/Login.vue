@@ -2,9 +2,17 @@
 // import Vue from 'vue';
 import {Options, Vue} from 'vue-class-component';
 import {login} from "@/api";
+import ToastNotification from "@/components/ToastNotification.vue";
+import {ToastType} from "@/components/ToastNotificationType";
 
 @Options({
+  computed: {
+    ToastType() {
+      return ToastType
+    }
+  },
   components : {
+    ToastNotification
 
   }
 })
@@ -44,12 +52,16 @@ export default class Login extends Vue {
       <label for="pwd">Password: </label>
       <input type="password" v-model="password" id="pwd">
     </div>
-    <div v-if="loading">
+    <ToastNotification v-if="loading"  dismiss-click="" :type="ToastType.INFO">
       Loading...
-    </div>
-    <div v-if="wrongCredentials" style="color: red">
-        Wrong credentials!
-    </div>
+    </ToastNotification>
+    <ToastNotification
+        v-if="wrongCredentials"
+        :dismiss-click="() => wrongCredentials = false"
+        :type="ToastType.ERROR"
+    >
+      Wrong credentials!
+    </ToastNotification>
     <div>
       <button type="submit" style="width: 50px" :disabled="!username || !password">
         Login
@@ -62,5 +74,15 @@ export default class Login extends Vue {
 .login {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+  width: 50%;
+}
+
+input {
+  height: 1.8rem;
+}
+
+button {
+  height: 2.2rem;
 }
 </style>
