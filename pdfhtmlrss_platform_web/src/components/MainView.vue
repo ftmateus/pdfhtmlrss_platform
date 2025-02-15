@@ -4,8 +4,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content : space-between;
-      height: 225px;
+      justify-content : space-around;
+      gap: 0.8rem;
+      height: 100%;
     ">
       <UserArea/>
       <OperationsSelector v-model="operation" @update:modelValue="dismissAlertMessage"/>
@@ -16,8 +17,7 @@
       >
         <button style="width: 150px" :disabled="!file || documentViewOpened" @click.prevent="handleOpenDocumentView">Open document view</button>
         <div v-if="documentViewOpened">
-          Paste the XPath URLs of the HTML elements you want to redact separated by lines. Hint: Use your browser DevTools.
-          <textarea v-model="redactedElemsTextBoxRef" style="width: 300px; height: 100px"></textarea>
+            Select the parts of the document to be redacted.
         </div>
 <!--        <fieldset v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">-->
 <!--          <legend>Signature Options</legend>-->
@@ -62,7 +62,7 @@
 
 <script setup lang="ts">
 
-import {defineEmits, ref} from 'vue'
+import { defineEmits, ref} from 'vue'
 import FileSelector from "@/components/FileSelector.vue";
 import OperationsSelector from "@/components/OperationsSelector.vue";
 // import OperationButton from "@/components/OperationButton.vue";
@@ -154,7 +154,7 @@ function isSubmitButtonDisabled() {
   switch(operation.value) {
     case Operation.SIGN_SELECT_REDACTABLE_ELEMS:
     case Operation.REDACT:
-      return (redactedElemsTextBoxRef?.value?.length ?? 0) == 0
+      return !documentViewOpened.value
     default:
       return false;
   }
@@ -190,12 +190,12 @@ async function handleOperationButtonClick() {
       if(!redactionProcess.value)
         redactionProcess.value = await submitRedactionProcess(file.value, operation.value)
 
-      let redactElems = redactedElemsTextBoxRef.value?.split("\n")
-          ?.filter(e => e.startsWith("/html/body/"))
-          ?.map(e => e.replace(/\/html\/body\/a\[.*]\//, "/html/body/"))
-          ?.map(e => `#xpath(${e})`) ?? []
+      let elementsToRedact : string[] = JSON.parse(localStorage.getItem("elementsToRedact") ?? "[]")
+          .map((e : string) => `#xpath(${e})`)
 
-      await finishRedactionProcess(redactionProcess.value.taskId, redactElems)
+      console.log(elementsToRedact)
+
+      await finishRedactionProcess(redactionProcess.value.taskId, elementsToRedact)
           .then(res =>  {
             if(res.ok)
               return res?.blob()
@@ -203,7 +203,13 @@ async function handleOperationButtonClick() {
             res.json()
                 .then(j => showToastNotification(`Error: ${j?.message}`, ToastType.ERROR))
           })
-          .then(blob => blob && downloadBlobRequest(blob))
+          .then(blob => {
+            if(!blob)
+              return
+            downloadBlobRequest(blob)
+            toastNotificationMessage.value = "Document was sucessfully signed!"
+            toastNotificationType.value = ToastType.SUCCESS
+          })
           .finally(() => clearForm())
       break;
     }

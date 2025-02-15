@@ -14,13 +14,24 @@ async function handleFileUpload() {
   const file = fileInputRef.value.files[0]
   props.setFile(file)
 }
+function handleFileDrop(e : DragEvent) {
+  if(!e.dataTransfer?.files?.length)
+    return;
+
+  const file : File = e.dataTransfer.files[0]
+  fileInputRef.value.files = e.dataTransfer.files
+  props.setFile(file)
+}
+
 </script>
 
 <template>
   <div
       id="drop_zone"
-      ondrop="handleFileUpload"
-      ondragover="dragOverHandler(event);"
+      @drop.prevent="handleFileDrop"
+      @dragenter.prevent
+      @dragleave.prevent
+      @dragover.prevent
   >
     <p>Drag file to this <i>drop zone</i>.</p>
     <input
@@ -41,6 +52,7 @@ async function handleFileUpload() {
   width: 500px;
   height: 100px;
   border-radius: 20px;
+  background-color: lightgray;
 }
 
 </style>

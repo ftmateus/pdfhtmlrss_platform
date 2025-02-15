@@ -144,5 +144,5 @@ export function getTemporaryFileURL(
 }
 
 export function getRedactJsScriptUrl() {
-    return `${window.location.href}/redact.js`
+    return `${getSubsite()}redact.js`
 }

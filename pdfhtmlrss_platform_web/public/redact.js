@@ -1,6 +1,13 @@
 
 const redactedElementsPreviousStyles = new Map();
 
+let redactionProcess = window.location.pathname.split("/")
+    .pop().split(".")[0]
+
+localStorage.setItem("elementsToRedact", JSON.stringify([]))
+
+console.log(redactionProcess)
+
 window.onclick = function(e) {
     let selectedElem = e.target;
     if(selectedElem?.getAttribute("redacted") !== null) {
@@ -10,14 +17,22 @@ window.onclick = function(e) {
         }
         selectedElem.removeAttribute("redacted");
         redactedElementsPreviousStyles.delete(selectedElem);
+
+        let elementsToRedact = JSON.parse(localStorage.getItem("elementsToRedact"))
+        let elementXpath = getElementXPath(selectedElem);
+        elementsToRedact = elementsToRedact.filter(a => a !== elementXpath)
+        localStorage.setItem("elementsToRedact", JSON.stringify(elementsToRedact));
     } else {
         selectedElem.setAttribute("redacted", "");
         if(selectedElem.tagName === "IMG")
             redactImageElement(selectedElem);
         else
             redactTextElement(selectedElem);
-        let elementXpath = getElementXPath(selectedElem)
-        document.dispatchEvent(new Event('add-redacted-element', { xpath : elementXpath}));
+        // let elementXpath = getElementXPath(selectedElem)
+
+        let elementsToRedact = JSON.parse(localStorage.getItem("elementsToRedact"))
+        elementsToRedact.push(getElementXPath(selectedElem));
+        localStorage.setItem("elementsToRedact", JSON.stringify(elementsToRedact));
     }
 }
 

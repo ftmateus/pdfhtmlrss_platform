@@ -7,7 +7,10 @@
     <div class="control-view">
       <img alt="Vue logo" src="./assets/logo.png" style="margin-top: 20px">
       <h1>PDF HTML Redactable Signatures Platform</h1>
-      <RouterView @open-document-view="handleOpenDocumentView" @close-document-view="handleCloseDocumentView"/>
+      <RouterView
+          @open-document-view="handleOpenDocumentView"
+          @close-document-view="handleCloseDocumentView"
+      />
     </div>
 <!--    <div class="separator" v-if="documentViewToggle" @mousedown="handleSeparatorResize" @touchdown="handleSeparatorResize"/>-->
     <div class="separator" v-if="documentViewToggle"/>
@@ -17,7 +20,6 @@
           :width="documentViewWidth ?? 'auto'"
           ref="documentViewIframe"
           @load="injectRedactScript"
-          @add-redacted-element="() => console.log('Added Redacted Element')"
       />
     </div>
 <!--    <div :style="{height : '100%'}" v-if="viewToggle">-->
@@ -41,6 +43,7 @@
 // }
 
 import { ref } from 'vue';
+import {getRedactJsScriptUrl} from "@/api";
 
 const documentViewToggle = ref<boolean>(false);
 const documentViewUrl = ref<string>("");
@@ -63,7 +66,7 @@ function injectRedactScript() {
     return;
 
   const redactScript = document.createElement("script");
-  redactScript.src = "/redact.js"
+  redactScript.src =  getRedactJsScriptUrl()
   documentViewIframe.value.contentDocument.body.appendChild(redactScript);
 }
 
