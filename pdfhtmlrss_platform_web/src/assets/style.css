@@ -2,6 +2,11 @@ button {
     background: powderblue;
     border-radius: 5px;
     height: 2.2rem;
+    cursor: pointer
+}
+
+button:disabled {
+    cursor: not-allowed;
 }
 
 select {

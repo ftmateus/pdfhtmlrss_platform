@@ -94,7 +94,13 @@ export function submitRedactionProcess(
         method : 'POST',
         body : formData
     })
-    .then(r => r.json())
+    .then(r => {
+        return r.json().then(j => {
+            if(!r.ok)
+                throw Error(j.message)
+            return j;
+        })
+    })
     .then(j => j as RedactionProcess)
 }
 

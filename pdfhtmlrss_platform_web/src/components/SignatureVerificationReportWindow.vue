@@ -1,12 +1,12 @@
 <script setup lang="ts">
 
 import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
-import { defineProps } from "vue"
+import { defineProps, defineEmits } from "vue"
 
 const props = defineProps<{
-  closeWindow : Function;
   report : SignatureVerificationReport
 }>();
+const emit = defineEmits(['close-window'])
 
 const generalSignatureProperties = [
   ["Issued by: ", () => props.report.issuedBy],
@@ -55,7 +55,7 @@ const rssSignatureProperties = [
       </div>
     </div>
     <h5 v-else style="color: #b9b900">No Redactable Signature is present!</h5>
-    <button @click="closeWindow">Close</button>
+    <button @click="() => emit('close-window')">Close</button>
   </dialog>
 </template>
 
