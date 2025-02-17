@@ -79,7 +79,7 @@ import {
   verifyDocument
 } from "@/api";
 import {RedactionProcess} from "@/dto/RedactionProcess";
-import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
+import SignatureVerificationReport, {isSignatureValid} from "@/dto/SignatureVerificationReport";
 import SignatureVerificationReportWindow from "@/components/SignatureVerificationReportWindow.vue";
 import ToastNotification from "@/components/ToastNotification.vue";
 import {ToastType} from "@/components/ToastNotificationType";
@@ -169,10 +169,6 @@ async function handleOpenDocumentView() {
     showToastNotification(`Error: ${e.message}`, ToastType.ERROR);
   }
 
-}
-
-function isSignatureValid(report : SignatureVerificationReport) : boolean {
-    return report.padesNotModified && (!report.hasRSSSignature || report.rssNotModified);
 }
 
 function isSubmitButtonDisabled() {

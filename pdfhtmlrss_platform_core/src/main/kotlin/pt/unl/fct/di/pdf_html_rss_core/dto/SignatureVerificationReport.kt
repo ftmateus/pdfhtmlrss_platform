@@ -4,11 +4,17 @@ import java.util.Date
 
 data class SignatureVerificationReport(
     val isSigned: Boolean,
-    val padesNotModified: Boolean? = false,
-    val hasRSSSignature : Boolean? = false,
-    val rssNotModified : Boolean? = false,
     val signatureDate : Date? = null,
     val issuedBy : String? = null,
-    val padesAlgorithm : String? = null,
-    val rssAlgorithm : String? = null,
+
+    val hasExternalSignatures: Boolean = false,
+    val hasRSSPAdESSignature: Boolean? = false,
+    val hasRSSXMLSignature : Boolean? = false,
+
+    val externalSignaturesViolated: Boolean = false,
+    val rssPAdESViolated : Boolean? = false,
+    val rssXMLViolated : Boolean? = false,
+
+    val rssPAdESAlgorithm : String? = null,
+    val rssXMLAlgorithm : String? = null,
 )
