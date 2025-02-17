@@ -224,7 +224,10 @@ async function handleOperationButtonClick() {
       let elementsToRedact : string[] = JSON.parse(localStorage.getItem("elementsToRedact") ?? "[]")
           .map((e : string) => `#xpath(${e})`)
 
-      console.log(elementsToRedact)
+      if(elementsToRedact.length == 0) {
+        showToastNotification("No document elements have been selected!", ToastType.ERROR)
+        return;
+      }
 
       await finishRedactionProcess(redactionProcess.value.taskId, elementsToRedact)
           .then(res =>  {

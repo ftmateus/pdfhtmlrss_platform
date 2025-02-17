@@ -1,7 +1,5 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
-import com.itextpdf.kernel.geom.PageSize
-import com.itextpdf.kernel.pdf.PdfDocument
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
@@ -10,10 +8,6 @@ import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.*
-import java.nio.charset.StandardCharsets
-import com.itextpdf.html2pdf.ConverterProperties;
-import com.itextpdf.html2pdf.HtmlConverter
-import org.w3c.dom.html.HTMLStyleElement
 
 @Service
 class FileConversionService {
@@ -37,7 +31,7 @@ class FileConversionService {
             else -> generateHTMLFromPDFDocMultiplePages(pdfFile)
         }
 
-        domService.cleanDocument(domDoc)
+        domService.cleanAndFormatDocument(domDoc)
 
         return domDoc
     }

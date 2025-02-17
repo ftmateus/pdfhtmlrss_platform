@@ -8,7 +8,7 @@ const currentOperation = defineModel()
 </script>
 
 <template>
-  <h3>What do you want to do?</h3>
+  <h3>What do you want to do with your document?</h3>
   <div style="display: flex; justify-content: space-around; width: 100%">
     <button
         v-bind:key="a" v-for="a in Object.values(Operation)"

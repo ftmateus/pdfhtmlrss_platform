@@ -2,10 +2,6 @@ package pt.unl.fct.di.pdf_html_rss_core.services
 
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.Dereferencer
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.RedactableXMLSignatureException
-import org.jsoup.Jsoup
-import org.jsoup.helper.W3CDom
-import org.jsoup.safety.Cleaner
-import org.jsoup.safety.Safelist
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
@@ -31,6 +27,8 @@ class DOMService {
 
             xPath.compile("/html/head/meta[@name='date']")
         }
+
+        const val PAGES_GAP_MARGIN_BOTTOM : String = "20px";
     }
 
     @Autowired
@@ -53,7 +51,15 @@ class DOMService {
             }
     }
 
-    fun cleanDocument(document : Document) {
+    fun cleanAndFormatDocument(document : Document) {
+        removeEmptyAnchorElements(document)
+        removeDateMetaHtmlElement(document)
+        removeOutline(document)
+        addGapBetweenPages(document)
+        document.documentElement.removeAttribute("xmlns")
+    }
+
+    fun removeEmptyAnchorElements(document : Document) {
         val aElems = document.getElementsByTagName("a")
         val elemsToRemove = mutableListOf<Node>();
 
@@ -70,12 +76,25 @@ class DOMService {
         elemsToRemove.forEach {
             it.parentNode.removeChild(it)
         }
+    }
 
-        document.documentElement.removeAttribute("xmlns")
-
-        removeDateMetaHtmlElement(document)
-
-        removeOutline(document)
+    fun addGapBetweenPages(document : Document) {
+        val bodyElem = document.getElementsByTagName("body").item(0)
+        assert(bodyElem != null)
+        var pageElem : Node? = bodyElem.firstChild
+        var pageNum = 1;
+        while (pageElem != null) {
+            val pageDomAttributes = pageElem.attributes
+            val pageId = pageDomAttributes?.getNamedItem("id")?.textContent;
+            if(pageId == "page${pageNum}-div")
+            {
+                val pageStyle = pageDomAttributes.getNamedItem("style");
+                val oldStyle = pageStyle?.textContent
+                pageStyle?.textContent = "${oldStyle};margin-bottom:${PAGES_GAP_MARGIN_BOTTOM}"
+                pageNum++;
+            }
+            pageElem = pageElem.nextSibling;
+        }
     }
 
     fun removeOutline(document : Document) {
