@@ -79,6 +79,24 @@ class RedactionProcessService {
         val loggedInUser = securityService.getLoggedInUser()
             ?: throw PDFHTMLRSSException()
 
+        val signatureVerificationReport = pdfManipulationService
+            .verifyPdfDocumentSignatures(pdfFile);
+
+        if(signatureVerificationReport.isViolated())
+            throw PDFHTMLRSSException("Document has violated signatures!")
+
+        if(signatureVerificationReport.hasExternalSignatures)
+            throw PDFHTMLRSSException("Document has external signatures!")
+
+        if(action == RedactionProcessAction.SELECT_REDACTABLE_ELEMS
+            && signatureVerificationReport.isSigned)
+            throw PDFHTMLRSSException("Document is already signed!")
+
+        if(action == RedactionProcessAction.REDACT
+            && !signatureVerificationReport.hasValidRSSSignature()) {
+                throw PDFHTMLRSSException("Document has no valid redactable signature")
+        }
+
         val taskId = UUID.randomUUID().toString();
 
         val tmpHtmlFile = getPdfTemporaryHtmlFile(pdfFile, action, taskId);

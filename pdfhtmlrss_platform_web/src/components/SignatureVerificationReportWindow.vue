@@ -10,7 +10,7 @@ const emit = defineEmits(['close-window'])
 
 const generalSignatureProperties = [
   ["Issued by: ", () => props.report.issuedBy],
-  ["Signature Date: ", () => props.report.signatureDate],
+  ["Signature date: ", () => props.report.signatureDate],
   ["Has external signatures: ", () => props.report.hasExternalSignatures],
 ]
 

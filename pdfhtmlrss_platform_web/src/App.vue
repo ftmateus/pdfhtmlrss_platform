@@ -3,8 +3,8 @@
     Attention: This is a proof of concept application intended solely for demonstration and research purposes.
     Never use this in real world applications!
   </div>
-  <div class="app-view">
-    <div class="control-view">
+  <div class="app-view" :style="{justifyContent: documentViewToggle ? 'space-between' : 'center'}">
+    <div class="control-view" >
       <img alt="Vue logo" src="./assets/logo.png" style="margin-top: 20px; height: 200px;"/>
       <h1>PDF HTML Redactable Signatures Platform</h1>
       <RouterView
@@ -12,13 +12,20 @@
           @close-document-view="handleCloseDocumentView"
       />
     </div>
-<!--    <div class="separator" v-if="documentViewToggle" @mousedown="handleSeparatorResize" @touchdown="handleSeparatorResize"/>-->
-    <div class="separator" v-if="documentViewToggle"/>
-    <div class="document-view" v-if="documentViewToggle" ref="documentView">
+    <div class="document-view"
+         v-if="documentViewToggle" ref="documentView"
+         :style="{width: documentViewWidth ?? '100%'}"
+    >
+<!--      <div class="separator"-->
+<!--           @touchdown="handleSeparatorResize"-->
+<!--           @drag="handleSeparatorResize"-->
+<!--      />-->
+      <div class="separator"/>
       <iframe
+          class="document-view" v-if="documentViewToggle"
           :src="documentViewUrl"
-          :width="documentViewWidth ?? 'auto'"
           ref="documentViewIframe"
+          width="100%"
           @load="injectRedactScript"
       />
     </div>
@@ -28,19 +35,6 @@
 </template>
 
 <script setup lang="ts">
-// import { Options, Vue } from 'vue-class-component';
-// import HelloWorld from './components/MainView.vue';
-// import Login from "@/components/Login.vue";
-//
-// @Options({
-//   components: {
-//     Login,
-//     HelloWorld,
-//   },
-// })
-// export default class App extends Vue {
-//
-// }
 
 import { ref } from 'vue';
 import {getRedactJsScriptUrl} from "@/api";
@@ -73,8 +67,12 @@ function injectRedactScript() {
 }
 
 // function handleSeparatorResize(e : MouseEvent) {
-//   console.log(documentView.value?.$el?.clientWidth);
-//   documentView.value.width += e.offsetX;
+//   if(!documentView.value)
+//     return;
+//
+//   // console.log(documentView.value.clientWidth);
+//   console.log(e.movementX);
+//   documentViewWidth.value = documentView.value.clientWidth + e.movementX;
 // }
 
 </script>
@@ -100,7 +98,7 @@ function injectRedactScript() {
 .app-view {
   position: absolute;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   height: 100%;
   width: 100%;
   flex-direction: row;
@@ -124,12 +122,16 @@ function injectRedactScript() {
 
 .document-view {
   height: 100%;
+  max-width: 100%;
   flex-grow: 1;
+  display: flex;
+  flex-direction: row;
 }
 
 .document-view iframe {
   position: relative;
   height: 100%;
   width: 100%;
+  min-width: 20%;
 }
 </style>

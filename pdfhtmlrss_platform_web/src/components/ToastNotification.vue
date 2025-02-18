@@ -39,6 +39,7 @@ function toastTypeToCSSClass() {
         border-width: thin;
         border-style: solid;
         align-self: center;
+        max-width: 400px;
     }
 
     .toast-notification-success {

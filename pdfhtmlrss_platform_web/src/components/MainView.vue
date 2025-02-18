@@ -129,13 +129,23 @@ async function setFile(newFile : File) {
   }
 }
 
-function fileSupported() : boolean {
+function checkFile() : boolean {
   if(!file.value)
-    return false
+    return false;
 
   let fileType =  file.value.type
 
-  return fileType == "application/pdf" || fileType == "text/html"
+  if(fileType != "application/pdf" && fileType != "text/html") {
+    showToastNotification("File type not supported!", ToastType.ERROR);
+    return false;
+  }
+
+  if(file.value.size > 1024 * 1024) {
+    showToastNotification("File is too big!", ToastType.ERROR);
+    return false;
+  }
+
+  return true;
 }
 
 function downloadBlobRequest(blob : Blob) {
@@ -149,17 +159,13 @@ function downloadBlobRequest(blob : Blob) {
 }
 
 async function handleOpenDocumentView() {
-  if(!file.value)
+  if(!file.value || !checkFile())
     return;
 
   if(operation.value != Operation.SIGN_SELECT_REDACTABLE_ELEMS
   && operation.value != Operation.REDACT)
     return;
 
-  if(!fileSupported()) {
-    showToastNotification("File not supported!", ToastType.ERROR);
-    return;
-  }
 
   try {
     if(!redactionProcess.value)
@@ -173,7 +179,7 @@ async function handleOpenDocumentView() {
 
 function isSubmitButtonDisabled() {
   if(!file.value)
-    return true;
+    return false;
 
   switch(operation.value) {
     case Operation.SIGN_SELECT_REDACTABLE_ELEMS:
@@ -206,8 +212,8 @@ function showToastNotification(message : String, toastType : ToastType) {
 }
 
 async function handleOperationButtonClick() {
-  if(!file.value)
-    return
+  if(!file.value || !checkFile())
+    return;
 
   dismissToastNotification()
 
