@@ -5,6 +5,14 @@ button {
     cursor: pointer
 }
 
+button:hover:enabled {
+    background: #89d5d7;
+}
+
+button:active:enabled {
+    background: cadetblue;
+}
+
 button:disabled {
     cursor: not-allowed;
 }

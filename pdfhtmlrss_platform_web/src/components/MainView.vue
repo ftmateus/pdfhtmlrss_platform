@@ -179,7 +179,7 @@ async function handleOpenDocumentView() {
 
 function isSubmitButtonDisabled() {
   if(!file.value)
-    return false;
+    return true;
 
   switch(operation.value) {
     case Operation.SIGN_SELECT_REDACTABLE_ELEMS:

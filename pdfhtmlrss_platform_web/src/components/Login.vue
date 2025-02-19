@@ -52,7 +52,7 @@ export default class Login extends Vue {
       <label for="pwd">Password: </label>
       <input type="password" v-model="password" id="pwd">
     </div>
-    <ToastNotification v-if="loading"  dismiss-click="" :type="ToastType.INFO">
+    <ToastNotification v-if="loading" :type="ToastType.INFO">
       Loading...
     </ToastNotification>
     <ToastNotification

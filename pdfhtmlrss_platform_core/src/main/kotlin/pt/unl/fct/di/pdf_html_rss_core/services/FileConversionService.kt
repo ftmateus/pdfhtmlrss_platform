@@ -77,39 +77,44 @@ class FileConversionService {
     fun generateHTMLFromPDFDocMultiplePages(pdfFile : PDFFileWrapper) : Document {
         val tmpFile = temporaryFilesRepository.getNewTmpFileWithoutCreating(".html");
         try {
-            val pdfToHtmlProcess = ProcessBuilder()
-                .command("/usr/bin/pdftohtml", "-c", "-q", "-dataurls", "-zoom", "1.12", "-noframes", "-", tmpFile.path)
-                .redirectInput(ProcessBuilder.Redirect.PIPE)
-                .start()
-
-            pdfFile.getInputStream().use { inS ->
-                pdfToHtmlProcess.outputStream.use { outS ->
-                    inS.copyTo(outS)
-                }
-            }
-
-            pdfToHtmlProcess.waitFor()
-
-            val tidyProcess = ProcessBuilder()
-                .command(
-                    "/usr/bin/tidy", "-q",
-                    "--numeric-entities", "yes",
-                    "-output", "/dev/stdout",
-                    tmpFile.path
-                )
-                .start()
-
-            val domDoc = tidyProcess.inputStream.use {
-                domService.parseDocument(it, true)
-            }
-
-            tidyProcess.waitFor();
-
-            return domDoc;
+            val doc = generateHTMLFromPDFDocMultiplePages(pdfFile, tmpFile);
+            return doc;
         }
         finally {
             tmpFile.delete()
         }
+    }
+
+    private fun generateHTMLFromPDFDocMultiplePages(pdfFile : PDFFileWrapper, tmpFile : File) : Document {
+        val pdfToHtmlProcess = ProcessBuilder()
+            .command("/usr/bin/pdftohtml", "-c", "-q", "-dataurls", "-zoom", "1.12", "-noframes", "-", tmpFile.path)
+            .redirectInput(ProcessBuilder.Redirect.PIPE)
+            .start()
+
+        pdfFile.getInputStream().use { inS ->
+            pdfToHtmlProcess.outputStream.use { outS ->
+                inS.copyTo(outS)
+            }
+        }
+
+        pdfToHtmlProcess.waitFor()
+
+        val tidyProcess = ProcessBuilder()
+            .command(
+                "/usr/bin/tidy", "-q",
+                "--numeric-entities", "yes",
+                "-output", "/dev/stdout",
+                tmpFile.path
+            )
+            .start()
+
+        val domDoc = tidyProcess.inputStream.use {
+            domService.parseDocument(it, true)
+        }
+
+        tidyProcess.waitFor();
+
+        return domDoc;
     }
 
     fun generatePDFFromHTML(domDocData : ByteArray) : PDFFileWrapper  {

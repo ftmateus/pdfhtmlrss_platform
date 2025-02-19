@@ -31,7 +31,7 @@ const currentOperation = defineModel()
 <!--  </select>-->
 </template>
 <style scoped>
-.selected {
+.selected,.selected:hover {
   background-color: cadetblue;
 }
 </style>
