@@ -24,7 +24,8 @@ class RedactionProcess(
     val fileType : String,
     val tmpPdfFile : String?,
     val tmpHtmlFile : String,
-    val action : RedactionProcessAction
+    val action : RedactionProcessAction,
+    val allowedRedactableElems : List<String> = emptyList(),
 ) {
     constructor() : this("", -1L, "", "", "", RedactionProcessAction.REDACT) {
 

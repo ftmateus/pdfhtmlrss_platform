@@ -5,15 +5,16 @@ import {ToastType} from "@/components/ToastNotificationType";
 
 const props = defineProps<{
   type: ToastType,
-  message: string,
+  // message: string,
   detailsClick? : Function,
-  dismissClick : Function,
+  dismissClick? : Function,
 }>();
 
 function toastTypeToCSSClass() {
   switch (props.type) {
     case ToastType.SUCCESS : return 'toast-notification-success'
     case ToastType.ERROR : return 'toast-notification-error'
+    case ToastType.INFO: return 'toast-notification-info'
     default: return ''
   }
 }
@@ -22,11 +23,10 @@ function toastTypeToCSSClass() {
 
 <template>
   <div :class="['toast-notification', toastTypeToCSSClass()]">
-    <label>{{ message }}</label>
-    <div>
+    <slot></slot>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
       <a v-if="detailsClick" href="#" @click="detailsClick">Details</a>
-      &nbsp;
-      <a href="#" @click="dismissClick">Dismiss</a>
+      <a v-if="dismissClick" href="#" @click="dismissClick">Dismiss</a>
     </div>
   </div>
 </template>
@@ -36,7 +36,10 @@ function toastTypeToCSSClass() {
         border-radius: 10px;
         padding: 8px;
         border-color: black;
-        border-width: medium;
+        border-width: thin;
+        border-style: solid;
+        align-self: center;
+        max-width: 400px;
     }
 
     .toast-notification-success {

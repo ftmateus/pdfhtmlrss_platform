@@ -16,6 +16,7 @@ function getSubsite() : string {
     // Extract the subsite part
     // eslint-disable-next-line no-useless-escape
     const subsiteMatch = path.match(/^\/([^\/]+)\/?/);
+    // return subsiteMatch ? subsiteMatch[0] : window.location.href;
     return subsiteMatch ? subsiteMatch[0] : "/";
 }
 
@@ -93,7 +94,13 @@ export function submitRedactionProcess(
         method : 'POST',
         body : formData
     })
-    .then(r => r.json())
+    .then(r => {
+        return r.json().then(j => {
+            if(!r.ok)
+                throw Error(j.message)
+            return j;
+        })
+    })
     .then(j => j as RedactionProcess)
 }
 
@@ -140,4 +147,8 @@ export function getTemporaryFileURL(
 ) : string {
 
     return `${apiPrefix}/tmp/${tmpFileName}`
+}
+
+export function getRedactJsScriptUrl() {
+    return `${getSubsite()}redact.js`
 }

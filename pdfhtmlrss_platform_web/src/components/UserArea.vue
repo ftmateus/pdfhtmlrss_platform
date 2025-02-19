@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import {checkAuthStatus, logout} from "@/api";
-import {onMounted, ref} from "vue";
+import {defineEmits, onMounted, ref} from "vue";
+
+const emit = defineEmits(['logout'])
 
 let router = useRouter()
 
@@ -13,6 +15,7 @@ onMounted(async () => {
 })
 
 async function handleLogout() {
+  emit('logout')
   let res = await logout();
   if(res.ok) {
     await router.push("/login")

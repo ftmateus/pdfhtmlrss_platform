@@ -1,31 +1,39 @@
 <script setup lang="ts">
 
 import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
-import { defineProps } from "vue"
+import { defineProps, defineEmits } from "vue"
 
 const props = defineProps<{
-  closeWindow : Function;
   report : SignatureVerificationReport
 }>();
+const emit = defineEmits(['close-window'])
 
 const generalSignatureProperties = [
   ["Issued by: ", () => props.report.issuedBy],
-  ["Signature Date: ", () => props.report.signatureDate],
+  ["Signature date: ", () => props.report.signatureDate],
+  ["Has external signatures: ", () => props.report.hasExternalSignatures],
+]
+
+const externalSignaturesProperties = [
+  ["External signatures violated: ",
+      () => props.report.externalSignaturesViolated,
+      () => props.report.externalSignaturesViolated ? "red" : "green"
+  ],
 ]
 
 const padesSignatureProperties = [
-  ["Algorithm: ", () => props.report.padesAlgorithm],
+  ["Algorithm: ", () => props.report.rssPAdESAlgorithm],
   ["Signature violated: ",
-      () => !props.report.padesNotModified,
-      () => props.report.padesNotModified ? "green" : "red"
+      () => props.report.rssPAdESViolated,
+      () => props.report.rssPAdESViolated ? "red" : "green"
   ],
 ]
 
 const rssSignatureProperties = [
-  ["Algorithm: ", () => props.report.rssAlgorithm],
+  ["Algorithm: ", () => props.report.rssXMLAlgorithm],
   ["Signature violated: ",
-      () => !props.report.rssNotModified,
-      () => props.report.rssNotModified ? "green" : "red"
+      () => props.report.rssXMLViolated,
+      () => props.report.rssXMLViolated ? "red" : "green"
   ],
 ]
 
@@ -34,28 +42,36 @@ const rssSignatureProperties = [
 </script>
 
 <template>
-  <dialog open>
+  <dialog open style="padding-right: 32px; padding-left: 32px;">
+    <h2>Signature details</h2>
     <div v-for="[label, value] in generalSignatureProperties" v-bind:key="label">
       <label>{{ label }}</label>
       {{ value() }}
     </div>
-    <div>
+    <div v-if="report.hasExternalSignatures">
+      <div v-for="[label, value, propColor] in externalSignaturesProperties" v-bind:key="label">
+        <label>{{ label }}</label>
+        <label :style="{color: propColor?.() ?? 'black'}">{{ value() }}</label>
+      </div>
+    </div>
+    <div v-if="report.hasRSSPAdESSignature">
       <h4>PAdES</h4>
       <div v-for="[label, value, propColor] in padesSignatureProperties" v-bind:key="label">
         <label>{{ label }}</label>
         <label :style="{color: propColor?.() ?? 'black'}">{{ value() }}</label>
       </div>
     </div>
-<!--    <label v-else>No PAdES Signature is present</label>-->
-    <div v-if="report.hasRSSSignature">
+    <h5 v-else style="color: #b9b900">Document was not signed by this tool!</h5>
+    <!--    <label v-else>No PAdES Signature is present</label>-->
+    <div v-if="report.hasRSSPAdESSignature && report.hasRSSXMLSignature">
       <h4>RSS</h4>
       <div v-for="[label, value, propColor] in rssSignatureProperties" v-bind:key="label">
         <label>{{ label }}</label>
         <label :style="{color: propColor?.() ?? 'black'}">{{ value() }}</label>
       </div>
     </div>
-    <h5 v-else style="color: #b9b900">No Redactable Signature is present!</h5>
-    <button @click="closeWindow">Close</button>
+    <h5 v-else-if="report.hasRSSPAdESSignature" style="color: #b9b900">No Redactable Signature is present!</h5>
+    <button @click="() => emit('close-window')" style="margin-top: 24px">Close</button>
   </dialog>
 </template>
 

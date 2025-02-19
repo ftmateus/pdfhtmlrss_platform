@@ -5,6 +5,7 @@ import com.itextpdf.text.pdf.PRStream
 import com.itextpdf.text.pdf.PdfFileSpecification
 import com.itextpdf.text.pdf.PdfName
 import com.itextpdf.text.pdf.PdfReader
+import com.itextpdf.text.pdf.security.PdfPKCS7
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.grss.GSRedactableSignature
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.grss.xml.GSRedactableXMLSignature
 import de.unipassau.wolfgangpopp.xmlrss.wpprovider.grss.xml.GSSignatureValue
@@ -17,6 +18,7 @@ import pt.unl.fct.di.pdf_html_rss_core.dto.SignatureVerificationReport
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.services.PAdESService.Companion.SIGNATURE_FIELD
 import java.io.*
+import kotlin.streams.toList
 
 
 @Service
@@ -174,41 +176,103 @@ class PDFManipulationService {
             .verifyDocument(signatureDom);
     }
 
+    private fun verifyPAdESSignatureField(sigUtil : SignatureUtil, field : String) : Boolean {
+        val pkcs7 = sigUtil.readSignatureData(field) ?: return false
+
+//        return sigUtil.signatureCoversWholeDocument(SIGNATURE_FIELD)
+        return pkcs7.verifySignatureIntegrityAndAuthenticity();
+    }
+
+    fun verifyExternalSignatures(sigUtil : SignatureUtil) : SignatureVerificationReport? {
+        for(field in sigUtil.signatureNames) {
+            if(field == SIGNATURE_FIELD)
+                continue;
+
+            if(verifyPAdESSignatureField(sigUtil, field))
+                continue;
+
+            //external signature was violated
+            return SignatureVerificationReport(
+                isSigned = true,
+                hasExternalSignatures = true,
+                externalSignaturesViolated = true
+            )
+        }
+        return null;
+    }
+
     fun verifyPdfDocumentSignatures(pdf : PDFFileWrapper) : SignatureVerificationReport {
         return pdf.useItextKernelPdfDocument {
             val sigUtil = SignatureUtil(it);
-            val pkcs7 = sigUtil.readSignatureData(SIGNATURE_FIELD)
-                ?: return@useItextKernelPdfDocument SignatureVerificationReport(
+
+            val signatureFields = sigUtil.signatureNames
+
+            if(signatureFields.isEmpty()) {
+                return@useItextKernelPdfDocument SignatureVerificationReport(
                     isSigned = false
                 )
+            }
 
-            val padesNotModified = sigUtil.signatureCoversWholeDocument(SIGNATURE_FIELD)
-                    && pkcs7.verifySignatureIntegrityAndAuthenticity();
+            val hasPDFHTMLRSSField =  signatureFields.stream()
+                .anyMatch { field -> field == SIGNATURE_FIELD }
+
+            val hasExternalSignatures = !hasPDFHTMLRSSField || signatureFields.size > 1
+
+            if(hasExternalSignatures) {
+                val externalSignaturesVerificationReport = verifyExternalSignatures(sigUtil)
+
+                if(externalSignaturesVerificationReport != null)
+                    return@useItextKernelPdfDocument externalSignaturesVerificationReport
+            }
+
+            if(!hasPDFHTMLRSSField)
+                return@useItextKernelPdfDocument SignatureVerificationReport(
+                    isSigned = true,
+                    hasExternalSignatures = true,
+                    externalSignaturesViolated = false,
+                    hasRSSPAdESSignature = false
+                )
+
+            val rssPAdESpkcs7 = sigUtil.readSignatureData(SIGNATURE_FIELD)
+            val rssPAdESAlgorithm = "${rssPAdESpkcs7.signatureAlgorithmName}+${rssPAdESpkcs7.digestAlgorithmName}"
+
+            if(!verifyPAdESSignatureField(sigUtil, SIGNATURE_FIELD))
+                return@useItextKernelPdfDocument SignatureVerificationReport(
+                    isSigned = true,
+                    hasExternalSignatures = hasExternalSignatures,
+                    externalSignaturesViolated = false,
+                    hasRSSPAdESSignature = true,
+                    rssPAdESViolated = true,
+                    rssPAdESAlgorithm = rssPAdESAlgorithm,
+                    issuedBy = rssPAdESpkcs7.signName
+                );
 
             if(!hasRedactableSignature(pdf))
                 return@useItextKernelPdfDocument SignatureVerificationReport(
                     isSigned = true,
-                    padesNotModified,
-                    hasRSSSignature = false,
-                    rssNotModified = true,
-                    signatureDate = pkcs7.signDate.time,
-                    issuedBy = pkcs7.signName,
-                    padesAlgorithm = "${pkcs7.signatureAlgorithmName}+${pkcs7.digestAlgorithmName}",
-                    rssAlgorithm = null
-                )
+                    hasExternalSignatures = hasExternalSignatures,
+                    externalSignaturesViolated = false,
+                    hasRSSPAdESSignature = true,
+                    rssPAdESViolated = false,
+                    hasRSSXMLSignature = false,
+                    rssPAdESAlgorithm = rssPAdESAlgorithm,
+                    issuedBy = rssPAdESpkcs7.signName
+                );
 
-            val rssSignature = getRedactableSignature(pdf)
+            val rssXMLSignature = getRedactableSignature(pdf)
 
             return@useItextKernelPdfDocument SignatureVerificationReport(
                 isSigned = true,
-                padesNotModified = padesNotModified,
-                hasRSSSignature = true,
-                signatureDate = pkcs7.signDate.time,
-                issuedBy = pkcs7.signName ?: "",
-                padesAlgorithm = "${pkcs7.signatureAlgorithmName}+${pkcs7.digestAlgorithmName}",
-                rssAlgorithm = null, //TODO get RSS algorithm
-                rssNotModified = xhtmlRedactableSignaturesService.verifyDocument(rssSignature)
-            )
+                hasExternalSignatures = hasExternalSignatures,
+                externalSignaturesViolated = false,
+                hasRSSPAdESSignature = true,
+                rssPAdESViolated = false,
+                hasRSSXMLSignature = true,
+                rssPAdESAlgorithm = rssPAdESAlgorithm,
+                //TODO
+                rssXMLAlgorithm = null,
+                rssXMLViolated = !xhtmlRedactableSignaturesService.verifyDocument(rssXMLSignature)
+            );
         }
     }
 }

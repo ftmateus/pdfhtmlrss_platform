@@ -4,19 +4,21 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content : space-between;
-      height: 225px;
+      justify-content : space-around;
+      gap: 0.8rem;
+      height: 100%;
     ">
-      <UserArea/>
-      <OperationsSelector v-model="operation" @update:modelValue="dismissAlertMessage"/>
+      <UserArea @logout="() => documentViewOpened = false"/>
+      <OperationsSelector v-model="operation" @update:modelValue="dismissToastNotification"/>
       <FileSelector :set-file="setFile"/>
       <form
           v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS || operation == Operation.REDACT"
           style="display: flex; flex-direction: column; align-items: center; width: 500px"
       >
-        <button style="width: 150px" :disabled="!file" @click.prevent="handleOpenDocumentView">Open document view</button>
-        Paste the XPath URLs of the HTML elements you want to redact separated by lines. Hint: Use your browser DevTools.
-        <textarea v-model="redactedElemsTextBoxRef" style="width: 300px; height: 100px"></textarea>
+        <button style="width: 150px" :disabled="!file || documentViewOpened" @click.prevent="handleOpenDocumentView">Open document view</button>
+        <div v-if="documentViewOpened">
+            Select the parts of the document to be redacted.
+        </div>
 <!--        <fieldset v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">-->
 <!--          <legend>Signature Options</legend>-->
 <!--          <input type="radio" name="sign_option" id="improved_compatibility" checked>-->
@@ -27,26 +29,28 @@
       </form>
       <ToastNotification
           v-if="toastNotificationMessage && signatureVerificationReport != null"
-          :message="toastNotificationMessage"
           :type="toastNotificationType"
-          :detailsClick="() => openWindow = true"
-          :dismissClick="dismissAlertMessage"
-      />
+          :detailsClick="() => openSignatureVerifyReportWindow = true"
+          :dismissClick="dismissSignatureVerificationToastNotification"
+      >
+        {{ toastNotificationMessage }}
+      </ToastNotification>
       <ToastNotification
           v-if="toastNotificationMessage && signatureVerificationReport == null"
-          :message="toastNotificationMessage"
           :type="toastNotificationType"
-          :dismissClick="dismissAlertMessage"
-      />
+          :dismissClick="dismissToastNotification"
+      >
+        {{ toastNotificationMessage }}
+      </ToastNotification>
       <button
           :disabled="isSubmitButtonDisabled()"
           @click="handleOperationButtonClick"
       >
-        {{opToButtonTitle(operation)}}
+        {{ opToButtonTitle(operation) }}
       </button>
       <SignatureVerificationReportWindow
-          v-if="openWindow && signatureVerificationReport"
-          :closeWindow="() => openWindow = false"
+          v-if="openSignatureVerifyReportWindow && signatureVerificationReport"
+          @close-window="() => openSignatureVerifyReportWindow = false"
           :report="signatureVerificationReport"
       />
 <!--      <OperationButton-->
@@ -60,7 +64,7 @@
 
 <script setup lang="ts">
 
-import {ref} from 'vue'
+import { defineEmits, ref, watch } from 'vue'
 import FileSelector from "@/components/FileSelector.vue";
 import OperationsSelector from "@/components/OperationsSelector.vue";
 // import OperationButton from "@/components/OperationButton.vue";
@@ -75,7 +79,7 @@ import {
   verifyDocument
 } from "@/api";
 import {RedactionProcess} from "@/dto/RedactionProcess";
-import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
+import SignatureVerificationReport, {isSignatureValid} from "@/dto/SignatureVerificationReport";
 import SignatureVerificationReportWindow from "@/components/SignatureVerificationReportWindow.vue";
 import ToastNotification from "@/components/ToastNotification.vue";
 import {ToastType} from "@/components/ToastNotificationType";
@@ -88,16 +92,34 @@ const operation = ref(Operation.SIGN_SELECT_REDACTABLE_ELEMS)
 const toastNotificationMessage = ref<String | undefined>()
 const toastNotificationType = ref<ToastType | undefined>(undefined)
 const redactionProcess = ref<RedactionProcess>();
-const openWindow = ref<Boolean>(false);
+const openSignatureVerifyReportWindow = ref<Boolean>(false);
 const signatureVerificationReport = ref<SignatureVerificationReport | undefined>(undefined);
+const documentViewOpened = ref(false);
+
+const emit = defineEmits(['open-document-view', 'close-document-view'])
 // const redactableSignatureOption = ref<RedactableSignatureOption>(
 //     RedactableSignatureOption.IMPROVED_COMPATIBILITY
-// )c
+// )
 
-const redactedElemsTextBoxRef = ref<String>()
+watch(documentViewOpened, (newValue) => {
+    if(newValue == true) {
+      if(!redactionProcess.value)
+        return
+
+      let tmpHtmlFile = redactionProcess.value.tmpHtmlFile
+
+      emit("open-document-view", getTemporaryFileURL(tmpHtmlFile));
+    }
+    else {
+      emit('close-document-view')
+    }
+})
+
 
 async function setFile(newFile : File) {
   file.value = newFile;
+  documentViewOpened.value = false
+
   if(!redactionProcess.value)
     return
   try {
@@ -105,6 +127,25 @@ async function setFile(newFile : File) {
   } finally {
     redactionProcess.value = undefined
   }
+}
+
+function checkFile() : boolean {
+  if(!file.value)
+    return false;
+
+  let fileType =  file.value.type
+
+  if(fileType != "application/pdf" && fileType != "text/html") {
+    showToastNotification("File type not supported!", ToastType.ERROR);
+    return false;
+  }
+
+  if(file.value.size > 1024 * 1024) {
+    showToastNotification("File is too big!", ToastType.ERROR);
+    return false;
+  }
+
+  return true;
 }
 
 function downloadBlobRequest(blob : Blob) {
@@ -118,24 +159,22 @@ function downloadBlobRequest(blob : Blob) {
 }
 
 async function handleOpenDocumentView() {
-  if(!file.value)
+  if(!file.value || !checkFile())
     return;
 
   if(operation.value != Operation.SIGN_SELECT_REDACTABLE_ELEMS
   && operation.value != Operation.REDACT)
     return;
 
-  if(!redactionProcess.value)
-    redactionProcess.value = await submitRedactionProcess(file.value, operation.value)
 
-  let tmpHtmlFile = redactionProcess.value.tmpHtmlFile
+  try {
+    if(!redactionProcess.value)
+      redactionProcess.value = await submitRedactionProcess(file.value, operation.value)
+    documentViewOpened.value = true
+  } catch(e : any) {
+    showToastNotification(`Error: ${e.message}`, ToastType.ERROR);
+  }
 
-  window.open(getTemporaryFileURL(tmpHtmlFile), "_blank")
-      ?.focus()
-}
-
-function isSignatureValid(report : SignatureVerificationReport) : boolean {
-    return report.padesNotModified && (!report.hasRSSSignature || report.rssNotModified);
 }
 
 function isSubmitButtonDisabled() {
@@ -145,7 +184,7 @@ function isSubmitButtonDisabled() {
   switch(operation.value) {
     case Operation.SIGN_SELECT_REDACTABLE_ELEMS:
     case Operation.REDACT:
-      return (redactedElemsTextBoxRef?.value?.length ?? 0) == 0
+      return !documentViewOpened.value
     default:
       return false;
   }
@@ -154,10 +193,15 @@ function isSubmitButtonDisabled() {
 function clearForm() {
   file.value = undefined
   redactionProcess.value = undefined
-  redactedElemsTextBoxRef.value = ""
+  documentViewOpened.value = false
 }
 
-function dismissAlertMessage() {
+function dismissSignatureVerificationToastNotification() {
+  signatureVerificationReport.value = undefined
+  dismissToastNotification()
+}
+
+function dismissToastNotification() {
   toastNotificationMessage.value = ""
   toastNotificationType.value = undefined
 }
@@ -168,10 +212,10 @@ function showToastNotification(message : String, toastType : ToastType) {
 }
 
 async function handleOperationButtonClick() {
-  if(!file.value)
-    return
+  if(!file.value || !checkFile())
+    return;
 
-  dismissAlertMessage()
+  dismissToastNotification()
 
   switch (operation.value) {
     case Operation.SIGN_SELECT_REDACTABLE_ELEMS:
@@ -179,21 +223,30 @@ async function handleOperationButtonClick() {
       if(!redactionProcess.value)
         redactionProcess.value = await submitRedactionProcess(file.value, operation.value)
 
-      let redactElems = redactedElemsTextBoxRef.value?.split("\n")
-          ?.filter(e => e.startsWith("/html/body/"))
-          ?.map(e => e.replace(/\/html\/body\/a\[.*]\//, "/html/body/"))
-          ?.map(e => `#xpath(${e})`) ?? []
+      let elementsToRedact : string[] = JSON.parse(localStorage.getItem("elementsToRedact") ?? "[]")
+          .map((e : string) => `#xpath(${e})`)
 
-      await finishRedactionProcess(redactionProcess.value.taskId, redactElems)
+      if(elementsToRedact.length == 0) {
+        showToastNotification("No document elements have been selected!", ToastType.ERROR)
+        return;
+      }
+
+      await finishRedactionProcess(redactionProcess.value.taskId, elementsToRedact)
           .then(res =>  {
-            if(res.ok)
-              return res?.blob()
+            if(!res.ok)
+              res.json()
+              .then(j => showToastNotification(`Error: ${j?.message}`, ToastType.ERROR))
 
-            res.json()
-                .then(j => showToastNotification(`Error: ${j?.message}`, ToastType.ERROR))
+            return res?.blob()
           })
-          .then(blob => blob && downloadBlobRequest(blob))
-          .finally(() => clearForm())
+          .then(blob => {
+            if(!blob)
+              return
+            downloadBlobRequest(blob)
+            toastNotificationMessage.value = "Document was sucessfully signed!"
+            toastNotificationType.value = ToastType.SUCCESS
+            clearForm()
+          })
       break;
     }
     case Operation.SIGN_ONLY : {

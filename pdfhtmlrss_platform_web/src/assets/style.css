@@ -1,0 +1,33 @@
+button {
+    background: powderblue;
+    border-radius: 5px;
+    height: 2.2rem;
+    cursor: pointer
+}
+
+button:hover:enabled {
+    background: #89d5d7;
+}
+
+button:active:enabled {
+    background: cadetblue;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
+select {
+    background: aliceblue;
+    aspect-ratio: 8;
+    border-radius: 10px;
+}
+
+input {
+    background: floralwhite;
+    border-radius: 10px;
+}
+
+body {
+    background: lightsteelblue;
+}

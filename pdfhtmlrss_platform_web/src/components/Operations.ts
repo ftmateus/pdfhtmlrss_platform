@@ -10,13 +10,13 @@ export enum Operation {
 export function opToTitle(operation : Operation) : string {
     switch (operation) {
         case Operation.SIGN_ONLY:
-            return "Sign document only"
+            return "Sign only"
         case Operation.REDACT :
-            return "Redact document"
+            return "Redact"
         case  Operation.SIGN_SELECT_REDACTABLE_ELEMS:
             return "Sign and select redactable elements"
         case Operation.VERIFY :
-            return  "Verify document"
+            return  "Verify signature"
         default : return ""
     }
 }

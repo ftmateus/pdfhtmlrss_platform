@@ -47,7 +47,12 @@ class SecurityConfig {
     @Bean
     @Throws(Exception::class)
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        return http.authorizeRequests()
+        return http
+            .headers()
+                .frameOptions()
+                .sameOrigin()
+            .and()
+            .authorizeRequests()
             .antMatchers(*SWAGGER_AUTH_WHITELIST)
                 .permitAll()
             .antMatchers("/test")
