@@ -25,3 +25,5 @@ keytool -genkey -alias pdfhtmlrss_ca -keyalg RSA -keysize 4096 -validity $CA_VAL
 echo "Generating AES secret key (used to encrypt users private keys)..."
 
 keytool -genseckey -alias pdfhtmlrss_encryption_key -keyalg AES -keysize 256 -keystore "$KEYSTORE_PATH"
+
+echo "Keystore created at $KEYSTORE_PATH"

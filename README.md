@@ -14,7 +14,7 @@ of the time of writing.
  
 * Create an `application-override.properties` file by copying 
 `application-override-example.properties` file and populate the values, such 
-as the admin password. The keystore is saved at ~/.pdfhtmlrss/keystore.jks
+as the admin password.
 * A `.jks` keystore file must be created. You can generate it running `generate_keystore.sh`.
 Don't forget to set the necessary keystore properties in the `application-override.properties`.
 * Redis and MariaDB local instances are required. Spring Boot should automatically 
