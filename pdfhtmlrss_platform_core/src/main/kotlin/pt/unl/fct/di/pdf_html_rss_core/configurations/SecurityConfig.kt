@@ -69,15 +69,19 @@ class SecurityConfig {
             .formLogin {
                 it.successHandler { request, response, authentication ->
                     response.status = HttpServletResponse.SC_OK
-                    response.contentType = MediaType.APPLICATION_JSON_VALUE
-                    response.writer.write("{\"loggedIn\":true,\"user\":\"${authentication.name}\"}")
+//                    response.contentType = MediaType.APPLICATION_JSON_VALUE
+//                    val isAdmin = authentication.authorities
+//                        .stream().anyMatch { a -> a.authority == "ROLE_ADMIN" }
+//                    response.writer.write("{\"loggedIn\":true,\"user\":\"${authentication.name}\",\"isAdmin\":$isAdmin}")
                 }
             }
             .logout {
                 it.logoutSuccessHandler { request, response, authentication ->
                     response.status = HttpServletResponse.SC_OK
-                    response.contentType = MediaType.APPLICATION_JSON_VALUE
-                    response.writer.write("{\"loggedIn\":false}")
+                    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+                    response.setHeader("Clear-Site-Data", "\"cache\", \"cookies\", \"storage\"")
+//                    response.contentType = MediaType.APPLICATION_JSON_VALUE
+//                    response.writer.write("{\"loggedIn\":false}")
                 }
             }
             .csrf() //TODO

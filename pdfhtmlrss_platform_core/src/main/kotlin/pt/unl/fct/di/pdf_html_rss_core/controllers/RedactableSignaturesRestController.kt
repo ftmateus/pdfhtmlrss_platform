@@ -13,6 +13,7 @@ import pt.unl.fct.di.pdf_html_rss_core.services.*
 import java.io.*
 import java.net.URLConnection
 import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletResponse
 
 
@@ -51,11 +52,19 @@ class RedactableSignaturesRestController {
     lateinit var domService: DOMService;
 
     @GetMapping("/auth/status", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun checkAuthStatus() : String {
+    fun checkAuthStatus() : ResponseEntity<AuthenticationStatus> {
         val loggedInUser = securityService.getLoggedInUser()
-            ?: return "{\"loggedIn\":false}";
 
-        return "{\"loggedIn\":true,\"user\":\"${loggedInUser.username}\"}"
+        val cacheSeconds : Long = if (loggedInUser != null) 5 else 0
+
+        return ResponseEntity
+            .ok()
+            .cacheControl(CacheControl.maxAge(cacheSeconds, TimeUnit.SECONDS))
+            .body(AuthenticationStatus(
+                loggedIn = loggedInUser != null,
+                user = loggedInUser?.username,
+                isAdmin = loggedInUser?.isAdmin
+            ))
     }
 
     @GetMapping("/tmp/{filePath}")

@@ -258,47 +258,4 @@ class SecurityService() {
             return it.toByteArray()
         }
     }
-
-    private fun toGenericHash(hashAlgorithm : String, stream : InputStream) : String {
-        val hash = MessageDigest.getInstance(hashAlgorithm)
-        val bufferSize = 4096;
-        val buffer : ByteArray = ByteArray(bufferSize)
-        stream.use {
-            var bytesAvailable = it.available();
-            while ( bytesAvailable > 0) {
-                val bytesToWrite = let {
-                    if (bytesAvailable <= bufferSize)
-                        bytesAvailable
-                    else
-                        bufferSize;
-                }
-                it.read(buffer)
-                hash.update(buffer, 0, bytesToWrite)
-                bytesAvailable = it.available();
-            }
-        }
-        return hash.digest()
-            .fold(StringBuilder()) { sb, it -> sb.append("%02x".format(it)) }
-            .toString()
-    }
-
-    fun toSha1(stream : InputStream) : String {
-        return toGenericHash("SHA-1", stream);
-    }
-
-    fun toSha256(stream : InputStream) : String {
-        return toGenericHash("SHA-256", stream);
-    }
-
-    fun toSha256(data : ByteArray) : String {
-        //TODO improve performance?
-        return MessageDigest.getInstance("SHA-256")
-            .digest(data)
-            .fold(StringBuilder()) { sb, it -> sb.append("%02x".format(it)) }
-            .toString()
-    }
-
-    fun verifySha256(data : ByteArray, hash : String) : Boolean {
-        return toSha256(data) == hash;
-    }
 }

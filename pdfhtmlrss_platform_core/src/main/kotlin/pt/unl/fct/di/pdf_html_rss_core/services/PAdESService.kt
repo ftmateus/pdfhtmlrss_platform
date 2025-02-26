@@ -1,16 +1,14 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
-import com.itextpdf.kernel.pdf.PdfDocument
-import com.itextpdf.kernel.pdf.PdfReader
-import com.itextpdf.kernel.pdf.StampingProperties
+import com.itextpdf.kernel.pdf.*
 import com.itextpdf.signatures.*
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.utils.toSha256
 import java.io.OutputStream
 import java.security.cert.Certificate
-import com.itextpdf.signatures.SignatureUtil;
 
 
 @Service
@@ -37,18 +35,58 @@ class PAdESService {
         val redactionCACertificate = keystoreService.getRedactionCACertificate()
             as Certificate;
 
-        //TODO close input stream
-        pdfFile.getInputStream().use {
-            PdfReader(it).use { reader ->
-                val signer = PdfSigner(reader, outputStream, StampingProperties())
-                signer.fieldName = SIGNATURE_FIELD;
+        val pdfFileInputStream = pdfFile.getInputStream();
+        val reader = PdfReader(pdfFileInputStream)
+        try {
+            val signer = PdfSigner(reader, outputStream, StampingProperties())
+            signer.fieldName = SIGNATURE_FIELD;
+            signer.certificationLevel = PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED;
+            
+            val pks = PrivateKeySignature(userKey.privateKey, DigestAlgorithms.SHA256, bcProvider.name)
+            val digest: IExternalDigest = BouncyCastleDigest()
 
-                val pks = PrivateKeySignature(userKey.privateKey, DigestAlgorithms.SHA256, bcProvider.name)
-                val digest: IExternalDigest = BouncyCastleDigest()
+//            signXHTMLRSSSignatureIfPresent(signer)
 
-                signer.signDetached(digest, pks, arrayOf(userKey.certificate, redactionCACertificate), null, null, null, 0, PdfSigner.CryptoStandard.CADES);
+            signer.signDetached(digest, pks, arrayOf(userKey.certificate, redactionCACertificate),
+                null, null, null, 0, PdfSigner.CryptoStandard.CADES);
+
+        } finally {
+            reader.close()
+            pdfFileInputStream.close()
+        }
+    }
+
+    private fun signXHTMLRSSSignatureIfPresent(signer : PdfSigner) {
+        val catalog: PdfDictionary = signer.document.catalog.pdfObject
+        val names: PdfDictionary? = catalog.getAsDictionary(PdfName.Names)
+        val embeddedFiles : PdfArray? = names?.getAsDictionary(PdfName.EmbeddedFiles)
+            ?.getAsArray(PdfName.Names)
+
+        if(embeddedFiles == null || embeddedFiles.isEmpty)
+            return;
+
+        var xhtmlRssSigIdx : Int = -1;
+
+        for(i in 0..embeddedFiles.size()) {
+            val filename = embeddedFiles.getAsString(i)
+            if(filename.toString() == PDFManipulationService.ATTACHED_FULL_RSS_FILE_NAME) {
+                xhtmlRssSigIdx = i;
+                break;
             }
         }
+
+        if(xhtmlRssSigIdx == -1)
+            return;
+
+        val fileSpec = embeddedFiles.getAsDictionary(xhtmlRssSigIdx + 1)
+
+        val fileStream: PdfStream = fileSpec.getAsDictionary(PdfName.EF)
+            .getAsStream(PdfName.F)
+
+        val hash = toSha256(fileStream.bytes)
+
+        signer.signatureDictionary
+            .put(PdfName("XMLRSSHash"), PdfString(hash))
     }
 
     fun verifyDocument(sigUtil : SignatureUtil) : Boolean {

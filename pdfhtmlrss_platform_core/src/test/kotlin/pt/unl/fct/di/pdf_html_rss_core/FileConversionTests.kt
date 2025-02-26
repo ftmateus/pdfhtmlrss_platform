@@ -17,12 +17,12 @@ import pt.unl.fct.di.pdf_html_rss_core.services.SecurityService
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.ByteArrayInputStream
 import java.io.File
+import pt.unl.fct.di.pdf_html_rss_core.utils.toSha256
+import pt.unl.fct.di.pdf_html_rss_core.utils.verifySha256
 
 
 @SpringBootTest
 class FileConversionTests {
-    @Autowired
-    private lateinit var securityService: SecurityService
 
     @Autowired
     lateinit var temporaryFilesRepository: TemporaryFilesRepository
@@ -103,8 +103,8 @@ class FileConversionTests {
         val htmlDocData1 = pdfConversionService.generateHTMLFromPDF(pdfFile)
         val htmlDocData2 = pdfConversionService.generateHTMLFromPDF(pdfFile)
 
-        val htmlDocHash1 = securityService.toSha256(htmlDocData1)
-        val htmlDocHash2 = securityService.toSha256(htmlDocData2)
+        val htmlDocHash1 = toSha256(htmlDocData1)
+        val htmlDocHash2 = toSha256(htmlDocData2)
 
         assertEquals(htmlDocHash1, htmlDocHash2)
     }
@@ -130,8 +130,8 @@ class FileConversionTests {
             deleteAutomatically = false
         )
 
-        val htmlDocHash1 = securityService.toSha256(htmlDocData1)
-        val htmlDocHash2 = securityService.toSha256(htmlDocData2)
+        val htmlDocHash1 = toSha256(htmlDocData1)
+        val htmlDocHash2 = toSha256(htmlDocData2)
 
         assertEquals(htmlDocHash1, htmlDocHash2)
     }

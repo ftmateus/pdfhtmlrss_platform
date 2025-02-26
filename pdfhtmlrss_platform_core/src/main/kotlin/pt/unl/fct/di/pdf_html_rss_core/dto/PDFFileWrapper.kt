@@ -76,6 +76,8 @@ class PDFFileWrapper {
 
     fun toItextPdfReader(): PdfReader = PdfReader(getData().inputStream());
 
+    fun toItextKernelPdfReader(): com.itextpdf.kernel.pdf.PdfReader = com.itextpdf.kernel.pdf.PdfReader(getData().inputStream());
+
     fun<T> useItextKernelPdfDocument(block : (PdfDocument) -> T) : T {
         val io = getInputStream();
         val reader = com.itextpdf.kernel.pdf.PdfReader(io);

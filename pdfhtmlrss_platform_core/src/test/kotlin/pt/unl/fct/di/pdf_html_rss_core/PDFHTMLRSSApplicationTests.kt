@@ -12,6 +12,9 @@ import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.checkSha256WithLinux
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.*
+import pt.unl.fct.di.pdf_html_rss_core.utils.toSha256
+import pt.unl.fct.di.pdf_html_rss_core.utils.toSha256ByteArray
+import pt.unl.fct.di.pdf_html_rss_core.utils.verifySha256
 import java.io.File
 import java.io.FileInputStream
 
@@ -19,12 +22,6 @@ import java.io.FileInputStream
 @SpringBootTest
 @WithUserDetails("admin")
 class PDFHTMLRSSApplicationTests {
-
-	@Autowired
-	private lateinit var compressionService: CompressionService
-
-	@Autowired
-	private lateinit var securityService: SecurityService
 
 	@Autowired
 	lateinit var temporaryFilesRepository: TemporaryFilesRepository
@@ -89,8 +86,8 @@ class PDFHTMLRSSApplicationTests {
 	fun sha256Test(file : File) {
 		val fileData = FileInputStream(file).use {it.readBytes()}
 
-		val hash = securityService.toSha256(fileData)
-		assertTrue(securityService.verifySha256(fileData, hash))
+		val hash = toSha256ByteArray(fileData)
+		assertTrue(verifySha256(fileData, hash))
 		checkSha256WithLinux(hash, file)
 	}
 

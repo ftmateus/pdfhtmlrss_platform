@@ -6,6 +6,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.springframework.cglib.core.Block
 import org.w3c.dom.Document
 import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.utils.encodeAsHex
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -114,14 +115,16 @@ class TestUtils {
         }
 
         @JvmStatic
-        fun checkSha256WithLinux(expectedSha256 : String, file : File) {
+        fun checkSha256WithLinux(expectedSha256 : ByteArray, file : File) {
             val sha256sumProcess = ProcessBuilder()
                 .command("/usr/bin/sha256sum", "-c")
                 .redirectInput(ProcessBuilder.Redirect.PIPE)
                 .start()
 
+            val hashAsHex = encodeAsHex(expectedSha256)
+
             sha256sumProcess.outputStream.use {
-                it.write("$expectedSha256 ${file.absolutePath}".toByteArray())
+                it.write("$hashAsHex ${file.absolutePath}".toByteArray())
             }
 
             sha256sumProcess.waitFor()

@@ -8,14 +8,13 @@ import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.services.SecurityService
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.File
+import pt.unl.fct.di.pdf_html_rss_core.utils.toSha256
+import pt.unl.fct.di.pdf_html_rss_core.utils.verifySha256
 
 @SpringBootTest
 class TemporaryFilesTests {
     @Autowired
     lateinit var temporaryFilesRepository: TemporaryFilesRepository
-
-    @Autowired
-    lateinit var securityService: SecurityService
 
     @ParameterizedTest
     @MethodSource("pt.unl.fct.di.pdf_html_rss_core.TestUtils#allTestFiles")
@@ -32,10 +31,10 @@ class TemporaryFilesTests {
             }
 
         val testFileSha256 = testFile.inputStream().use {
-            securityService.toSha256(it.readBytes())
+            toSha256(it.readBytes())
         }
         val tempFileSha256 = tempFile.inputStream().use {
-            securityService.toSha256(it.readBytes())
+            toSha256(it.readBytes())
         }
 
         assertEquals(testFileSha256, tempFileSha256)
@@ -57,10 +56,10 @@ class TemporaryFilesTests {
             }
 
         val testFileSha256 = testFile.inputStream().use {
-            securityService.toSha256(it)
+            toSha256(it)
         }
         val tempFileSha256 = tempFile.inputStream().use {
-            securityService.toSha256(it)
+            toSha256(it)
         }
 
         assertEquals(testFileSha256, tempFileSha256)

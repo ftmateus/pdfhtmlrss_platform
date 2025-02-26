@@ -1,15 +1,13 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
+import com.itextpdf.kernel.pdf.PdfDictionary
+import com.itextpdf.kernel.pdf.StampingProperties
+import com.itextpdf.signatures.PdfSigner
 import com.itextpdf.signatures.SignatureUtil
 import com.itextpdf.text.pdf.PRStream
 import com.itextpdf.text.pdf.PdfFileSpecification
 import com.itextpdf.text.pdf.PdfName
 import com.itextpdf.text.pdf.PdfReader
-import com.itextpdf.text.pdf.security.PdfPKCS7
-import de.unipassau.wolfgangpopp.xmlrss.wpprovider.grss.GSRedactableSignature
-import de.unipassau.wolfgangpopp.xmlrss.wpprovider.grss.xml.GSRedactableXMLSignature
-import de.unipassau.wolfgangpopp.xmlrss.wpprovider.grss.xml.GSSignatureValue
-import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.binding.SignatureValue
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
@@ -18,7 +16,6 @@ import pt.unl.fct.di.pdf_html_rss_core.dto.SignatureVerificationReport
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.services.PAdESService.Companion.SIGNATURE_FIELD
 import java.io.*
-import kotlin.streams.toList
 
 
 @Service
@@ -176,10 +173,12 @@ class PDFManipulationService {
             .verifyDocument(signatureDom);
     }
 
-    private fun verifyPAdESSignatureField(sigUtil : SignatureUtil, field : String) : Boolean {
+    private fun verifyPAdESSignatureField(sigUtil : SignatureUtil, field : String, coversWholeDocument : Boolean = false) : Boolean {
         val pkcs7 = sigUtil.readSignatureData(field) ?: return false
 
-//        return sigUtil.signatureCoversWholeDocument(SIGNATURE_FIELD)
+        if(coversWholeDocument && !sigUtil.signatureCoversWholeDocument(field))
+            return false
+
         return pkcs7.verifySignatureIntegrityAndAuthenticity();
     }
 
@@ -236,7 +235,7 @@ class PDFManipulationService {
             val rssPAdESpkcs7 = sigUtil.readSignatureData(SIGNATURE_FIELD)
             val rssPAdESAlgorithm = "${rssPAdESpkcs7.signatureAlgorithmName}+${rssPAdESpkcs7.digestAlgorithmName}"
 
-            if(!verifyPAdESSignatureField(sigUtil, SIGNATURE_FIELD))
+            if(!verifyPAdESSignatureField(sigUtil, SIGNATURE_FIELD, true))
                 return@useItextKernelPdfDocument SignatureVerificationReport(
                     isSigned = true,
                     hasExternalSignatures = hasExternalSignatures,

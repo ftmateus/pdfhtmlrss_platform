@@ -6,8 +6,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import lombok.AllArgsConstructor
 import lombok.NoArgsConstructor
 import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import java.security.KeyPair
+import java.util.stream.Collectors
 import javax.persistence.*
 
 @JsonDeserialize
@@ -31,12 +33,23 @@ class User(
     @JsonIgnore
     var passwordClear : String?,
 
-) : UserDetails {
-    constructor() : this(-1, "", "", "")
+    @Column(name = "role")
+    @JsonIgnore
+    var role : String
 
-    override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
-        //TODO roles/authorities
-        return arrayListOf(GrantedAuthority { "USER" })
+) : UserDetails {
+    constructor() : this(-1, "", "", "", "ROLE_USER")
+
+    val isAdmin get() : Boolean = role == "ROLE_ADMIN"
+
+    override fun getAuthorities(): MutableCollection<GrantedAuthority> {
+        if(isAdmin)
+            return arrayListOf(
+                SimpleGrantedAuthority("ROLE_USER"),
+                SimpleGrantedAuthority("ROLE_ADMIN")
+            )
+
+        return arrayListOf(SimpleGrantedAuthority(role ))
     }
 
     override fun getPassword(): String {

@@ -42,7 +42,14 @@ export function login(user : string, password : string) : Promise<Response> {
 export function logout() : Promise<Response> {
     return fetch(`${apiPrefix}/logout`, {
         method : 'POST'
-    });
+    }).then(r => {
+        localStorage.clear();
+        sessionStorage.clear();
+        // caches?.keys()?.then?.(names => {
+        //    names.forEach(n => caches.delete(n));
+        // });
+        return r;
+    })
 }
 
 export async function signOnly(file : File) : Promise<Blob> {

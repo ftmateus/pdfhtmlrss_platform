@@ -40,7 +40,8 @@ class UserService : UserDetailsService {
             ADMIN_USER_ID,
             "admin",
             adminPasswordHash,
-            null
+            null,
+            "ROLE_ADMIN"
         )
         usersRepository.save(adminUser);
     }
@@ -69,7 +70,8 @@ class UserService : UserDetailsService {
                 userId = userId,
                 username = user.username,
                 passwordHash = passwordHash,
-                passwordClear = null
+                passwordClear = null,
+                "ROLE_USER"
             )
         );
         securityService.generateRSSKeyPairToUser(userId);
