@@ -9,10 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.security.test.context.support.WithUserDetails
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.checkSha256WithLinux
-import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.*
-import pt.unl.fct.di.pdf_html_rss_core.utils.toSha256
 import pt.unl.fct.di.pdf_html_rss_core.utils.toSha256ByteArray
 import pt.unl.fct.di.pdf_html_rss_core.utils.verifySha256
 import java.io.File

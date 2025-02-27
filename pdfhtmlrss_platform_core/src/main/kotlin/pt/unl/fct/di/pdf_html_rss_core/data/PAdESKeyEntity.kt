@@ -1,4 +1,4 @@
-package pt.unl.fct.di.pdf_html_rss_core.dto
+package pt.unl.fct.di.pdf_html_rss_core.data
 
 import pt.unl.fct.di.pdf_html_rss_core.components.DatabaseKeysEncrypt
 import java.security.interfaces.RSAPrivateKey

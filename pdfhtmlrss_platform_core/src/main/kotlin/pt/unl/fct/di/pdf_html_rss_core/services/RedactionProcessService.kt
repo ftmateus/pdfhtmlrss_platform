@@ -4,13 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import org.w3c.dom.Document
-import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
-import pt.unl.fct.di.pdf_html_rss_core.dto.RedactionProcess
-import pt.unl.fct.di.pdf_html_rss_core.dto.RedactionProcessAction
+import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.data.RedactionProcess
+import pt.unl.fct.di.pdf_html_rss_core.data.RedactionProcessAction
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository

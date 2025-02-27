@@ -1,10 +1,7 @@
-package pt.unl.fct.di.pdf_html_rss_core.dto
+package pt.unl.fct.di.pdf_html_rss_core.data
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.redis.core.RedisHash
-import org.springframework.data.redis.core.TimeToLive
-import java.util.*
-import javax.persistence.Entity
 
 enum class RedactionProcessAction {
     SELECT_REDACTABLE_ELEMS, REDACT

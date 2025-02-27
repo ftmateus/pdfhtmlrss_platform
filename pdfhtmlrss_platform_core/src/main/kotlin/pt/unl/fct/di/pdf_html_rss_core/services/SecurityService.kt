@@ -9,7 +9,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.util.io.pem.PemObject
-import org.bouncycastle.util.io.pem.PemObjectGenerator
 import org.bouncycastle.util.io.pem.PemReader
 import org.bouncycastle.util.io.pem.PemWriter
 import org.slf4j.Logger
@@ -19,9 +18,9 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
-import pt.unl.fct.di.pdf_html_rss_core.dto.PAdESKeyEntity
-import pt.unl.fct.di.pdf_html_rss_core.dto.RSSKeyPairEntity
-import pt.unl.fct.di.pdf_html_rss_core.dto.User
+import pt.unl.fct.di.pdf_html_rss_core.data.PAdESKeyEntity
+import pt.unl.fct.di.pdf_html_rss_core.data.RSSKeyPairEntity
+import pt.unl.fct.di.pdf_html_rss_core.data.User
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.PAdESKeyRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RSSKeyPairRepository
@@ -33,7 +32,6 @@ import java.nio.file.Files
 import java.security.*
 import java.security.cert.Certificate
 import java.security.interfaces.RSAPrivateKey
-import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
@@ -95,7 +93,7 @@ class SecurityService() {
         val securityContext: SecurityContext = SecurityContextHolder.getContext()
         val authentication: Authentication = securityContext.authentication
         val principal: Any = authentication.principal
-        return if (principal is pt.unl.fct.di.pdf_html_rss_core.dto.User)
+        return if (principal is pt.unl.fct.di.pdf_html_rss_core.data.User)
             principal
         else null
     }

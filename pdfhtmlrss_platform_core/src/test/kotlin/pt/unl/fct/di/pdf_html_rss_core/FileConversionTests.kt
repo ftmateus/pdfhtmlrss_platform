@@ -10,15 +10,13 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
-import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.FileConversionService
-import pt.unl.fct.di.pdf_html_rss_core.services.SecurityService
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.ByteArrayInputStream
 import java.io.File
 import pt.unl.fct.di.pdf_html_rss_core.utils.toSha256
-import pt.unl.fct.di.pdf_html_rss_core.utils.verifySha256
 
 
 @SpringBootTest

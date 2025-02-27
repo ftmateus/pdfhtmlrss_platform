@@ -1,10 +1,9 @@
 package pt.unl.fct.di.pdf_html_rss_core.repositories
 
-import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
-import pt.unl.fct.di.pdf_html_rss_core.dto.User
+import pt.unl.fct.di.pdf_html_rss_core.data.User
 import java.util.*
 
 @Repository

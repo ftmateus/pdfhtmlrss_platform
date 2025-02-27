@@ -5,12 +5,11 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.context.support.WithUserDetails
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
-import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
-import pt.unl.fct.di.pdf_html_rss_core.dto.RedactionProcess
-import pt.unl.fct.di.pdf_html_rss_core.dto.RedactionProcessAction
+import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.data.RedactionProcess
+import pt.unl.fct.di.pdf_html_rss_core.data.RedactionProcessAction
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.RedactionProcessService

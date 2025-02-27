@@ -1,15 +1,11 @@
-package pt.unl.fct.di.pdf_html_rss_core.dto
+package pt.unl.fct.di.pdf_html_rss_core.data
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import lombok.AllArgsConstructor
-import lombok.NoArgsConstructor
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
-import java.security.KeyPair
-import java.util.stream.Collectors
 import javax.persistence.*
 
 @JsonDeserialize

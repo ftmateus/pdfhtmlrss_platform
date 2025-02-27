@@ -1,4 +1,4 @@
-package pt.unl.fct.di.pdf_html_rss_core.dto
+package pt.unl.fct.di.pdf_html_rss_core.data
 
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.text.pdf.PdfReader

@@ -1,8 +1,5 @@
-package pt.unl.fct.di.pdf_html_rss_core.dto
+package pt.unl.fct.di.pdf_html_rss_core.data
 
-import lombok.AllArgsConstructor
-import lombok.NoArgsConstructor
-import java.security.Key
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.PublicKey

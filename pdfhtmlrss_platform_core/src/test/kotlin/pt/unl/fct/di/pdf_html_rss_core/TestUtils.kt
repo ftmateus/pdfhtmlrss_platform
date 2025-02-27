@@ -3,14 +3,9 @@ package pt.unl.fct.di.pdf_html_rss_core
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.params.provider.Arguments
-import org.springframework.cglib.core.Block
-import org.w3c.dom.Document
-import pt.unl.fct.di.pdf_html_rss_core.dto.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.utils.encodeAsHex
 import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
-import java.io.OutputStream
 import java.util.stream.IntStream
 import java.util.stream.Stream
 import kotlin.streams.toList
