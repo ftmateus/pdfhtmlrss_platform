@@ -16,10 +16,6 @@ import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletResponse
 
-
-//import kotlin.io.encoding.Base64
-
-
 @RestController
 @RequestMapping(value = ["/"])
 class RedactableSignaturesRestController {
@@ -81,12 +77,6 @@ class RedactableSignaturesRestController {
         val contentType = URLConnection.guessContentTypeFromName(tempFile.name)
             .let { MediaType.valueOf(it) }
 
-//        val contentType = when(tempFile.extension) {
-//            "pdf" -> MediaType.APPLICATION_PDF
-//            "html" -> MediaType.TEXT_HTML
-//            else -> MediaType.TEXT_PLAIN
-//        }
-
         return ResponseEntity.ok()
             .contentType(contentType)
             .body(InputStreamResource(tempFile.inputStream()));
@@ -144,15 +134,7 @@ class RedactableSignaturesRestController {
     fun getRedactionProcess(
         @PathVariable processId: String
     ) : RedactionProcess {
-        val loggedInUser = securityService.getLoggedInUser() ?:
-            throw ResponseStatusException(HttpStatus.FORBIDDEN)
-
-        val process = redactionProcessService.getRedactionProcess(processId)
-
-        if(process.userId != loggedInUser.userId)
-            throw ResponseStatusException(HttpStatus.FORBIDDEN)
-
-        return process;
+        return redactionProcessService.getRedactionProcess(processId);
     }
 
     @PostMapping("/sign/{processId}")
@@ -164,26 +146,21 @@ class RedactableSignaturesRestController {
         if(elementsToRedact.isEmpty())
             throw ResponseStatusException(HttpStatus.BAD_REQUEST)
 
-        try {
-            ByteArrayOutputStream().use { out ->
-                val process = redactionProcessService
-                    .finalizeRedactionProcess(
-                        processId,
-                        elementsToRedact,
-                        out
-                    )
+        ByteArrayOutputStream().use { out ->
+            val process = redactionProcessService
+                .finalizeRedactionProcess(
+                    processId,
+                    elementsToRedact,
+                    out
+                )
 
-                response.contentType = process.fileType
+            response.contentType = process.fileType
 
-                val docBytes = out.toByteArray()
+            val docBytes = out.toByteArray()
 
-                response.outputStream.use {
-                    docBytes.inputStream().copyTo(it)
-                }
+            response.outputStream.use {
+                docBytes.inputStream().copyTo(it)
             }
-        } catch(e : Exception) {
-            e.printStackTrace()
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.localizedMessage)
         }
     }
 
@@ -191,9 +168,7 @@ class RedactableSignaturesRestController {
     fun cancelRedactionProcess(
         @PathVariable processId : String
     ) {
-        val process = getRedactionProcess(processId)
-
-        redactionProcessService.deleteRedactionProcess(process)
+        redactionProcessService.deleteRedactionProcess(processId)
     }
 
     @PostMapping("/sign")
@@ -241,7 +216,7 @@ class RedactableSignaturesRestController {
 
     private fun checkIfFileTypeIsSupported(type : MediaType) {
         if(SUPPORTED_UPLOAD_MIME_TYPES.none { it == type })
-            throw ResponseStatusException(HttpStatus.NOT_ACCEPTABLE)
+            throw ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
     }
 
 }

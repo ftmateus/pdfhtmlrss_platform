@@ -99,7 +99,7 @@ class UserService : UserDetailsService {
             }
     }
 
-    //TODO Maybe give responsability to database
+    //TODO Maybe give responsibility to database
     fun generateUserId() : Long {
         return generateSequence {
             Random.nextLong(100, Long.MAX_VALUE)

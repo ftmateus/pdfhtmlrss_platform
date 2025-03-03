@@ -10,7 +10,9 @@ import org.w3c.dom.Document
 import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.data.RedactionProcess
 import pt.unl.fct.di.pdf_html_rss_core.data.RedactionProcessAction
+import pt.unl.fct.di.pdf_html_rss_core.exceptions.ForbiddenAccessException
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
+import pt.unl.fct.di.pdf_html_rss_core.exceptions.ResourceNotFoundException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import pt.unl.fct.di.pdf_html_rss_core.utils.compressGZip
@@ -22,10 +24,6 @@ import java.util.*
 
 @Service
 class RedactionProcessService {
-
-    companion object {
-
-    }
 
     @Autowired
     private lateinit var securityService: SecurityService
@@ -73,8 +71,7 @@ class RedactionProcessService {
         pdfFile : PDFFileWrapper,
         action : RedactionProcessAction
     ) : RedactionProcess {
-        val loggedInUser = securityService.getLoggedInUser()
-            ?: throw PDFHTMLRSSException()
+        val loggedInUser = securityService.getLoggedInUser(true)
 
         val signatureVerificationReport = pdfManipulationService
             .verifyPdfDocumentSignatures(pdfFile);
@@ -107,7 +104,7 @@ class RedactionProcessService {
 
         return RedactionProcess(
             taskId = taskId,
-            userId = loggedInUser.userId,
+            userId = loggedInUser!!.userId,
             tmpHtmlFile = tmpHtmlFile.name,
             tmpPdfFile = tmpPdfFile.name,
             fileType = MediaType.APPLICATION_PDF.toString(),
@@ -120,7 +117,7 @@ class RedactionProcessService {
         htmlFileInputStream : InputStream,
         action : RedactionProcessAction
     ) : RedactionProcess {
-        val loggedInUser = securityService.getLoggedInUser() ?: throw PDFHTMLRSSException()
+        val loggedInUser = securityService.getLoggedInUser(true)
 
         val taskId = UUID.randomUUID().toString();
 
@@ -132,7 +129,7 @@ class RedactionProcessService {
 
         return RedactionProcess(
             taskId = taskId,
-            userId = loggedInUser.userId,
+            userId = loggedInUser!!.userId,
             tmpHtmlFile = tmpHtmlFile.name,
             tmpPdfFile = null,
             fileType = MediaType.TEXT_HTML.toString(),
@@ -140,9 +137,12 @@ class RedactionProcessService {
         ).also { redactionProcessRepository.save(it) }
     }
 
+
     fun deleteRedactionProcess(
-        redactionProcess : RedactionProcess
+        processId : String
     ) {
+        val redactionProcess = getRedactionProcess(processId)
+
         redactionProcessRepository.deleteById(redactionProcess.taskId)
 
         temporaryFilesRepository
@@ -159,11 +159,10 @@ class RedactionProcessService {
         elementsToRedact : List<String>,
         outputStream : OutputStream,
     ) : RedactionProcess {
-        //TODO change all exceptions
         val process = getRedactionProcess(processId)
 
         val htmlTmpFile = temporaryFilesRepository.getTempFile(process.tmpHtmlFile)
-            ?: throw PDFHTMLRSSException()
+            ?: throw ResourceNotFoundException(process.tmpHtmlFile)
 
         val htmlTmpDom = htmlTmpFile.inputStream().use {
             domService.parseDocument(it)
@@ -196,12 +195,13 @@ class RedactionProcessService {
         return process
     }
 
-    /*
-     * TODO change exceptions
-     */
     fun getRedactionProcess(processId : String ) : RedactionProcess {
         val process = redactionProcessRepository.findById(processId)
-            .orElseThrow { throw PDFHTMLRSSException() }
+            .orElseThrow { ResourceNotFoundException("Process id: $processId") }
+
+        val loggedInUser = securityService.getLoggedInUser()
+        if(loggedInUser?.userId != process.userId && !loggedInUser!!.isAdmin)
+            throw ForbiddenAccessException("Process id: $processId")
 
         return process;
     }
@@ -212,7 +212,7 @@ class RedactionProcessService {
     ) : PDFFileWrapper {
         val tmpPdfFile = temporaryFilesRepository.getTempFile(
             process.tmpPdfFile ?: ""
-        ) ?: throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR)
+        ) ?: throw ResourceNotFoundException(process.tmpPdfFile ?: "")
 
         val pdf = if(process.action == RedactionProcessAction.REDACT) {
             fileConversionService.generatePDFFromHTML(processedSignedDoc)

@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service
 import pt.unl.fct.di.pdf_html_rss_core.data.PAdESKeyEntity
 import pt.unl.fct.di.pdf_html_rss_core.data.RSSKeyPairEntity
 import pt.unl.fct.di.pdf_html_rss_core.data.User
+import pt.unl.fct.di.pdf_html_rss_core.exceptions.ForbiddenAccessException
+import pt.unl.fct.di.pdf_html_rss_core.exceptions.NotAuthenticatedException
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.PAdESKeyRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RSSKeyPairRepository
@@ -40,7 +42,7 @@ import javax.crypto.Cipher
 
 
 @Service
-class SecurityService() {
+class SecurityService {
 
     var logger: Logger = LoggerFactory.getLogger(SecurityService::class.java)
 
@@ -51,9 +53,6 @@ class SecurityService() {
     private lateinit var pAdESKeyRepository: PAdESKeyRepository;
 
     @Autowired
-    private lateinit var temporaryFilesRepository: TemporaryFilesRepository
-
-    @Autowired
     private lateinit var wpProvider: WPProvider
 
     @Autowired
@@ -61,12 +60,6 @@ class SecurityService() {
 
     @Autowired
     private lateinit var keystoreService: KeystoreService;
-
-
-//    lateinit var keyPair : KeyPair;
-
-//    val publicKey : PublicKey get() = keyPair.public;
-//    val privateKey : PrivateKey get() = keyPair.private;
 
     companion object {
         const val SERIALIZED_KEYPAIR_FILE = "keyPair.ser"
@@ -89,20 +82,21 @@ class SecurityService() {
             }
     }
 
-    fun getLoggedInUser() : User? {
+    fun getLoggedInUser(throwException : Boolean = false) : User? {
         val securityContext: SecurityContext = SecurityContextHolder.getContext()
         val authentication: Authentication = securityContext.authentication
         val principal: Any = authentication.principal
         return if (principal is pt.unl.fct.di.pdf_html_rss_core.data.User)
             principal
+        else if(throwException) throw NotAuthenticatedException()
         else null
     }
 
     fun getRSSKeyPairFromLoggedInUser() : RSSKeyPairEntity {
-        val currentUser = getLoggedInUser() ?: throw PDFHTMLRSSException();
+        val currentUser = getLoggedInUser(true);
 
         return rssKeyPairRepository
-            .findById(currentUser.userId)
+            .findById(currentUser!!.userId)
             .orElseThrow { PDFHTMLRSSException() }
     }
 
