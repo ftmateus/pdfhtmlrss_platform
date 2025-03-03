@@ -12,6 +12,8 @@ import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.data.SignatureVerificationReport
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.services.PAdESService.Companion.SIGNATURE_FIELD
+import pt.unl.fct.di.pdf_html_rss_core.utils.decompressGZip
+import pt.unl.fct.di.pdf_html_rss_core.utils.compressGZip
 import java.io.*
 
 
@@ -29,9 +31,6 @@ class PDFManipulationService {
          */
         const val ATTACHED_SHORT_RSS_FILE_NAME = "rss.xml"
     }
-
-    @Autowired
-    private lateinit var compressionService: CompressionService
 
     @Autowired
     lateinit var fileConversionService : FileConversionService;
@@ -125,7 +124,7 @@ class PDFManipulationService {
             throw PDFHTMLRSSException("")
 
         val decompressedSig = sigData.inputStream().use {
-            compressionService.decompressGZip(it)
+            decompressGZip(it)
         }
 
         //TODO Use Signature XMLRSS class
@@ -149,7 +148,7 @@ class PDFManipulationService {
         val signatureDom = xhtmlRedactableSignaturesService.signDocument(htmlDom);
 
         val compressedHtml = ByteArrayOutputStream().use {
-            compressionService.compressGZip(it) { gzipos ->
+            compressGZip(it) { gzipos ->
                 domService.writeDocumentToStream(signatureDom, gzipos)
             }
             it.toByteArray()

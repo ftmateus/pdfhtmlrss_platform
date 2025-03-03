@@ -13,6 +13,7 @@ import pt.unl.fct.di.pdf_html_rss_core.data.RedactionProcessAction
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
+import pt.unl.fct.di.pdf_html_rss_core.utils.compressGZip
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
@@ -43,9 +44,6 @@ class RedactionProcessService {
 
     @Autowired
     lateinit var pdfManipulationService: PDFManipulationService;
-
-    @Autowired
-    lateinit var compressionService : CompressionService;
 
     @Autowired
     lateinit var xhtmlRedactableSignatureService: XHTMLRedactableSignatureService
@@ -221,7 +219,7 @@ class RedactionProcessService {
         } else PDFFileWrapper(tmpPdfFile)
 
         val compressedHtml = ByteArrayOutputStream().use {
-            compressionService.compressGZip(it) { gzipos ->
+            compressGZip(it) { gzipos ->
                 domService.writeDocumentToStream(processedSignedDoc, gzipos)
             }
             it.toByteArray()

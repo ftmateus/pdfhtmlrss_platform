@@ -18,25 +18,23 @@ data class SignatureVerificationReport(
     val rssPAdESAlgorithm : String? = null,
     val rssXMLAlgorithm : String? = null,
 ) {
-    fun isViolated() : Boolean {
-        return externalSignaturesViolated()
+    fun isViolated() : Boolean = externalSignaturesViolated()
             || rssPAdESSignatureViolated()
             || rssXMLSignatureViolated()
-    }
 
-    fun externalSignaturesViolated() : Boolean {
-        return isSigned && hasExternalSignatures && externalSignaturesViolated;
-    }
+    fun externalSignaturesViolated() : Boolean  = isSigned
+            && hasExternalSignatures
+            && externalSignaturesViolated;
 
-    fun rssPAdESSignatureViolated() : Boolean {
-        return isSigned && hasRSSPAdESSignature && rssPAdESViolated;
-    }
+    fun rssPAdESSignatureViolated() : Boolean = isSigned
+            && hasRSSPAdESSignature
+            && rssPAdESViolated;
 
-    fun rssXMLSignatureViolated() : Boolean {
-        return isSigned && hasRSSXMLSignature && rssXMLViolated;
-    }
+    fun rssXMLSignatureViolated() : Boolean = isSigned
+            && hasRSSXMLSignature
+            && rssXMLViolated
 
-    fun hasValidRSSSignature() : Boolean {
-        return isSigned && hasRSSPAdESSignature && hasRSSXMLSignature;
-    }
+    fun hasValidRSSSignature() : Boolean = isSigned
+            && hasRSSPAdESSignature
+            && hasRSSXMLSignature;
 }

@@ -7,8 +7,9 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
-import pt.unl.fct.di.pdf_html_rss_core.services.CompressionService
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
+import pt.unl.fct.di.pdf_html_rss_core.utils.compressGZip
+import pt.unl.fct.di.pdf_html_rss_core.utils.decompressGZip
 import java.io.File
 
 @SpringBootTest
@@ -16,9 +17,6 @@ class CompressionTests {
 
     @Autowired
     lateinit var temporaryFilesRepository: TemporaryFilesRepository
-
-    @Autowired
-    lateinit var compressionService: CompressionService;
 
     @ParameterizedTest
     @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#htmlTestFiles"])
@@ -36,7 +34,7 @@ class CompressionTests {
         val originalData = file.readBytes();
 
         val compressedData = originalData.inputStream().use {
-            compressionService.compressGZip(it)
+            compressGZip(it)
         }
 
         temporaryFilesRepository.writeToTempFile(
@@ -50,7 +48,7 @@ class CompressionTests {
         assert(compressionRatio < 1.0);
 
         val decompressedData = compressedData.inputStream().use {
-            compressionService.decompressGZip(it);
+            decompressGZip(it);
         }
 
         temporaryFilesRepository.writeToTempFile(

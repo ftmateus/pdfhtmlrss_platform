@@ -8,6 +8,9 @@ import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
+import java.util.stream.Collectors
+import kotlin.streams.asSequence
+import kotlin.streams.toList
 
 @Repository
 class TemporaryFilesRepository {
@@ -93,18 +96,6 @@ class TemporaryFilesRepository {
         return file
     }
 
-    //TODO every minute, maybe change it
-    @Scheduled(fixedRate = 60*1000)
-    fun pruneTemporaryFiles() {
-        for(temporaryFile in temporaryFilesToDelete) {
-            val file = File(temporaryFolder, temporaryFile)
-            if(isTemporaryFileExpired(file)) {
-                temporaryFilesToDelete.remove(temporaryFile)
-                file.delete()
-            }
-        }
-    }
-
     fun createUnixNamedPipe() : File {
         val pipeFile = File(temporaryFolder, "fifo" + UUID.randomUUID().toString())
 
@@ -116,5 +107,19 @@ class TemporaryFilesRepository {
 
     fun getNewTmpFileWithoutCreating(fileExtension : String = "") : File {
         return File(temporaryFolder, "${UUID.randomUUID()}${fileExtension}")
+    }
+
+    //Every 5 minutes
+    @Scheduled(fixedRate = 5*60*1000)
+    fun pruneTemporaryFiles() {
+        val expiredFiles :List<File> = temporaryFilesToDelete.stream()
+            .map { File(temporaryFolder, it) }
+            .filter { isTemporaryFileExpired(it) }
+            .toList()
+
+        for(temporaryFile in expiredFiles) {
+            temporaryFile.delete()
+            temporaryFilesToDelete.remove(temporaryFile.name)
+        }
     }
 }
