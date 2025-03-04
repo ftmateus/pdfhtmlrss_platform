@@ -4,6 +4,31 @@ let redactionProcess = window.location.pathname.split("/")
 
 localStorage.setItem("elementsToRedact", JSON.stringify([]))
 
+let signatureNode = document.getElementsByTagName("signature")[0]
+
+let allowedRedactableElems = []
+
+if(signatureNode) {
+    let pointers = signatureNode.getElementsByTagName("pointer")
+    for(let i = 0; i < pointers.length; i++) {
+        let p = pointers[i]
+        let uriAttr = p.attributes['uri']
+        if(!uriAttr || !uriAttr.nodeValue.startsWith("#xpath"))
+            continue
+
+        let xpathUri = uriAttr.nodeValue
+            .match(/#xpath\((.*)\)/)[1]
+
+        let elem = document.evaluate(xpathUri, document)?.iterateNext();
+
+        allowedRedactableElems.push(elem)
+    }
+}
+
+allowedRedactableElems.forEach(elem => {
+    elem.setAttribute("redactable", "")
+})
+
 window.onclick = function (e) {
     let selectedElem = e.target;
 
@@ -29,6 +54,10 @@ window.ondblclick = function(e) {
 
     if(selectedElem?.getAttribute("redacted") !== null)
         return
+
+    if(allowedRedactableElems.length > 0
+    && !allowedRedactableElems.includes(selectedElem))
+        return;
 
     selectedElem.setAttribute("redacted", "");
     //clears all text selections

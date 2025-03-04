@@ -1,5 +1,6 @@
 package pt.unl.fct.di.pdf_html_rss_core.services
 
+import de.unipassau.wolfgangpopp.xmlrss.wpprovider.utils.XMLUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
@@ -132,6 +133,10 @@ class FileConversionService {
 
     fun generatePDFFromHTML(domDoc : org.w3c.dom.Document) : PDFFileWrapper
     {
+//        val signatureNode = XMLUtils.getSignatureNode(domDoc)
+//
+//        signatureNode?.parentNode?.removeChild(signatureNode)
+
         ByteArrayOutputStream().use { out ->
             val renderer = ITextRenderer()
             renderer.sharedContext.apply {

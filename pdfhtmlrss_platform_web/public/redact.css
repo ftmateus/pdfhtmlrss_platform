@@ -22,3 +22,11 @@
 img[redacted] {
     filter: blur(25px);
 }
+
+*[redactable] {
+    border: 1px solid orange;
+}
+
+signature {
+    visibility: hidden;
+}

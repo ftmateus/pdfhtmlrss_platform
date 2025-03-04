@@ -31,7 +31,7 @@ class User(
 
     @Column(name = "role")
     @JsonIgnore
-    var role : String
+    var role : String?
 
 ) : UserDetails {
     constructor() : this(-1, "", "", "", "ROLE_USER")
@@ -44,6 +44,8 @@ class User(
                 SimpleGrantedAuthority("ROLE_USER"),
                 SimpleGrantedAuthority("ROLE_ADMIN")
             )
+        if(role == null || role?.isBlank() == true)
+            return arrayListOf(SimpleGrantedAuthority("ROLE_USER"))
 
         return arrayListOf(SimpleGrantedAuthority(role ))
     }

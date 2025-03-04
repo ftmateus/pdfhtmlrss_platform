@@ -29,5 +29,6 @@ class DocumentBuilderConfig {
 //                setFeature("http://xml.org/sax/features/external-parameter-entities", false);
                 isValidating = true;
                 isNamespaceAware = true
+                isIgnoringElementContentWhitespace = true
             }
 }

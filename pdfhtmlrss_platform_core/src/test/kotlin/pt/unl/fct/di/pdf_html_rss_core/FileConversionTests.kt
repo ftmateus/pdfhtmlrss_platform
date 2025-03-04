@@ -87,7 +87,6 @@ class FileConversionTests {
 
         assertIsValidPdfFile(reconvertedPdfDoc);
 
-        //FIXME reconverted PDF generating more (blank) pages than it should
         assertEquals(
             pdfFile.numberOfPages,
             reconvertedPdfDoc.numberOfPages

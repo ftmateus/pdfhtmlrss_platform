@@ -37,7 +37,7 @@
 <script setup lang="ts">
 
 import { ref } from 'vue';
-import {getRedactJsScriptUrl, getRedactJsStyleUrl} from "@/api";
+import {getRedactJsScriptUrl, getRedactCssSheetUrl} from "@/api";
 
 import '@/assets/style.css'
 
@@ -61,15 +61,16 @@ function injectRedactScript() {
   if(!documentViewIframe.value)
     return;
 
+  const redactStyle = document.createElement("link");
+  redactStyle.rel = "stylesheet";
+  redactStyle.type = "text/css";
+  redactStyle.href =  getRedactCssSheetUrl()
+  documentViewIframe.value.contentDocument.body.appendChild(redactStyle);
+
   const redactScript = document.createElement("script");
   redactScript.src =  getRedactJsScriptUrl()
   documentViewIframe.value.contentDocument.body.appendChild(redactScript);
 
-  const redactStyle = document.createElement("link");
-  redactStyle.rel = "stylesheet";
-  redactStyle.type = "text/css";
-  redactStyle.href =  getRedactJsStyleUrl()
-  documentViewIframe.value.contentDocument.body.appendChild(redactStyle);
 }
 
 // function handleSeparatorResize(e : MouseEvent) {

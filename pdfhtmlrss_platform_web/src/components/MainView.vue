@@ -16,8 +16,12 @@
           style="display: flex; flex-direction: column; align-items: center; width: 500px"
       >
         <button style="width: 150px" :disabled="!file || documentViewOpened" @click.prevent="handleOpenDocumentView">Open document view</button>
-        <div v-if="documentViewOpened">
-            Select the parts of the document to be redacted by double clicking.
+        <div v-if="documentViewOpened && operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">
+            Select the redactable parts of the document by double clicking.
+        </div>
+        <div v-if="documentViewOpened && operation == Operation.REDACT">
+            Redact the document by double clicking.
+            Only the elements with <label style="border: 1px solid orange;">orange border</label> are allowed.
         </div>
 <!--        <fieldset v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">-->
 <!--          <legend>Signature Options</legend>-->

@@ -160,6 +160,6 @@ export function getRedactJsScriptUrl() {
     return `${getSubsite()}redact.js`
 }
 
-export function getRedactJsStyleUrl() {
+export function getRedactCssSheetUrl() {
     return `${getSubsite()}redact.css`
 }

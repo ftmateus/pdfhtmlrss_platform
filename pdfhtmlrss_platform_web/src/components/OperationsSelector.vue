@@ -9,7 +9,7 @@ const currentOperation = defineModel()
 
 <template>
   <h3>What do you want to do with your document?</h3>
-  <div style="display: flex; justify-content: space-around; width: 100%">
+  <div style="display: flex; justify-content: space-around; width: 100%; flex-wrap: wrap; gap: 10px">
     <button
         v-bind:key="a" v-for="a in Object.values(Operation)"
         @click="() => currentOperation = a"
