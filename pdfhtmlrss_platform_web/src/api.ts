@@ -159,3 +159,7 @@ export function getTemporaryFileURL(
 export function getRedactJsScriptUrl() {
     return `${getSubsite()}redact.js`
 }
+
+export function getRedactJsStyleUrl() {
+    return `${getSubsite()}redact.css`
+}

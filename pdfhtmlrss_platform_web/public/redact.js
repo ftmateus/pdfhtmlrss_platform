@@ -1,55 +1,42 @@
 
-const redactedElementsPreviousStyles = new Map();
-
 let redactionProcess = window.location.pathname.split("/")
     .pop().split(".")[0]
 
 localStorage.setItem("elementsToRedact", JSON.stringify([]))
 
-console.log(redactionProcess)
-
-window.onclick = function(e) {
+window.onclick = function (e) {
     let selectedElem = e.target;
-    if(selectedElem?.getAttribute("redacted") !== null) {
-        let oldStyle = redactedElementsPreviousStyles.get(selectedElem);
-        for (const styleProperty in oldStyle) {
-            selectedElem.style[styleProperty] = oldStyle[styleProperty];
-        }
-        selectedElem.removeAttribute("redacted");
-        redactedElementsPreviousStyles.delete(selectedElem);
 
-        let elementsToRedact = JSON.parse(localStorage.getItem("elementsToRedact"))
-        let elementXpath = getElementXPath(selectedElem);
-        elementsToRedact = elementsToRedact.filter(a => a !== elementXpath)
-        localStorage.setItem("elementsToRedact", JSON.stringify(elementsToRedact));
-    } else {
-        selectedElem.setAttribute("redacted", "");
-        if(selectedElem.tagName === "IMG")
-            redactImageElement(selectedElem);
-        else
-            redactTextElement(selectedElem);
-        // let elementXpath = getElementXPath(selectedElem)
+    if(selectedElem.tagName === "BODY")
+        return
 
-        let elementsToRedact = JSON.parse(localStorage.getItem("elementsToRedact"))
-        elementsToRedact.push(getElementXPath(selectedElem));
-        localStorage.setItem("elementsToRedact", JSON.stringify(elementsToRedact));
-    }
+    if(selectedElem?.getAttribute("redacted") == null)
+        return
+
+    selectedElem.removeAttribute("redacted");
+
+    let elementsToRedact = JSON.parse(localStorage.getItem("elementsToRedact"))
+    let elementXpath = getElementXPath(selectedElem);
+    elementsToRedact = elementsToRedact.filter(a => a !== elementXpath)
+    localStorage.setItem("elementsToRedact", JSON.stringify(elementsToRedact));
 }
 
-function redactTextElement(element) {
-    redactedElementsPreviousStyles.set(element, {
-        color : element.style.color,
-        backgroundColor : element.style.backgroundColor,
-    });
-    element.style.color = "black";
-    element.style.backgroundColor = "black";
-}
+window.ondblclick = function(e) {
+    let selectedElem = e.target;
 
-function redactImageElement(element) {
-    redactedElementsPreviousStyles.set(element, {
-        filter : element.style.filter,
-    });
-    element.style.filter = 'blur(25px)';
+    if(selectedElem.tagName === "BODY")
+        return
+
+    if(selectedElem?.getAttribute("redacted") !== null)
+        return
+
+    selectedElem.setAttribute("redacted", "");
+    //clears all text selections
+    window.getSelection().empty();
+
+    let elementsToRedact = JSON.parse(localStorage.getItem("elementsToRedact"))
+    elementsToRedact.push(getElementXPath(selectedElem));
+    localStorage.setItem("elementsToRedact", JSON.stringify(elementsToRedact));
 }
 
 function getElementXPath(element) {

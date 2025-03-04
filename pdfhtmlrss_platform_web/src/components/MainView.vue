@@ -17,7 +17,7 @@
       >
         <button style="width: 150px" :disabled="!file || documentViewOpened" @click.prevent="handleOpenDocumentView">Open document view</button>
         <div v-if="documentViewOpened">
-            Select the parts of the document to be redacted.
+            Select the parts of the document to be redacted by double clicking.
         </div>
 <!--        <fieldset v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">-->
 <!--          <legend>Signature Options</legend>-->

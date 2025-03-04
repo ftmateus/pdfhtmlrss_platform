@@ -2,10 +2,18 @@ button {
     background: powderblue;
     border-radius: 5px;
     height: 2.2rem;
-    cursor: pointer
+    cursor: pointer;
+
+    -webkit-transition: background-color 200ms linear;
+    -ms-transition: background-color 200ms linear;
+    transition: background-color 200ms linear;
 }
 
 button:hover:enabled {
+    -webkit-transition: background-color 200ms linear;
+    -ms-transition: background-color 200ms linear;
+    transition: background-color 200ms linear;
+
     background: #89d5d7;
 }
 

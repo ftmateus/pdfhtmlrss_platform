@@ -37,7 +37,7 @@
 <script setup lang="ts">
 
 import { ref } from 'vue';
-import {getRedactJsScriptUrl} from "@/api";
+import {getRedactJsScriptUrl, getRedactJsStyleUrl} from "@/api";
 
 import '@/assets/style.css'
 
@@ -64,6 +64,12 @@ function injectRedactScript() {
   const redactScript = document.createElement("script");
   redactScript.src =  getRedactJsScriptUrl()
   documentViewIframe.value.contentDocument.body.appendChild(redactScript);
+
+  const redactStyle = document.createElement("link");
+  redactStyle.rel = "stylesheet";
+  redactStyle.type = "text/css";
+  redactStyle.href =  getRedactJsStyleUrl()
+  documentViewIframe.value.contentDocument.body.appendChild(redactStyle);
 }
 
 // function handleSeparatorResize(e : MouseEvent) {
@@ -116,7 +122,7 @@ function injectRedactScript() {
 
 .separator {
   width: 20px;
-  background-color: black;
+  background-color: darkslategrey;
   cursor: col-resize;
 }
 
