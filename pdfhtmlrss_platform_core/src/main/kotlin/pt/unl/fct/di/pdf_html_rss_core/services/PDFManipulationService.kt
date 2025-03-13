@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
+import pt.unl.fct.di.pdf_html_rss_core.data.SignatureDerivationCheckReport
 import pt.unl.fct.di.pdf_html_rss_core.data.SignatureVerificationReport
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.services.PAdESService.Companion.SIGNATURE_FIELD
@@ -194,6 +195,21 @@ class PDFManipulationService {
             )
         }
         return null;
+    }
+
+    fun verifyDerivationFromOriginalFile(
+        redactedDocument : PDFFileWrapper,
+        originalDocument : PDFFileWrapper,
+    ) : SignatureDerivationCheckReport {
+        val redactedDocReport = verifyPdfDocumentSignatures(redactedDocument);
+
+        val originalDocReport = verifyPdfDocumentSignatures(originalDocument);
+
+        if(!redactedDocReport.isSigned || redactedDocReport.isViolated()
+        || !originalDocReport.isSigned || originalDocReport.isViolated())
+            return SignatureDerivationCheckReport(redactedDocReport, originalDocReport, false)
+
+        TODO()
     }
 
     fun verifyPdfDocumentSignatures(pdf : PDFFileWrapper) : SignatureVerificationReport {

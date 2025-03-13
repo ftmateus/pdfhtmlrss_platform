@@ -3,6 +3,7 @@ services:
       build: pdfhtmlrss_platform_web
       ports:
         - "8080:80"
+      restart: unless-stopped
       hostname:
         frontend
       networks:
@@ -16,6 +17,7 @@ services:
       context: ./
 #        ports:
 #          - 8081:8080
+    restart: unless-stopped
     hostname:
       api
     volumes:

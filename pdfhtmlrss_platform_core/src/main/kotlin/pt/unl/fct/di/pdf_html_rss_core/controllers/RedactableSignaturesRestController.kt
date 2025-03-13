@@ -83,15 +83,42 @@ class RedactableSignaturesRestController {
             .body(InputStreamResource(tempFile.inputStream()));
     }
 
+    @PostMapping("/verify/derivative")
+    fun verifyDocumentDerivationFromOriginalFile(
+        @RequestParam("redactedFile") redactedFile: MultipartFile,
+        @RequestParam("originalFile") originalFile: MultipartFile,
+    ) : SignatureDerivationCheckReport {
+        val redactedType = MediaType.parseMediaType(redactedFile.contentType?: "")
+            .also { checkIfFileTypeIsSupported(it) }
 
-    //TODO post or get?
+        val originalType = MediaType.parseMediaType(originalFile.contentType?: "")
+            .also { checkIfFileTypeIsSupported(it) }
+
+        if(redactedType != MediaType.APPLICATION_PDF
+        || redactedType != originalType)
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST)
+
+        val redactedPdfDoc = redactedFile.inputStream.use {
+            it.readBytes()
+        }.let { PDFFileWrapper(redactedFile.name, it) }
+
+        val originalPdfDoc = redactedFile.inputStream.use {
+            it.readBytes()
+        }.let { PDFFileWrapper(redactedFile.name, it) }
+
+        return pdfManipulationService.verifyDerivationFromOriginalFile(
+            redactedPdfDoc, originalPdfDoc
+        )
+    }
+
     @PostMapping("/verify")
     fun verifyDocument(
         @RequestParam("file") file: MultipartFile,
 //        @RequestParam("type") type: MediaType,
     ) : SignatureVerificationReport {
         val type = MediaType.parseMediaType(file.contentType?: "")
-        checkIfFileTypeIsSupported(type)
+            .also { checkIfFileTypeIsSupported(it) }
+
 
         val pdfDoc = file.inputStream.use {
             it.readBytes()

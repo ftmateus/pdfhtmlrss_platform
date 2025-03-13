@@ -15,7 +15,7 @@ const val PENDING_REDACTION_TASK_TTL = 30 * 60L;
 //@Entity
 @RedisHash("redaction-processes", timeToLive = PENDING_REDACTION_TASK_TTL)
 class RedactionProcess(
-    @Id
+    @Id //TODO change to process id
     val taskId : String,
     val userId : Long,
     val fileType : String,
