@@ -33,10 +33,7 @@ function handleFileDrop(e : DragEvent) {
       @dragleave.prevent
       @dragover.prevent
   >
-    <p>
-      <i class="pi pi-file-import" style="font-size: 1.0rem"></i>
-      Drag file to this <i>drop zone</i>.
-    </p>
+    <slot></slot>
     <input
         type="file"
         id="fileElem"
@@ -53,10 +50,12 @@ function handleFileDrop(e : DragEvent) {
 <style scoped>
 #drop_zone {
   border: 1px solid black;
-  width: 500px;
-  height: 100px;
+  width: 480px;
   border-radius: 20px;
   background-color: lightgray;
+  box-sizing: border-box;
+  padding-right: 20px;
+  padding-left: 20px;
 }
 
 

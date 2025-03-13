@@ -1,12 +1,12 @@
 <script setup lang="ts">
 
 import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
-import { defineProps, defineEmits } from "vue"
+import { defineProps } from "vue"
 
 const props = defineProps<{
-  report : SignatureVerificationReport
+  report : SignatureVerificationReport,
+  title : String,
 }>();
-const emit = defineEmits(['close-window'])
 
 const generalSignatureProperties = [
   ["Issued by: ", () => props.report.issuedBy],
@@ -42,8 +42,8 @@ const rssSignatureProperties = [
 </script>
 
 <template>
-  <dialog open style="padding-right: 32px; padding-left: 32px;">
-    <h2>Signature details</h2>
+  <div>
+    <h2>{{ title }}</h2>
     <div v-for="[label, value] in generalSignatureProperties" v-bind:key="label">
       <label>{{ label }}</label>
       {{ value() }}
@@ -51,14 +51,14 @@ const rssSignatureProperties = [
     <div v-if="report.hasExternalSignatures">
       <div v-for="[label, value, propColor] in externalSignaturesProperties" v-bind:key="label">
         <label>{{ label }}</label>
-        <label :style="{color: propColor?.() ?? 'black'}">{{ value() }}</label>
+        <label :style="{color: propColor?.() ?? 'black', fontWeight : 'bold'}">{{ value() }}</label>
       </div>
     </div>
     <div v-if="report.hasRSSPAdESSignature">
       <h4>PAdES</h4>
       <div v-for="[label, value, propColor] in padesSignatureProperties" v-bind:key="label">
         <label>{{ label }}</label>
-        <label :style="{color: propColor?.() ?? 'black'}">{{ value() }}</label>
+        <label :style="{color: propColor?.() ?? 'black', fontWeight : 'bold'}">{{ value() }}</label>
       </div>
     </div>
     <h5 v-else style="color: #b9b900">Document was not signed by this tool!</h5>
@@ -67,24 +67,14 @@ const rssSignatureProperties = [
       <h4>RSS</h4>
       <div v-for="[label, value, propColor] in rssSignatureProperties" v-bind:key="label">
         <label>{{ label }}</label>
-        <label :style="{color: propColor?.() ?? 'black'}">{{ value() }}</label>
+        <label :style="{color: propColor?.() ?? 'black', fontWeight : 'bold'}">{{ value() }}</label>
       </div>
     </div>
     <h5 v-else-if="report.hasRSSPAdESSignature" style="color: #b9b900">No Redactable Signature is present!</h5>
-    <button @click="() => emit('close-window')" style="margin-top: 24px">Close</button>
-  </dialog>
+
+  </div>
 </template>
 
-<style>
-  dialog::backdrop {
-    background: rgba(0, 0, 0, 0.5);
-  }
+<style scoped>
 
-  dialog {
-    border-radius: 30px;
-  }
-
-  closeBtn {
-    right: 0px !important;
-  }
 </style>

@@ -1,6 +1,20 @@
 
-let redactionProcess = window.location.pathname.split("/")
+let redactionProcessId = window.location.pathname.split("/")
     .pop().split(".")[0]
+
+function getSubsite() {
+    // Get the current path from the URL
+    const path = window.location.pathname;
+
+    // Extract the subsite part
+    // eslint-disable-next-line no-useless-escape
+    const subsiteMatch = path.match(/^\/([^\/]+)\/?/);
+    // return subsiteMatch ? subsiteMatch[0] : window.location.href;
+    return subsiteMatch ? subsiteMatch[0] : "/";
+}
+
+const apiPrefix = `${getSubsite()}`
+
 
 localStorage.setItem("elementsToRedact", JSON.stringify([]))
 
@@ -8,12 +22,23 @@ let signatureNode = document.getElementsByTagName("signature")[0]
 
 let allowedRedactableElems = []
 
-if(signatureNode) {
+let redactionProcess = null;
+
+fetch(`${apiPrefix}/sign/${redactionProcessId}`, {
+    method : 'GET'
+})
+.then(r => r.json())
+.then(j => {
+    redactionProcess =  j;
+    console.log(redactionProcess)
+    if(!signatureNode || redactionProcess.action !== "REDACT")
+        return;
+
     let pointers = signatureNode.getElementsByTagName("pointer")
-    for(let i = 0; i < pointers.length; i++) {
+    for (let i = 0; i < pointers.length; i++) {
         let p = pointers[i]
         let uriAttr = p.attributes['uri']
-        if(!uriAttr || !uriAttr.nodeValue.startsWith("#xpath"))
+        if (!uriAttr || !uriAttr.nodeValue.startsWith("#xpath"))
             continue
 
         let xpathUri = uriAttr.nodeValue
@@ -25,8 +50,12 @@ if(signatureNode) {
     }
 }
 
-allowedRedactableElems.forEach(elem => {
-    elem.setAttribute("redactable", "")
+    if (allowedRedactableElems.length === 0 && redactionProcess.action === "REDACT")
+        allowedRedactableElems = null;
+
+    allowedRedactableElems?.forEach(elem => {
+        elem.setAttribute("redactable", "")
+    })
 })
 
 window.onload = function() {
@@ -49,7 +78,6 @@ window.onclick = function (e) {
 
     let elementsToRedact = JSON.parse(localStorage.getItem("elementsToRedact"))
     let elementXpath = getElementXPath(selectedElem);
-    console.log(elementXpath);
     elementsToRedact = elementsToRedact.filter(a => a !== elementXpath)
     localStorage.setItem("elementsToRedact", JSON.stringify(elementsToRedact));
 }
@@ -63,8 +91,8 @@ window.ondblclick = function(e) {
     if(selectedElem?.getAttribute("redacted") !== null)
         return
 
-    if(allowedRedactableElems.length > 0
-    && !allowedRedactableElems.includes(selectedElem))
+    if(!allowedRedactableElems?.includes(selectedElem)
+    && redactionProcess.action === "REDACT")
         return;
 
     selectedElem.setAttribute("redacted", "");

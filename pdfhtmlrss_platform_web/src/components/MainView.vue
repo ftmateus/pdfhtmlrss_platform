@@ -10,12 +10,21 @@
     ">
       <UserArea @logout="() => documentViewOpened = false"/>
       <OperationsSelector v-model="operation" @update:modelValue="dismissToastNotification"/>
-      <FileSelector :set-file="setFile"/>
+      <FileSelector :set-file="setFile">
+        <p>Drag file to this <i>drop zone</i>.<span style="color: red">*</span></p>
+      </FileSelector>
+      <div v-if="operation == Operation.VERIFY">
+        <input name="derivation" type="checkbox" v-model="verifyFileDerivation"/>
+        <label for="derivation">Check derivation from original file.</label>
+      </div>
+      <FileSelector :set-file="setOriginalFileDerivation" style="background-color: lightsteelblue;" v-if="operation == Operation.VERIFY && verifyFileDerivation">
+        <p>Drop original document to verify if redacted document is derived from it.</p>
+      </FileSelector>
       <form
           v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS || operation == Operation.REDACT"
           style="display: flex; flex-direction: column; align-items: center; width: 500px"
       >
-        <button :disabled="!file || documentViewOpened" @click.prevent="handleOpenDocumentView">
+        <button :disabled="!mainFile || documentViewOpened" @click.prevent="handleOpenDocumentView">
           <i class="pi pi-external-link" style="font-size: 0.8rem"></i>
           Open document view
         </button>
@@ -55,11 +64,31 @@
       >
         {{ opToButtonTitle(operation) }}
       </button>
-      <SignatureVerificationReportWindow
+      <ModalWindow
           v-if="openSignatureVerifyReportWindow && signatureVerificationReport"
           @close-window="() => openSignatureVerifyReportWindow = false"
-          :report="signatureVerificationReport"
-      />
+      >
+          <SignatureVerificationReportView
+              title="Signature Details"
+              :report="signatureVerificationReport"
+          />
+      </ModalWindow>
+      <ModalWindow
+          v-if="openSignatureVerifyReportWindow && signatureVerificationReport && verifyFileDerivation"
+          @close-window="() => openSignatureVerifyReportWindow = false"
+      >
+        <h2>Signature Details</h2>
+        <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 1rem" >
+          <SignatureVerificationReportView
+              title="Original Document"
+              :report="signatureVerificationReport"
+          />
+          <SignatureVerificationReportView
+              title="Redacted Document"
+              :report="signatureVerificationReport"
+          />
+        </div>
+      </ModalWindow>
 <!--      <OperationButton-->
 <!--          :operation="operation"-->
 <!--          @click="handleOperationButtonClick"-->
@@ -87,14 +116,17 @@ import {
 } from "@/api";
 import {RedactionProcess} from "@/dto/RedactionProcess";
 import SignatureVerificationReport, {isSignatureValid} from "@/dto/SignatureVerificationReport";
-import SignatureVerificationReportWindow from "@/components/SignatureVerificationReportWindow.vue";
+import SignatureVerificationReportView from "@/components/SignatureVerificationReportView.vue";
 import ToastNotification from "@/components/ToastNotification.vue";
 import {ToastType} from "@/components/ToastNotificationType";
+import ModalWindow from "@/components/ModalWindow.vue";
 // import { RefSymbol } from '@vue/reactivity';
 
 
 
-const file = ref<File>();
+const mainFile = ref<File>();
+const verifyFileDerivation = ref<Boolean>();
+const originalFileDerivation = ref<File>();
 const operation = ref(Operation.SIGN_SELECT_REDACTABLE_ELEMS)
 const toastNotificationMessage = ref<String | undefined>()
 const toastNotificationType = ref<ToastType | undefined>(undefined)
@@ -124,7 +156,20 @@ watch(documentViewOpened, (newValue) => {
 
 
 async function setFile(newFile : File) {
-  file.value = newFile;
+  mainFile.value = newFile;
+  documentViewOpened.value = false
+
+  if(!redactionProcess.value)
+    return
+  try {
+    await cancelRedactionProcess(redactionProcess.value?.taskId)
+  } finally {
+    redactionProcess.value = undefined
+  }
+}
+
+async function setOriginalFileDerivation(newFile : File) {
+  originalFileDerivation.value = newFile;
   documentViewOpened.value = false
 
   if(!redactionProcess.value)
@@ -137,17 +182,17 @@ async function setFile(newFile : File) {
 }
 
 function checkFile() : boolean {
-  if(!file.value)
+  if(!mainFile.value)
     return false;
 
-  let fileType =  file.value.type
+  let fileType =  mainFile.value.type
 
   if(fileType != "application/pdf" && fileType != "text/html") {
     showToastNotification("File type not supported!", ToastType.ERROR);
     return false;
   }
 
-  if(file.value.size > 5 * 1024 * 1024) {
+  if(mainFile.value.size > 5 * 1024 * 1024) {
     showToastNotification("File is too big!", ToastType.ERROR);
     return false;
   }
@@ -159,14 +204,14 @@ function downloadBlobRequest(blob : Blob, filename? : string) {
   let fileUrl = window.URL.createObjectURL(blob);
   let a = document.createElement('a');
   a.href = fileUrl;
-  a.download = filename ?? (file.value?.name ?? "");
+  a.download = filename ?? (mainFile.value?.name ?? "");
   document.body.appendChild(a); // we need to append the element to the dom -> otherwise it will not work in firefox
   a.click();
   a.remove();
 }
 
 async function handleOpenDocumentView() {
-  if(!file.value || !checkFile())
+  if(!mainFile.value || !checkFile())
     return;
 
   if(operation.value != Operation.SIGN_SELECT_REDACTABLE_ELEMS
@@ -174,32 +219,36 @@ async function handleOpenDocumentView() {
     return;
 
   showToastNotification("Generating and opening document view...", ToastType.INFO);
-  
+
+
   try {
     if(!redactionProcess.value)
-      redactionProcess.value = await submitRedactionProcess(file.value, operation.value)
+      redactionProcess.value = await submitRedactionProcess(mainFile.value, operation.value)
     documentViewOpened.value = true
     dismissToastNotification()
   } catch(e : any) {
     showToastNotification(`Error: ${e.message}`, ToastType.ERROR);
   }
+
 }
 
 function isSubmitButtonDisabled() {
-  if(!file.value)
+  if(!mainFile.value)
     return true;
 
   switch(operation.value) {
     case Operation.SIGN_SELECT_REDACTABLE_ELEMS:
     case Operation.REDACT:
       return !documentViewOpened.value
+    case Operation.VERIFY:
+        return verifyFileDerivation.value && !originalFileDerivation.value;
     default:
       return false;
   }
 }
 
 function clearForm() {
-  file.value = undefined
+  mainFile.value = undefined
   redactionProcess.value = undefined
   documentViewOpened.value = false
 }
@@ -237,13 +286,13 @@ async function handleRedactOperation() {
     showToastNotification("Signing document...", ToastType.INFO)
 
   try {
-      let blob = await finishRedactionProcess(redactionProcess.value.taskId, elementsToRedact)
-      downloadBlobRequest(blob)
-      if(operation.value == Operation.REDACT)
-        showToastNotification("Document was successfully redacted!", ToastType.SUCCESS)
-      else
-        showToastNotification("Document was successfully signed!", ToastType.SUCCESS)
-      clearForm()
+    let blob = await finishRedactionProcess(redactionProcess.value.taskId, elementsToRedact)
+    downloadBlobRequest(blob)
+    if(operation.value == Operation.REDACT)
+      showToastNotification("Document was successfully redacted!", ToastType.SUCCESS)
+    else
+      showToastNotification("Document was successfully signed!", ToastType.SUCCESS)
+    clearForm()
   } catch (e : any) {
     showToastNotification(`Error: ${e?.message}`, ToastType.ERROR)
   }
@@ -252,7 +301,7 @@ async function handleRedactOperation() {
 async function handleVerifyDocument() {
   showToastNotification("Verifying document...", ToastType.INFO)
   try {
-    let report = await verifyDocument(file.value!)
+    let report = await verifyDocument(mainFile.value!)
     if(!report.isSigned)
       showToastNotification("Document is not signed!", ToastType.ERROR)
     else if(isSignatureValid(report))
@@ -270,7 +319,7 @@ async function handleVerifyDocument() {
 async function handleSignDocument() {
   showToastNotification("Signing document...", ToastType.INFO)
   try {
-    let blob = await signOnly(file.value!)
+    let blob = await signOnly(mainFile.value!)
     showToastNotification("Document was successfully signed!", ToastType.SUCCESS)
     downloadBlobRequest(blob)
   } catch (e : any) {
@@ -281,8 +330,8 @@ async function handleSignDocument() {
   }
 }
 
-function handleOperationButtonClick() {
-  if(!file.value || !checkFile())
+async function handleOperationButtonClick() {
+  if(!mainFile.value || !checkFile())
     return;
 
   dismissToastNotification()
@@ -290,19 +339,19 @@ function handleOperationButtonClick() {
   switch (operation.value) {
     case Operation.SIGN_SELECT_REDACTABLE_ELEMS:
     case Operation.REDACT:  {
-      handleRedactOperation()
+      await handleRedactOperation()
       break;
     }
     case Operation.SIGN_ONLY : {
-      handleSignDocument()
+      await handleSignDocument()
       break;
     }
     case Operation.VERIFY : {
-      handleVerifyDocument()
+      await handleVerifyDocument()
       break;
     }
     case Operation.GET_RSS_SIG : {
-      getRSSSignatureDebug(file.value)
+      await getRSSSignatureDebug(mainFile.value)
           .then(res =>  {
             if(!res.ok)
             {
@@ -317,7 +366,7 @@ function handleOperationButtonClick() {
             if(!blob)
               return
 
-            downloadBlobRequest(blob, file.value?.name + ".rss.xml")
+            downloadBlobRequest(blob, mainFile.value?.name + ".rss.xml")
             toastNotificationMessage.value = "RSS signature was downloaded!"
             toastNotificationType.value = ToastType.SUCCESS
             clearForm()
