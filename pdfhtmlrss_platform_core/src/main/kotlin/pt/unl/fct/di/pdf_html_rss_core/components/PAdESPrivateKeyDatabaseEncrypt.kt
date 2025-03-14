@@ -1,7 +1,5 @@
 package pt.unl.fct.di.pdf_html_rss_core.components
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
 import pt.unl.fct.di.pdf_html_rss_core.services.SecurityService
 import java.security.interfaces.RSAPrivateKey
 import javax.persistence.AttributeConverter
@@ -9,8 +7,7 @@ import javax.persistence.Converter
 
 
 @Converter(autoApply = true)
-class DatabaseKeysEncrypt : AttributeConverter<RSAPrivateKey, ByteArray> {
-
+class PAdESPrivateKeyDatabaseEncrypt : AttributeConverter<RSAPrivateKey, ByteArray> {
 
     override fun convertToDatabaseColumn(privateKey: RSAPrivateKey): ByteArray {
         val securityService: SecurityService = ApplicationContextProvider?.getBean(SecurityService::class.java)

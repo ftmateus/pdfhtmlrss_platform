@@ -1,6 +1,6 @@
 package pt.unl.fct.di.pdf_html_rss_core.data
 
-import pt.unl.fct.di.pdf_html_rss_core.components.DatabaseKeysEncrypt
+import pt.unl.fct.di.pdf_html_rss_core.components.PAdESPrivateKeyDatabaseEncrypt
 import java.security.interfaces.RSAPrivateKey
 import java.security.cert.Certificate
 import javax.persistence.*
@@ -13,7 +13,7 @@ class PAdESKeyEntity(
 
     @Lob
     @Column(name = "privatekey")
-    @Convert(converter = DatabaseKeysEncrypt::class)
+    @Convert(converter = PAdESPrivateKeyDatabaseEncrypt::class)
     var privateKey: RSAPrivateKey?,
 
     @Lob

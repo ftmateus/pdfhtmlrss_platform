@@ -17,7 +17,7 @@ class XHTMLRedactableSignatureService {
     lateinit var domService : DOMService;
 
     companion object {
-        const val RSS_ALGORITHM = "GSRSSwithRSAandBPA";
+        const val DEFAULT_RSS_ALGORITHM = "GSRSSwithRSAandBPA";
     }
 
     fun signAndRedactDocument(
@@ -42,7 +42,7 @@ class XHTMLRedactableSignatureService {
             .getRSSKeyPairFromLoggedInUser()
             .keyPair;
 
-        val rss = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
+        val rss = RedactableXMLSignature.getInstance(DEFAULT_RSS_ALGORITHM);
 
         rss.initSign(keyPair);
         rss.setDocument(doc)
@@ -58,7 +58,7 @@ class XHTMLRedactableSignatureService {
         redactSelectors: List<String> = emptyList()
 //        signSelectors: List<String> = emptyList(),
     ) : Document {
-        val rss = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
+        val rss = RedactableXMLSignature.getInstance(DEFAULT_RSS_ALGORITHM);
 
         val keyPair = securityService
             .getRSSKeyPairFromLoggedInUser()
@@ -77,7 +77,7 @@ class XHTMLRedactableSignatureService {
         doc: Document,
         redactSelectors: List<String> = emptyList()
     ) : Document {
-        val rss = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
+        val rss = RedactableXMLSignature.getInstance(DEFAULT_RSS_ALGORITHM);
 
         val publicKey = securityService
             .getRSSKeyPairFromLoggedInUser()
@@ -93,7 +93,7 @@ class XHTMLRedactableSignatureService {
     }
 
     fun verifyDocument(signedDoc : Document) : Boolean {
-        val sig = RedactableXMLSignature.getInstance(RSS_ALGORITHM);
+        val sig = RedactableXMLSignature.getInstance(DEFAULT_RSS_ALGORITHM);
 
         //TODO get public key from document instead of logged in user
         val publicKey = securityService

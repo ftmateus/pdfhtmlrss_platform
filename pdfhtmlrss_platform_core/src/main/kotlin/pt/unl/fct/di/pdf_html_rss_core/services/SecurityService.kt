@@ -14,6 +14,7 @@ import org.bouncycastle.util.io.pem.PemWriter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
@@ -21,12 +22,10 @@ import org.springframework.stereotype.Service
 import pt.unl.fct.di.pdf_html_rss_core.data.PAdESKeyEntity
 import pt.unl.fct.di.pdf_html_rss_core.data.RSSKeyPairEntity
 import pt.unl.fct.di.pdf_html_rss_core.data.User
-import pt.unl.fct.di.pdf_html_rss_core.exceptions.ForbiddenAccessException
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.NotAuthenticatedException
 import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.PAdESKeyRepository
 import pt.unl.fct.di.pdf_html_rss_core.repositories.RSSKeyPairRepository
-import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import java.io.*
 import java.math.BigInteger
 import java.nio.charset.Charset
@@ -61,9 +60,12 @@ class SecurityService {
     @Autowired
     private lateinit var keystoreService: KeystoreService;
 
+    @Value("\${pdfhtmlrss.rss.keygen.size}")
+    private var rssKeySize : Int = 2048;
+
     companion object {
         const val SERIALIZED_KEYPAIR_FILE = "keyPair.ser"
-        const val RSS_KEY_SIZE = 2048
+//        const val RSS_KEY_SIZE = 2048
         const val PADES_RSA_KEY_SIZE = 2048
     }
 
@@ -96,18 +98,26 @@ class SecurityService {
         val currentUser = getLoggedInUser(true);
 
         return rssKeyPairRepository
-            .findById(currentUser!!.userId)
+            .findRSSKeyPairEntityByUserIdAndAlgorithm(
+                currentUser!!.userId, XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM
+            )
             .orElseThrow { PDFHTMLRSSException() }
     }
 
-    fun generateRSSKeyPairToUser(userId : Long) : RSSKeyPairEntity {
+    fun generateRSSKeyPairToUser(
+        userId : Long,
+        rssAlgorithm: String = XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM
+    ) : RSSKeyPairEntity {
         //check(rssKeyPairRepository.findById(userId) == null)
 
-        val keyPair = generateRSSKeyPair()
+        val keyPair = generateRSSKeyPair(rssAlgorithm)
 
         return rssKeyPairRepository.save(
             RSSKeyPairEntity(
-                userId, keyPair.private, keyPair.public
+                null,
+                userId,
+                rssAlgorithm,
+                keyPair.private, keyPair.public
             )
         )
     }
@@ -142,6 +152,8 @@ class SecurityService {
 
     fun setupKeyChainForUser(user : User) {
         if(pAdESKeyRepository.existsById(user.userId).not()) {
+            logger.info("Generating PAdES RSA key pair for user ${user.userId}")
+
             val padesRsaKeyPair = generateRSAKeyPair();
 
             val userCertificate = generateUserCertificate(user, padesRsaKeyPair.public);
@@ -151,8 +163,37 @@ class SecurityService {
             )
         }
 
-        if(rssKeyPairRepository.existsById(user.userId).not()) {
-            generateRSSKeyPairToUser(user.userId)
+        if(rssKeyPairRepository.existsByUserIdAndAlgorithm(
+                user.userId,
+                algorithm = XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM
+        ).not()) {
+            logger.info("Generating ${XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM} key pair for user ${user.userId}")
+            generateRSSKeyPairToUser(
+                user.userId,
+                XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM
+            )
+        }
+
+        if(rssKeyPairRepository.existsByUserIdAndAlgorithm(
+                user.userId,
+                algorithm = "GLRSSwithRSAandBPA"
+        ).not()) {
+            logger.info("Generating GLRSSwithRSAandBPA key pair for user ${user.userId}")
+            generateRSSKeyPairToUser(
+                user.userId,
+                "GLRSSwithRSAandBPA"
+            )
+        }
+
+        if(rssKeyPairRepository.existsByUserIdAndAlgorithm(
+                user.userId,
+                algorithm = "PSRSS"
+        ).not()) {
+            logger.info("Generating PSRSS key pair for user ${user.userId}")
+            generateRSSKeyPairToUser(
+                user.userId,
+                "PSRSS"
+            )
         }
     }
 
@@ -196,10 +237,12 @@ class SecurityService {
 
     }
 
-    fun generateRSSKeyPair(): KeyPair {
-        val keyGen = KeyPairGenerator.getInstance("GSRSSwithRSAandBPA")
+    fun generateRSSKeyPair(
+        rssAlgorithm : String = XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM
+    ): KeyPair {
+        val keyGen = KeyPairGenerator.getInstance(rssAlgorithm)
         //TODO Key generation is too slow...
-        keyGen.initialize(RSS_KEY_SIZE)
+        keyGen.initialize(rssKeySize)
         return keyGen.generateKeyPair()
     }
 
