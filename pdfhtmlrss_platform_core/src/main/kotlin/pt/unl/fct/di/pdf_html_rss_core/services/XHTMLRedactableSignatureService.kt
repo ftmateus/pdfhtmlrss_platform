@@ -18,6 +18,11 @@ class XHTMLRedactableSignatureService {
 
     companion object {
         const val DEFAULT_RSS_ALGORITHM = "GSRSSwithRSAandBPA";
+        val SUPPORTED_RSS_ALGORITHMS = arrayOf(
+            "GSRSSwithRSAandBPA",
+            "GLRSSwithRSAandBPA",
+            "PSRSS"
+        )
     }
 
     fun signAndRedactDocument(

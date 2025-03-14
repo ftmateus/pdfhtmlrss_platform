@@ -75,15 +75,6 @@ class SecurityService {
         Security.insertProviderAt(bcProvider, 2)
     }
 
-    fun createRSSKeyPairForAdminUser() {
-        rssKeyPairRepository
-            .findById(UserService.ADMIN_USER_ID)
-            .orElseGet {
-                logger.info("Admin key pair not found on database, generating new one...")
-                generateRSSKeyPairToUser(UserService.ADMIN_USER_ID)
-            }
-    }
-
     fun getLoggedInUser(throwException : Boolean = false) : User? {
         val securityContext: SecurityContext = SecurityContextHolder.getContext()
         val authentication: Authentication = securityContext.authentication
@@ -163,37 +154,17 @@ class SecurityService {
             )
         }
 
-        if(rssKeyPairRepository.existsByUserIdAndAlgorithm(
-                user.userId,
-                algorithm = XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM
-        ).not()) {
-            logger.info("Generating ${XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM} key pair for user ${user.userId}")
-            generateRSSKeyPairToUser(
-                user.userId,
-                XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM
-            )
-        }
-
-        if(rssKeyPairRepository.existsByUserIdAndAlgorithm(
-                user.userId,
-                algorithm = "GLRSSwithRSAandBPA"
-        ).not()) {
-            logger.info("Generating GLRSSwithRSAandBPA key pair for user ${user.userId}")
-            generateRSSKeyPairToUser(
-                user.userId,
-                "GLRSSwithRSAandBPA"
-            )
-        }
-
-        if(rssKeyPairRepository.existsByUserIdAndAlgorithm(
-                user.userId,
-                algorithm = "PSRSS"
-        ).not()) {
-            logger.info("Generating PSRSS key pair for user ${user.userId}")
-            generateRSSKeyPairToUser(
-                user.userId,
-                "PSRSS"
-            )
+        for(rssAlgorithm in XHTMLRedactableSignatureService.SUPPORTED_RSS_ALGORITHMS) {
+            if(rssKeyPairRepository.existsByUserIdAndAlgorithm(
+                    user.userId,
+                    algorithm = rssAlgorithm
+                ).not()) {
+                logger.info("Generating $rssAlgorithm key pair for user ${user.username}")
+                generateRSSKeyPairToUser(
+                    user.userId,
+                    rssAlgorithm
+                )
+            }
         }
     }
 
