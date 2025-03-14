@@ -10,8 +10,16 @@ import javax.persistence.*
 @Entity
 @Table(name = "rsskeypairs")
 class RSSKeyPairEntity(
-    @Id @Column(name = "userid")
+
+    @Id @Column(name = "rsskeyid")
+    @GeneratedValue
+    var rssKeyId : Long?,
+
+    @Column(name = "userid")
     var userId : Long?,
+
+    @Column(name = "algorithm")
+    var algorithm : String?,
 
     @Lob
     @Column(name = "privatekey")
@@ -21,7 +29,7 @@ class RSSKeyPairEntity(
     @Column(name = "publickey")
     var publicKey : PublicKey?,
 ) {
-    constructor() : this(-1, null, null);
+    constructor() : this(-1, -1,null, null, null);
 
     @get:Transient
     val keyPair : KeyPair get() {
