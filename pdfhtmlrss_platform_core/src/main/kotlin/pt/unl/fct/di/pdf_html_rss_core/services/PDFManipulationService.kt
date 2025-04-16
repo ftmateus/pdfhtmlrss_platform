@@ -209,6 +209,8 @@ class PDFManipulationService {
         || !originalDocReport.isSigned || originalDocReport.isViolated())
             return SignatureDerivationCheckReport(redactedDocReport, originalDocReport, false)
 
+        val signatureDom = getRedactableSignature(redactedDocument)
+
         TODO()
     }
 

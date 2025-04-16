@@ -108,7 +108,9 @@ class SecurityService {
                 null,
                 userId,
                 rssAlgorithm,
-                keyPair.private, keyPair.public
+                keyPair.private, keyPair.public,
+                //TODO
+                null
             )
         )
     }
@@ -166,6 +168,10 @@ class SecurityService {
                 )
             }
         }
+    }
+
+    fun generateRSSCertificate(user : User, rssPublicKey: PublicKey) {
+        
     }
 
     fun generateUserCertificate(user : User, userPublicKey: PublicKey) : Certificate {

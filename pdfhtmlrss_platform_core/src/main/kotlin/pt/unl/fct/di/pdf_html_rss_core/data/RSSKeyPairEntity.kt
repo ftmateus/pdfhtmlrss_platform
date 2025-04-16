@@ -3,6 +3,7 @@ package pt.unl.fct.di.pdf_html_rss_core.data
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.PublicKey
+import java.security.cert.Certificate
 import javax.persistence.Entity
 import javax.persistence.Id
 import javax.persistence.*
@@ -28,8 +29,13 @@ class RSSKeyPairEntity(
     @Lob
     @Column(name = "publickey")
     var publicKey : PublicKey?,
+
+    @Lob
+    @Column(name = "certificate")
+    var certificate : Certificate?,
+
 ) {
-    constructor() : this(-1, -1,null, null, null);
+    constructor() : this(-1, -1,null, null, null, null);
 
     @get:Transient
     val keyPair : KeyPair get() {
