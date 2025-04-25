@@ -1,11 +1,14 @@
 package pt.unl.fct.di.pdf_html_rss_core
 
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.security.test.context.support.WithUserDetails
+import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getRedactSelectors
 import pt.unl.fct.di.pdf_html_rss_core.TestUtils.Companion.getTestFile
 import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.data.RedactionProcess
@@ -14,7 +17,10 @@ import pt.unl.fct.di.pdf_html_rss_core.repositories.RedactionProcessRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.DOMService
 import pt.unl.fct.di.pdf_html_rss_core.services.RedactionProcessService
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
+import pt.unl.fct.di.pdf_html_rss_core.services.PDFManipulationService
 import java.io.ByteArrayOutputStream
+import java.io.File
+import kotlin.test.BeforeTest
 
 @SpringBootTest
 @WithUserDetails("admin")
@@ -30,37 +36,85 @@ class RedactionProcessTests {
     lateinit var temporaryFilesRepository: TemporaryFilesRepository;
 
     @Autowired
+    lateinit var pdfManipulationService: PDFManipulationService
+
+    @Autowired
     lateinit var domService : DOMService;
 
-    @ParameterizedTest
-    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFilesToRedact"])
-    fun testPdfRedactionProcess(pdfFileName: String, elementsToRedact : List<String>) {
-        val pdfFile = PDFFileWrapper(
-            getTestFile(pdfFileName)
-        );
+    lateinit var testResultsSubFolder : File;
 
+    @BeforeTest
+    fun createSubFolder() {
+        testResultsSubFolder = temporaryFilesRepository.makeTempSubFolder("redaction-process-tests")
+    }
+
+    fun testPdfGenericRedactionProcess(pdfFile : PDFFileWrapper,
+        elementsToRedact : List<String>, action : RedactionProcessAction) : PDFFileWrapper {
         val selectRedactableElemsProcess = redactionProcessService.initiatePdfRedactionProcess(
             pdfFile,
-            RedactionProcessAction.SELECT_REDACTABLE_ELEMS
+            action
         )
 
         assertPdfRedactionProcessIsValid(selectRedactableElemsProcess)
 
-        ByteArrayOutputStream().use { out ->
+        val rssSignedFilePath = when(action) {
+            RedactionProcessAction.SELECT_REDACTABLE_ELEMS -> "${testResultsSubFolder.name}/${pdfFile.name}_signed_rss.pdf"
+            RedactionProcessAction.REDACT -> "${testResultsSubFolder.name}/${pdfFile.name}_redacted_rss.pdf"
+        };
+
+        val rssSignedFile = temporaryFilesRepository.writeToTempFile(rssSignedFilePath, deleteAutomatically = false) {
             val p = redactionProcessService.finalizeRedactionProcess(
                 selectRedactableElemsProcess.taskId,
                 elementsToRedact,
-                out
+                it
             )
             assertEquals(p, selectRedactableElemsProcess)
+        }.let { PDFFileWrapper(it) }
+
+        pdfManipulationService.verifyPdfDocumentSignatures(rssSignedFile)
+        .also {
+            assertTrue(!it.isViolated())
+            assertTrue(it.hasRSSPAdESSignature)
+            assertTrue(it.hasRSSXMLSignature)
         }
 
-        assertRedactionProcessWasFinished(selectRedactableElemsProcess)
+        return rssSignedFile;
+    }
+
+    @ParameterizedTest
+    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFilesToRedact"])
+    fun `Test PDF redaction process (sign only)`(pdfFileName: String) {
+        val pdfFile = PDFFileWrapper(
+            getTestFile(pdfFileName)
+        );
+
+        val elementsToRedact = getRedactSelectors(pdfFileName)
+
+        val rssSignedPdfFile = testPdfGenericRedactionProcess(
+            pdfFile, elementsToRedact, RedactionProcessAction.SELECT_REDACTABLE_ELEMS)
+
+    }
+
+    @ParameterizedTest
+    @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#pdfTestFilesToRedact"])
+    fun `Test PDF redaction process (sign and redact)`(pdfFileName: String) {
+        val pdfFile = PDFFileWrapper(
+            getTestFile(pdfFileName)
+        );
+
+        val elementsToRedact = getRedactSelectors(pdfFileName)
+
+        val rssSignedPdfFile = testPdfGenericRedactionProcess(
+            pdfFile, elementsToRedact, RedactionProcessAction.SELECT_REDACTABLE_ELEMS)
+
+
+        val rssRedactedPdfFile = testPdfGenericRedactionProcess(
+            rssSignedPdfFile, elementsToRedact, RedactionProcessAction.REDACT)
     }
 
     @ParameterizedTest
     @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#htmlTestFilesToRedact"])
-    fun testHtmlRedactionProcess(htmlFileName: String, elementsToRedact : List<String>) {
+    fun `Test HTML redaction process (sign and redact)`(htmlFileName: String, elementsToRedact : List<String>) {
 
         val htmlFile = getTestFile(htmlFileName)
 

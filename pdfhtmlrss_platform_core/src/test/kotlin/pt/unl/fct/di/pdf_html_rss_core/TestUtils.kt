@@ -6,6 +6,8 @@ import org.junit.jupiter.params.provider.Arguments
 import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.utils.encodeAsHex
 import java.io.File
+import java.io.FileInputStream
+import java.nio.charset.Charset
 import java.util.stream.IntStream
 import java.util.stream.Stream
 import kotlin.streams.toList
@@ -21,8 +23,8 @@ class TestUtils {
         @JvmStatic
         fun getTestFile(fileName : String) : File {
             return File(TEST_FILES_FOLDER_PATH, fileName).also {
-                assumeTrue(it.exists())
-                assumeTrue(it.isFile)
+                assumeTrue(it.exists(), "$fileName does not exist")
+                assumeTrue(it.isFile, "$fileName is not a valid file")
             };
         }
 
@@ -33,6 +35,19 @@ class TestUtils {
                 ?.sortedBy { it.totalSpace }
                 ?.asReversed()
                 ?.map { Arguments.of(PDFFileWrapper(it)) }
+                ?.stream() ?: Stream.empty();
+        }
+
+        //TODO create test cases
+        @JvmStatic
+        fun pdfTestFilesWithOnePage(): Stream<Arguments> {
+            return File(TEST_FILES_FOLDER_PATH).listFiles()
+                ?.filter { it.extension == "pdf" }
+                ?.sortedBy { it.totalSpace }
+                ?.asReversed()
+                ?.map { PDFFileWrapper(it) }
+                ?.filter { it.numberOfPages == 1 }
+                ?.map { Arguments.of(it) }
                 ?.stream() ?: Stream.empty();
         }
 
@@ -55,6 +70,19 @@ class TestUtils {
                 ?.filter {
                     it.extension == "pdf" &&
                     it.length() < SMALL_PDF_SPACE_THRESHOLD
+                }
+                ?.sortedBy { it.totalSpace }
+                ?.asReversed()
+                ?.map { Arguments.of(PDFFileWrapper(it)) }
+                ?.stream() ?: Stream.empty();
+        }
+
+        @JvmStatic
+        fun largePdfTestFiles(): Stream<Arguments> {
+            return File(TEST_FILES_FOLDER_PATH).listFiles()
+                ?.filter {
+                    it.extension == "pdf" &&
+                    it.length() >= SMALL_PDF_SPACE_THRESHOLD
                 }
                 ?.sortedBy { it.totalSpace }
                 ?.asReversed()
@@ -89,15 +117,32 @@ class TestUtils {
         }
 
         @JvmStatic
+        fun testFilesToRedact(fileExtension : String) : Stream<Arguments> {
+            val pdfFilesToRedact = File(TEST_FILES_FOLDER_PATH).listFiles()
+                ?.filter { it.name.endsWith("redact.txt")
+                        && it.name.matches(".*.$fileExtension.*".toRegex()) }
+                ?.map {
+                    Arguments.of(it.name.removeSuffix(".redact.txt"))
+                }
+                ?: emptyList()
+
+            return pdfFilesToRedact.stream()
+        }
+
+        @JvmStatic
         fun pdfTestFilesToRedact() : Stream<Arguments> {
-            return Stream.of(
-                Arguments.of(
-                    "sample.pdf", listOf(
-                        "#xpath(/html/body/div/p[2])"
-//                        "#xpath(/html/body/div/p[18])"
-                    )
-                ),
-            )
+            return testFilesToRedact("pdf")
+        }
+
+        @JvmStatic
+        fun getRedactSelectors(testFileName : String) : List<String> {
+            val redactSelectorsFile = getTestFile("$testFileName.redact.txt")
+            return redactSelectorsFile.inputStream().use { inputStream ->
+                inputStream
+                    .readAllBytes()
+                    .toString(Charset.defaultCharset())
+                    .split("\n")
+            }
         }
 
         @JvmStatic

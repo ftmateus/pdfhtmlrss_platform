@@ -49,6 +49,12 @@ class TemporaryFilesRepository {
             }
     }
 
+    fun makeTempSubFolder(folderName : String) : File {
+        val subFolder = File(temporaryFolder, folderName)
+        subFolder.mkdir();
+        return subFolder
+    }
+
     /**
      * Śtream is automatically closed
      */
