@@ -52,7 +52,7 @@ export function logout() : Promise<Response> {
     })
 }
 
-export async function signOnly(file : File) : Promise<Blob> {
+export async function signOnly(file : File) : Promise<Blob | undefined> {
     const formData = new FormData()
 
     formData.set("file", file)
@@ -63,30 +63,31 @@ export async function signOnly(file : File) : Promise<Blob> {
         // contentType : "multipart/form-data",
         body : formData
     })
-    if(!res.ok) {
-        const error = await res.json()
-        throw Error(error.message)
-    }
-    return res.blob()
+    if(res.ok)
+        return res.blob()
+
+    res.json().then(j => {
+        throw Error(j.message)
+    })
 }
 
-export function verifyDocument(file : File) : Promise<SignatureVerificationReport>  {
+export async function verifyDocument(file : File) : Promise<SignatureVerificationReport>  {
     const formData = new FormData()
 
     formData.set("file", file)
     formData.set("type", file.type)
 
-    return fetch(`${apiPrefix}/verify`, {
+    const res = await fetch(`${apiPrefix}/verify`, {
         method : 'POST',
         // contentType : "multipart/form-data",
         body : formData
-    }).then(r => {
-        return r.json().then(j => {
-            if(!r.ok)
-                throw Error(j.message)
-            return j;
-        })
     })
+
+    const json = await res.json()
+    if(res.ok)
+        return json as SignatureVerificationReport
+
+    throw Error(json.message)
 }
 
 export function submitRedactionProcess(
@@ -129,16 +130,22 @@ export function cancelRedactionProcess(
     })
 }
 
-export function finishRedactionProcess(
+export async function finishRedactionProcess(
     processId : string,
     elementsToRedact : string[]
-) : Promise<Response> {
+) : Promise<Blob | undefined> {
     const formData = new FormData()
     formData.set("elementsToRedact", elementsToRedact.toString())
 
-    return fetch(`${apiPrefix}/sign/${processId}`, {
+    const res = await fetch(`${apiPrefix}/sign/${processId}`, {
         method : 'POST',
         body : formData
+    })
+    if(res.ok)
+        return res.blob()
+
+    res.json().then(j => {
+        throw Error(j.message)
     })
 }
 

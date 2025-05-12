@@ -15,7 +15,10 @@
           v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS || operation == Operation.REDACT"
           style="display: flex; flex-direction: column; align-items: center; width: 500px"
       >
-        <button style="width: 150px" :disabled="!file || documentViewOpened" @click.prevent="handleOpenDocumentView">Open document view</button>
+        <button :disabled="!file || documentViewOpened" @click.prevent="handleOpenDocumentView">
+          <i class="pi pi-external-link" style="font-size: 0.8rem"></i>
+          Open document view
+        </button>
         <div v-if="documentViewOpened && operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">
             Select the redactable parts of the document by double clicking.
         </div>
@@ -68,7 +71,7 @@
 
 <script setup lang="ts">
 
-import { defineEmits, ref, watch } from 'vue'
+import {defineEmits, ref, watch} from 'vue'
 import FileSelector from "@/components/FileSelector.vue";
 import OperationsSelector from "@/components/OperationsSelector.vue";
 // import OperationButton from "@/components/OperationButton.vue";
@@ -170,15 +173,15 @@ async function handleOpenDocumentView() {
   && operation.value != Operation.REDACT)
     return;
 
-
+  showToastNotification("Opening document view...", ToastType.INFO)
   try {
     if(!redactionProcess.value)
       redactionProcess.value = await submitRedactionProcess(file.value, operation.value)
     documentViewOpened.value = true
+    dismissToastNotification()
   } catch(e : any) {
     showToastNotification(`Error: ${e.message}`, ToastType.ERROR);
   }
-
 }
 
 function isSubmitButtonDisabled() {
@@ -215,7 +218,69 @@ function showToastNotification(message : String, toastType : ToastType) {
   toastNotificationType.value = toastType
 }
 
-async function handleOperationButtonClick() {
+async function handleRedactOperation() {
+  if(!redactionProcess.value)
+    return
+
+  let elementsToRedact : string[] = JSON.parse(localStorage.getItem("elementsToRedact") ?? "[]")
+      .map((e : string) => `#xpath(${e})`)
+
+  if(elementsToRedact.length == 0) {
+    showToastNotification("No document elements have been selected!", ToastType.ERROR)
+    return;
+  }
+
+  if(operation.value == Operation.REDACT)
+    showToastNotification("Redacting document...", ToastType.INFO)
+  else
+    showToastNotification("Signing document...", ToastType.INFO)
+
+  try {
+      let blob = await finishRedactionProcess(redactionProcess.value.taskId, elementsToRedact)
+      downloadBlobRequest(blob)
+      if(operation.value == Operation.REDACT)
+        showToastNotification("Document was successfully redacted!", ToastType.SUCCESS)
+      else
+        showToastNotification("Document was successfully signed!", ToastType.SUCCESS)
+      clearForm()
+  } catch (e : any) {
+    showToastNotification(`Error: ${e?.message}`, ToastType.ERROR)
+  }
+}
+
+async function handleVerifyDocument() {
+  showToastNotification("Verifying document...", ToastType.INFO)
+  try {
+    let report = await verifyDocument(file.value!)
+    if(!report.isSigned)
+      showToastNotification("Document is not signed!", ToastType.ERROR)
+    else if(isSignatureValid(report))
+      showToastNotification("Document has valid signature!", ToastType.SUCCESS)
+    else
+      showToastNotification("Document has invalid signature!", ToastType.ERROR)
+
+    signatureVerificationReport.value = report.isSigned ? report : undefined;
+  }
+  catch(e : any) {
+    showToastNotification("Error: " + e.message, ToastType.ERROR)
+  }
+}
+
+async function handleSignDocument() {
+  showToastNotification("Signing document...", ToastType.INFO)
+  try {
+    let blob = await signOnly(file.value!)
+    showToastNotification("Document was successfully signed!", ToastType.SUCCESS)
+    downloadBlobRequest(blob)
+  } catch (e : any) {
+      showToastNotification(`Error: ${e.message}`, ToastType.ERROR)
+  }
+  finally {
+    clearForm()
+  }
+}
+
+function handleOperationButtonClick() {
   if(!file.value || !checkFile())
     return;
 
@@ -224,55 +289,16 @@ async function handleOperationButtonClick() {
   switch (operation.value) {
     case Operation.SIGN_SELECT_REDACTABLE_ELEMS:
     case Operation.REDACT:  {
-      if(!redactionProcess.value)
-        redactionProcess.value = await submitRedactionProcess(file.value, operation.value)
-
-      let elementsToRedact : string[] = JSON.parse(localStorage.getItem("elementsToRedact") ?? "[]")
-          .map((e : string) => `#xpath(${e})`)
-
-      if(elementsToRedact.length == 0) {
-        showToastNotification("No document elements have been selected!", ToastType.ERROR)
-        return;
-      }
-
-      await finishRedactionProcess(redactionProcess.value.taskId, elementsToRedact)
-          .then(res =>  {
-            if(!res.ok)
-              res.json()
-              .then(j => showToastNotification(`Error: ${j?.message}`, ToastType.ERROR))
-
-            return res?.blob()
-          })
-          .then(blob => {
-            if(!blob)
-              return
-            downloadBlobRequest(blob)
-            toastNotificationMessage.value = "Document was sucessfully signed!"
-            toastNotificationType.value = ToastType.SUCCESS
-            clearForm()
-          })
+      handleRedactOperation()
       break;
     }
     case Operation.SIGN_ONLY : {
-      await signOnly(file.value!)
-          .then(blob => blob && downloadBlobRequest(blob))
-          .catch(e => showToastNotification(`Error: ${e.message}`, ToastType.ERROR))
-          .finally(() => clearForm())
+      handleSignDocument()
       break;
     }
     case Operation.VERIFY : {
-      await verifyDocument(file.value!)
-          .then(report => {
-              if(!report.isSigned)
-                showToastNotification("Document is not signed!", ToastType.ERROR)
-              else if(isSignatureValid(report))
-                showToastNotification("Document has valid signature!", ToastType.SUCCESS)
-              else
-                showToastNotification("Document has invalid signature!", ToastType.ERROR)
-
-              signatureVerificationReport.value = report.isSigned ? report : undefined;
-          })
-          .catch(e => showToastNotification("Error: " + e.message, ToastType.ERROR))
+      handleVerifyDocument()
+      break;
     }
   }
 }

@@ -19,11 +19,22 @@ function toastTypeToCSSClass() {
   }
 }
 
+function toastTypeToIcon() {
+  switch (props.type) {
+    case ToastType.SUCCESS : return 'pi-check-circle'
+    case ToastType.ERROR : return 'pi-exclamation-triangle'
+    default: return 'pi-info-circle'
+  }
+}
+
 </script>
 
 <template>
   <div :class="['toast-notification', toastTypeToCSSClass()]">
-    <slot></slot>
+    <div>
+      <i :class="['pi', toastTypeToIcon()]" style="font-size: 1.0rem" ></i>
+      <slot></slot>
+    </div>
     <div style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
       <a v-if="detailsClick" href="#" @click="detailsClick">Details</a>
       <a v-if="dismissClick" href="#" @click="dismissClick">Dismiss</a>

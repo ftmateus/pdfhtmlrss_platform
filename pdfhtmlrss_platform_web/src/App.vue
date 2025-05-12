@@ -5,12 +5,21 @@
   </div>
   <div class="app-view" :style="{justifyContent: documentViewToggle ? 'space-between' : 'center'}">
     <div class="control-view" >
-      <img alt="Vue logo" src="./assets/logo.png" style="margin-top: 20px; height: 200px;"/>
+      <div style="height: 75px"></div>
+      <i class="pi pi-file-pdf" style="font-size: 8.0rem"></i>
+<!--      <img alt="Vue logo" src="./assets/logo.png" style="margin-top: 20px; height: 200px;"/>-->
       <h1>PDF HTML Redactable Signatures Platform</h1>
       <RouterView
           @open-document-view="handleOpenDocumentView"
           @close-document-view="handleCloseDocumentView"
       />
+      <footer style="position: relative; top: 50px">
+        <a href="https://github.com/ftmateus/pdfhtmlrss_platform">
+          <i class="pi pi-github" style="font-size: 1rem"></i>
+          GitHub
+        </a>
+
+      </footer>
     </div>
     <div class="document-view"
          v-if="documentViewToggle" ref="documentView"

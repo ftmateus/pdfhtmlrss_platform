@@ -25,10 +25,17 @@ async function handleLogout() {
 </script>
 
 <template>
+  <i class="pi pi-user" style="font-size: 2.5rem"></i>
   <label>Hello, {{ userName }}!</label>
   <div>
-    <button>Help</button>
-    <button @click="handleLogout">Logout</button>
+    <button>
+      <i class="pi pi-question" style="font-size: 0.8rem"></i>
+      Help
+    </button>
+    <button @click="handleLogout">
+      <i class="pi pi-sign-out" style="font-size: 0.8rem"></i>
+      Logout
+    </button>
   </div>
 </template>
 
