@@ -84,11 +84,8 @@ class XHTMLRedactableSignatureService {
     ) : Document {
         val rss = RedactableXMLSignature.getInstance(DEFAULT_RSS_ALGORITHM);
 
-        val publicKey = securityService
-            .getRSSKeyPairFromLoggedInUser()
-            .publicKey;
-
-        rss.initRedact(publicKey)
+        //public key is retrieved from signed file
+        rss.initRedact(null)
         rss.setDocument(doc)
 
         for (selector in redactSelectors)
@@ -100,11 +97,7 @@ class XHTMLRedactableSignatureService {
     fun verifyDocument(signedDoc : Document) : Boolean {
         val sig = RedactableXMLSignature.getInstance(DEFAULT_RSS_ALGORITHM);
 
-        //TODO get public key from document instead of logged in user
-        val publicKey = securityService
-            .getRSSKeyPairFromLoggedInUser()
-            .publicKey;
-
+        //public key is retrieved from signed file
         sig.initVerify(null);
 
         sig.setDocument(signedDoc)

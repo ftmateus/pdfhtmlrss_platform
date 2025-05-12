@@ -119,6 +119,11 @@ class DOMService {
         return null;
     }
 
+    fun removeRSSData(document : Document) {
+        val rssData = document.getElementsByTagName("Signature")
+        document.documentElement.removeChild(rssData.item(0));
+    }
+
     fun hasAllXPathElements(document: Document, xPathElems : List<String>): Boolean {
         return xPathElems.stream()
             .allMatch { xPathElementExists(document, it) }
