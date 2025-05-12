@@ -8,6 +8,7 @@ import pt.unl.fct.di.pdf_html_rss_core.utils.encodeAsHex
 import java.io.File
 import java.io.FileInputStream
 import java.nio.charset.Charset
+import java.util.*
 import java.util.stream.IntStream
 import java.util.stream.Stream
 import kotlin.streams.toList
@@ -30,9 +31,11 @@ class TestUtils {
 
         @JvmStatic
         fun allPdfTestFiles(): Stream<Arguments> {
+            val random = Random()
             return File(TEST_FILES_FOLDER_PATH).listFiles()
                 ?.filter { it.extension == "pdf" }
-                ?.sortedBy { it.totalSpace }
+                ?.sortedBy { random.nextInt() }
+//                ?.sortedBy { it.totalSpace }
                 ?.asReversed()
                 ?.map { Arguments.of(PDFFileWrapper(it)) }
                 ?.stream() ?: Stream.empty();
@@ -118,9 +121,11 @@ class TestUtils {
 
         @JvmStatic
         fun testFilesToRedact(fileExtension : String) : Stream<Arguments> {
+            val random = Random()
             val pdfFilesToRedact = File(TEST_FILES_FOLDER_PATH).listFiles()
                 ?.filter { it.name.endsWith("redact.txt")
                         && it.name.matches(".*.$fileExtension.*".toRegex()) }
+                ?.sortedBy { random.nextInt() }
                 ?.map {
                     Arguments.of(it.name.removeSuffix(".redact.txt"))
                 }
