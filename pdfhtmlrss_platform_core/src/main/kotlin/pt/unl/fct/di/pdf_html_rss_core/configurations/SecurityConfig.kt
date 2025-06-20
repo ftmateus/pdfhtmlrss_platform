@@ -55,8 +55,6 @@ class SecurityConfig {
             .authorizeRequests()
             .antMatchers(*SWAGGER_AUTH_WHITELIST)
                 .permitAll()
-            .antMatchers("/test")
-                .permitAll()
             .antMatchers("/login*")
                 .permitAll()
             .antMatchers("/auth/status")

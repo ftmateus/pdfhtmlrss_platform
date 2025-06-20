@@ -12,7 +12,6 @@ enum class RedactionProcessAction {
  */
 const val PENDING_REDACTION_TASK_TTL = 30 * 60L;
 
-//@Entity
 @RedisHash("redaction-processes", timeToLive = PENDING_REDACTION_TASK_TTL)
 class RedactionProcess(
     @Id
@@ -21,12 +20,8 @@ class RedactionProcess(
     val fileType : String,
     val tmpPdfFile : String?,
     val tmpHtmlFile : String,
-    val action : RedactionProcessAction,
-    val allowedRedactableElems : List<String> = emptyList(),
+    val action : RedactionProcessAction
 ) {
-    constructor() : this("", -1L, "", "", "", RedactionProcessAction.REDACT) {
-
-    }
 
     override fun equals(other: Any?): Boolean {
         if(other !is RedactionProcess)
