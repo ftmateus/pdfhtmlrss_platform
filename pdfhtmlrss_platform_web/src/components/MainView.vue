@@ -144,7 +144,7 @@ function checkFile() : boolean {
     return false;
   }
 
-  if(file.value.size > 1024 * 1024) {
+  if(file.value.size > 5 * 1024 * 1024) {
     showToastNotification("File is too big!", ToastType.ERROR);
     return false;
   }
@@ -170,11 +170,14 @@ async function handleOpenDocumentView() {
   && operation.value != Operation.REDACT)
     return;
 
+  showToastNotification("Generating and opening document view...", ToastType.INFO);
+
 
   try {
     if(!redactionProcess.value)
       redactionProcess.value = await submitRedactionProcess(file.value, operation.value)
     documentViewOpened.value = true
+    dismissToastNotification()
   } catch(e : any) {
     showToastNotification(`Error: ${e.message}`, ToastType.ERROR);
   }
