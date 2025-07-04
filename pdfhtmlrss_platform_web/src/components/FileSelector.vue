@@ -42,7 +42,7 @@ function handleFileDrop(e : DragEvent) {
         ref="fileInputRef"
         @input="handleFileUpload"
     />
-    <p style="font-size: 10px">Maximum size: 1 MB</p>
+    <p style="font-size: 10px">Maximum size: 5 MB</p>
     <!--    <label for="fileElem">Or select file</label>-->
   </div>
 </template>
