@@ -27,6 +27,8 @@ async function handleLogout() {
 <template>
   <label>Hello, {{ userName }}!</label>
   <div>
+    <button>Sign</button>
+    <button>Documents</button>
     <button>Help</button>
     <button @click="handleLogout">Logout</button>
   </div>

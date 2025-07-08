@@ -65,16 +65,17 @@ class UserService : UserDetailsService {
 
         val userId : Long = generateUserId();
 
-        usersRepository.save(
-            User(
-                userId = userId,
-                username = user.username,
-                passwordHash = passwordHash,
-                passwordClear = null,
-                "ROLE_USER"
-            )
-        );
-        securityService.generateRSSKeyPairToUser(userId);
+        val user = User(
+            userId = userId,
+            username = user.username,
+            passwordHash = passwordHash,
+            passwordClear = null,
+            "ROLE_USER"
+        )
+
+        usersRepository.save(user);
+
+        securityService.generateRSSKeyPairToUser(user);
 
         return userId;
     }

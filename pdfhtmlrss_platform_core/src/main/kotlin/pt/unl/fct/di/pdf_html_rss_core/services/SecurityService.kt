@@ -86,17 +86,18 @@ class SecurityService {
     }
 
     fun getRSSKeyPairFromLoggedInUser() : RSSKeyPairEntity {
-        val currentUser = getLoggedInUser(true);
+        val currentUser = getLoggedInUser(true)
+            ?: throw PDFHTMLRSSException()
 
         return rssKeyPairRepository
-            .findRSSKeyPairEntityByUserIdAndAlgorithm(
-                currentUser!!.userId, XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM
+            .findByUserAndAlgorithm(
+                currentUser, XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM
             )
             .orElseThrow { PDFHTMLRSSException() }
     }
 
     fun generateRSSKeyPairToUser(
-        userId : Long,
+        user : User,
         rssAlgorithm: String = XHTMLRedactableSignatureService.DEFAULT_RSS_ALGORITHM
     ) : RSSKeyPairEntity {
         //check(rssKeyPairRepository.findById(userId) == null)
@@ -105,8 +106,7 @@ class SecurityService {
 
         return rssKeyPairRepository.save(
             RSSKeyPairEntity(
-                null,
-                userId,
+                user,
                 rssAlgorithm,
                 keyPair.private, keyPair.public
             )
@@ -114,9 +114,9 @@ class SecurityService {
     }
 
     fun getLoggedInUserPadesKey() : PAdESKeyEntity {
-        val user = getLoggedInUser();
-        return pAdESKeyRepository.findById(user!!.userId)
-            .orElseThrow()
+        val user = getLoggedInUser()
+            ?: throw NotAuthenticatedException();
+        return pAdESKeyRepository.findByUser(user)
     }
 
     fun encryptData(data : ByteArray) : ByteArray {
@@ -142,7 +142,7 @@ class SecurityService {
     }
 
     fun setupKeyChainForUser(user : User) {
-        if(pAdESKeyRepository.existsById(user.userId).not()) {
+        if(!pAdESKeyRepository.existsByUser(user)) {
             logger.info("Generating PAdES RSA key pair for user ${user.userId}")
 
             val padesRsaKeyPair = generateRSAKeyPair();
@@ -150,18 +150,18 @@ class SecurityService {
             val userCertificate = generateUserCertificate(user, padesRsaKeyPair.public);
 
             pAdESKeyRepository.save(
-                PAdESKeyEntity(user.userId, padesRsaKeyPair.private as RSAPrivateKey, userCertificate)
+                PAdESKeyEntity(user, padesRsaKeyPair.private as RSAPrivateKey, userCertificate)
             )
         }
 
         for(rssAlgorithm in XHTMLRedactableSignatureService.SUPPORTED_RSS_ALGORITHMS) {
-            if(rssKeyPairRepository.existsByUserIdAndAlgorithm(
-                    user.userId,
+            if(rssKeyPairRepository.existsByUserAndAlgorithm(
+                    user,
                     algorithm = rssAlgorithm
                 ).not()) {
                 logger.info("Generating $rssAlgorithm key pair for user ${user.username}")
                 generateRSSKeyPairToUser(
-                    user.userId,
+                    user,
                     rssAlgorithm
                 )
             }

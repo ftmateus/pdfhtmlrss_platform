@@ -10,13 +10,9 @@ import javax.persistence.*
 @Entity
 @Table(name = "rsskeypairs")
 class RSSKeyPairEntity(
-
-    @Id @Column(name = "rsskeyid")
-    @GeneratedValue
-    var rssKeyId : Long?,
-
-    @Column(name = "userid")
-    var userId : Long?,
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    var user : User?,
 
     @Column(name = "algorithm")
     var algorithm : String?,
@@ -29,12 +25,16 @@ class RSSKeyPairEntity(
     @Column(name = "publickey")
     var publicKey : PublicKey?,
 ) {
-    constructor() : this(-1, -1,null, null, null);
+    constructor() : this(null,null, null, null);
 
     @get:Transient
     val keyPair : KeyPair get() {
         return KeyPair(publicKey, privateKey)
     }
+
+    @Id @Column(name = "rsskeyid")
+    @GeneratedValue
+    var rssKeyId : Long? = null;
 
     //@OneToOne(optional = false, mappedBy = "userId")
     //lateinit var user : User;

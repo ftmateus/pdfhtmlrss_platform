@@ -8,8 +8,9 @@ import javax.persistence.*
 @Entity
 @Table(name = "padeskeys")
 class PAdESKeyEntity(
-    @Id
-    var userId: Long = 0L,
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    var user: User?,
 
     @Lob
     @Column(name = "privatekey")
@@ -20,6 +21,10 @@ class PAdESKeyEntity(
     @Column(name = "certificate")
     var certificate: Certificate?
 ) {
-    constructor() : this(-1, null, null);
+    constructor() : this(null, null, null);
 
+    @Id
+    @Column(name = "key_pair_id")
+    @GeneratedValue
+    var id : Long? = null;
 }
