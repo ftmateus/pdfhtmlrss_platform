@@ -142,6 +142,18 @@ export function finishRedactionProcess(
     })
 }
 
+export function getRSSSignatureDebug(
+    pdfFile : File
+) :Promise<Response> {
+    const formData = new FormData()
+    formData.set("file", pdfFile)
+    return fetch(`${apiPrefix}/debug/rss`, {
+        method : 'POST',
+        body : formData
+    })
+}
+
+
 export function getTemporaryFile(
     tmpFileName : string
 ) : Promise<Response> {

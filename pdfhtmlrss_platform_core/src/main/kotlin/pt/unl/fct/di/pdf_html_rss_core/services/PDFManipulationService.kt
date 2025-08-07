@@ -117,11 +117,11 @@ class PDFManipulationService {
 
     fun getRedactableSignature(pdf : PDFFileWrapper) : Document {
         val sigData = getAttachments(pdf)
-            .first { it.first == ATTACHED_FULL_RSS_FILE_NAME }
-            .second;
+            .firstOrNull { it.first == ATTACHED_FULL_RSS_FILE_NAME }
+            ?.second;
 
         if(sigData == null)
-            throw PDFHTMLRSSException("")
+            throw PDFHTMLRSSException("No redactable signature is present in ${pdf.name}")
 
         val decompressedSig = sigData.inputStream().use {
             decompressGZip(it)
