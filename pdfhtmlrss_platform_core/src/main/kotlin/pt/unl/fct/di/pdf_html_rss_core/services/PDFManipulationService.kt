@@ -5,6 +5,7 @@ import com.itextpdf.text.pdf.PRStream
 import com.itextpdf.text.pdf.PdfFileSpecification
 import com.itextpdf.text.pdf.PdfName
 import com.itextpdf.text.pdf.PdfReader
+import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.Dereferencer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
@@ -209,7 +210,8 @@ class PDFManipulationService {
         || !originalDocReport.isSigned || originalDocReport.isViolated())
             return SignatureDerivationCheckReport(redactedDocReport, originalDocReport, false)
 
-        val signatureDom = getRedactableSignature(redactedDocument)
+        val redactedRSSSignature = getRedactableSignature(redactedDocument)
+        val originalRSSSignature = getRedactableSignature(originalDocument)
 
         TODO()
     }

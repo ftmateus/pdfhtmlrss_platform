@@ -24,10 +24,7 @@
           v-if="operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS || operation == Operation.REDACT"
           style="display: flex; flex-direction: column; align-items: center; width: 500px"
       >
-        <button :disabled="!mainFile || documentViewOpened" @click.prevent="handleOpenDocumentView">
-          <i class="pi pi-external-link" style="font-size: 0.8rem"></i>
-          Open document view
-        </button>
+        <button style="width: 150px" :disabled="!mainFile || documentViewOpened" @click.prevent="handleOpenDocumentView">Open document view</button>
         <div v-if="documentViewOpened && operation == Operation.SIGN_SELECT_REDACTABLE_ELEMS">
             Select the redactable parts of the document by double clicking.
         </div>
@@ -112,7 +109,8 @@ import {
   getTemporaryFileURL,
   signOnly,
   submitRedactionProcess,
-  verifyDocument
+  verifyDocument,
+  verifyDocumentDerivation
 } from "@/api";
 import {RedactionProcess} from "@/dto/RedactionProcess";
 import SignatureVerificationReport, {isSignatureValid} from "@/dto/SignatureVerificationReport";
@@ -268,68 +266,6 @@ function showToastNotification(message : String, toastType : ToastType) {
   toastNotificationType.value = toastType
 }
 
-async function handleRedactOperation() {
-  if(!redactionProcess.value)
-    return
-
-  let elementsToRedact : string[] = JSON.parse(localStorage.getItem("elementsToRedact") ?? "[]")
-      .map((e : string) => `#xpath(${e})`)
-
-  if(elementsToRedact.length == 0) {
-    showToastNotification("No document elements have been selected!", ToastType.ERROR)
-    return;
-  }
-
-  if(operation.value == Operation.REDACT)
-    showToastNotification("Redacting document...", ToastType.INFO)
-  else
-    showToastNotification("Signing document...", ToastType.INFO)
-
-  try {
-    let blob = await finishRedactionProcess(redactionProcess.value.taskId, elementsToRedact)
-    downloadBlobRequest(blob)
-    if(operation.value == Operation.REDACT)
-      showToastNotification("Document was successfully redacted!", ToastType.SUCCESS)
-    else
-      showToastNotification("Document was successfully signed!", ToastType.SUCCESS)
-    clearForm()
-  } catch (e : any) {
-    showToastNotification(`Error: ${e?.message}`, ToastType.ERROR)
-  }
-}
-
-async function handleVerifyDocument() {
-  showToastNotification("Verifying document...", ToastType.INFO)
-  try {
-    let report = await verifyDocument(mainFile.value!)
-    if(!report.isSigned)
-      showToastNotification("Document is not signed!", ToastType.ERROR)
-    else if(isSignatureValid(report))
-      showToastNotification("Document has valid signature!", ToastType.SUCCESS)
-    else
-      showToastNotification("Document has invalid signature!", ToastType.ERROR)
-
-    signatureVerificationReport.value = report.isSigned ? report : undefined;
-  }
-  catch(e : any) {
-    showToastNotification("Error: " + e.message, ToastType.ERROR)
-  }
-}
-
-async function handleSignDocument() {
-  showToastNotification("Signing document...", ToastType.INFO)
-  try {
-    let blob = await signOnly(mainFile.value!)
-    showToastNotification("Document was successfully signed!", ToastType.SUCCESS)
-    downloadBlobRequest(blob)
-  } catch (e : any) {
-      showToastNotification(`Error: ${e.message}`, ToastType.ERROR)
-  }
-  finally {
-    clearForm()
-  }
-}
-
 async function handleOperationButtonClick() {
   if(!mainFile.value || !checkFile())
     return;
@@ -339,15 +275,78 @@ async function handleOperationButtonClick() {
   switch (operation.value) {
     case Operation.SIGN_SELECT_REDACTABLE_ELEMS:
     case Operation.REDACT:  {
-      await handleRedactOperation()
+      if(!redactionProcess.value)
+        redactionProcess.value = await submitRedactionProcess(mainFile.value, operation.value)
+
+      let elementsToRedact : string[] = JSON.parse(localStorage.getItem("elementsToRedact") ?? "[]")
+          .map((e : string) => `#xpath(${e})`)
+
+      if(elementsToRedact.length == 0) {
+        showToastNotification("No document elements have been selected!", ToastType.ERROR)
+        return;
+      }
+
+      await finishRedactionProcess(redactionProcess.value.taskId, elementsToRedact)
+          .then(res =>  {
+            if(!res.ok)
+              res.json()
+              .then(j => showToastNotification(`Error: ${j?.message}`, ToastType.ERROR))
+
+            return res?.blob()
+          })
+          .then(blob => {
+            if(!blob)
+              return
+            downloadBlobRequest(blob)
+            toastNotificationMessage.value = "Document was sucessfully signed!"
+            toastNotificationType.value = ToastType.SUCCESS
+            clearForm()
+          })
       break;
     }
     case Operation.SIGN_ONLY : {
-      await handleSignDocument()
+      await signOnly(mainFile.value!)
+          .then(blob => blob && downloadBlobRequest(blob))
+          .catch(e => showToastNotification(`Error: ${e.message}`, ToastType.ERROR))
+          .finally(() => clearForm())
       break;
     }
     case Operation.VERIFY : {
-      await handleVerifyDocument()
+      if(verifyFileDerivation.value)
+      {
+        if(!originalFileDerivation.value) {
+          showToastNotification("Original file was not set", ToastType.ERROR)
+          return;
+        }
+        await verifyDocumentDerivation(originalFileDerivation.value, mainFile.value)
+            .then(report => {
+              if(!isSignatureValid(report.originalDocumentReport) || !report.originalDocumentReport.hasRSSXMLSignature) {
+                showToastNotification("Original document doesn't have valid signature!", ToastType.ERROR)
+              }
+              else if(!isSignatureValid(report.redactedDocumentReport) || !report.originalDocumentReport.hasRSSXMLSignature) {
+                showToastNotification("Redacted document doesn't have valid signature!", ToastType.ERROR)
+              }
+              else if(!report.isDerived) {
+                showToastNotification("Redacted document is not derived from original document!", ToastType.ERROR)
+              }
+              else {
+                showToastNotification("Redacted document is derived from original document!", ToastType.SUCCESS)
+              }
+            })
+            .catch(e => showToastNotification("Error: " + e.message, ToastType.ERROR))
+      } else {
+        await verifyDocument(mainFile.value!)
+            .then(report => {
+                if(!report.isSigned)
+                  showToastNotification("Document is not signed!", ToastType.ERROR)
+                else if(isSignatureValid(report))
+                  showToastNotification("Document has valid signature!", ToastType.SUCCESS)
+                else
+                  showToastNotification("Document has invalid signature!", ToastType.ERROR)
+
+              signatureVerificationReport.value = report.isSigned ? report : undefined;
+          })
+          .catch(e => showToastNotification("Error: " + e.message, ToastType.ERROR))
       break;
     }
     case Operation.GET_RSS_SIG : {

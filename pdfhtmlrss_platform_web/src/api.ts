@@ -3,6 +3,7 @@ import {RedactionProcess, RedactionProcessAction} from "@/dto/RedactionProcess";
 import {Operation} from "@/components/Operations";
 import SignatureVerificationReport from "@/dto/SignatureVerificationReport";
 import AuthenticationStatus from "@/dto/AuthenticationStatus";
+import SignatureDerivationCheckReport from "@/dto/SignatureDerivationCheckReport";
 
 export enum RedactableSignatureOption {
     IMPROVED_COMPATIBILITY = "improved_compatibility",
@@ -71,6 +72,27 @@ export async function signOnly(file : File) : Promise<Blob | undefined> {
     })
 }
 
+export function verifyDocumentDerivation(originalFile : File, redactedFile : File)
+    : Promise<SignatureDerivationCheckReport>
+{
+    const formData = new FormData()
+
+    formData.set("originalFile", originalFile)
+    formData.set("redactedFile", redactedFile)
+
+    return fetch(`${apiPrefix}/verify/derivative`, {
+        method : 'POST',
+        // contentType : "multipart/form-data",
+        body : formData
+    }).then(r => {
+        return r.json().then(j => {
+            if(!r.ok)
+                throw Error(j.message)
+            return j;
+        })
+    })
+}
+
 export async function verifyDocument(file : File) : Promise<SignatureVerificationReport>  {
     const formData = new FormData()
 
@@ -81,6 +103,12 @@ export async function verifyDocument(file : File) : Promise<SignatureVerificatio
         method : 'POST',
         // contentType : "multipart/form-data",
         body : formData
+    }).then(r => {
+        return r.json().then(j => {
+            if(!r.ok)
+                throw Error(j.message)
+            return j;
+        })
     })
 
     const json = await res.json()
