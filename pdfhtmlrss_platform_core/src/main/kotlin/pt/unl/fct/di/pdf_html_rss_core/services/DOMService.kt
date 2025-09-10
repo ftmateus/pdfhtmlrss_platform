@@ -200,4 +200,14 @@ class DOMService {
 
         metaElem?.parentNode?.removeChild(metaElem)
     }
+
+    fun getChildNodeByName(parentNode : Node, childName : String) : Node? {
+        val childs = parentNode.childNodes;
+        for(i in 0..childs.length) {
+            val n = childs.item(i);
+            if(n.nodeName == childName)
+                return n
+        }
+        return null;
+    }
 }

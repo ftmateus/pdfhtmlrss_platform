@@ -9,6 +9,7 @@ import de.unipassau.wolfgangpopp.xmlrss.wpprovider.xml.Dereferencer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.w3c.dom.Document
+import org.w3c.dom.Node
 import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.data.SignatureDerivationCheckReport
 import pt.unl.fct.di.pdf_html_rss_core.data.SignatureVerificationReport
@@ -198,6 +199,34 @@ class PDFManipulationService {
         return null;
     }
 
+    private fun comparePublicKeys(redactedRSSSignature : Node, originalRSSSignature : Node) : Boolean {
+
+        val redactedPublicKeys = Dereferencer.dereference("SignaturePublicKey", redactedRSSSignature)
+        val originalPublicKeys = Dereferencer.dereference("SignaturePublicKey", originalRSSSignature)
+
+        if(getRSSDSigPublicKey(redactedPublicKeys) != getRSSDSigPublicKey(originalPublicKeys))
+            return false;
+
+        if(getRSSAccPublicKey(redactedPublicKeys) != getRSSAccPublicKey(originalPublicKeys))
+            return false;
+
+        return true;
+    }
+
+    private fun compareSignatureValues(redactedRSSSignature : Node, originalRSSSignature : Node) : Boolean {
+
+        val redactedSignatures = Dereferencer.dereference("SignatureValue", redactedRSSSignature)
+        val originalSignatures = Dereferencer.dereference("SignatureValue", originalRSSSignature)
+
+        if(getRSSDSigValue(redactedSignatures) != getRSSDSigValue(originalSignatures))
+            return false;
+
+        if(getRSSAccValue(redactedSignatures) != getRSSAccValue(originalSignatures))
+            return false;
+
+        return true;
+    }
+
     fun verifyDerivationFromOriginalFile(
         redactedDocument : PDFFileWrapper,
         originalDocument : PDFFileWrapper,
@@ -213,7 +242,37 @@ class PDFManipulationService {
         val redactedRSSSignature = getRedactableSignature(redactedDocument)
         val originalRSSSignature = getRedactableSignature(originalDocument)
 
-        TODO()
+        //TODO verify algorithms
+
+        if(!comparePublicKeys(redactedRSSSignature, originalRSSSignature))
+            return SignatureDerivationCheckReport(redactedDocReport, originalDocReport, false)
+
+        if(!compareSignatureValues(redactedRSSSignature, originalRSSSignature))
+            return SignatureDerivationCheckReport(redactedDocReport, originalDocReport, false)
+
+        return SignatureDerivationCheckReport(redactedDocReport, originalDocReport, true);
+
+        //TODO check redacted elements
+    }
+
+    fun getRSSDSigPublicKey(publicKeys : Node) : String? {
+        return domService.getChildNodeByName(publicKeys, "DSigPublicKey")
+            ?.textContent
+    }
+
+    fun getRSSAccPublicKey(publicKeys : Node) : String? {
+        return domService.getChildNodeByName(publicKeys, "AccPublicKey")
+            ?.textContent
+    }
+
+    fun getRSSDSigValue(rssSignature : Node) : String? {
+        return domService.getChildNodeByName(rssSignature, "DSigValue")
+            ?.textContent
+    }
+
+    fun getRSSAccValue(rssSignature : Node) : String? {
+        return domService.getChildNodeByName(rssSignature, "AccumulatorValue")
+            ?.textContent
     }
 
     fun verifyPdfDocumentSignatures(pdf : PDFFileWrapper) : SignatureVerificationReport {

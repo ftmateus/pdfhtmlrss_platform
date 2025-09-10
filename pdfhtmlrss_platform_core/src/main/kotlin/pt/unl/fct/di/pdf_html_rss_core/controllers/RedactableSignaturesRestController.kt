@@ -102,9 +102,9 @@ class RedactableSignaturesRestController {
             it.readBytes()
         }.let { PDFFileWrapper(redactedFile.name, it) }
 
-        val originalPdfDoc = redactedFile.inputStream.use {
+        val originalPdfDoc = originalFile.inputStream.use {
             it.readBytes()
-        }.let { PDFFileWrapper(redactedFile.name, it) }
+        }.let { PDFFileWrapper(originalFile.name, it) }
 
         return pdfManipulationService.verifyDerivationFromOriginalFile(
             redactedPdfDoc, originalPdfDoc
@@ -198,13 +198,13 @@ class RedactableSignaturesRestController {
         response : HttpServletResponse
     ) {
         val type = MediaType.parseMediaType(file.contentType?: "")
-        if(!type.equals(MediaType.APPLICATION_PDF))
+        if(type != MediaType.APPLICATION_PDF)
             throw ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
 
         val rss = pdfManipulationService
             .getRedactableSignature(PDFFileWrapper(file.resource))
 
-        response.contentType = MediaType.TEXT_HTML.toString()
+        response.contentType = MediaType.TEXT_XML.toString()
         domService.writeDocumentToStream(
             document = rss,
             response.outputStream,

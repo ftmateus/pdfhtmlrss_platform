@@ -337,16 +337,17 @@ async function handleOperationButtonClick() {
       } else {
         await verifyDocument(mainFile.value!)
             .then(report => {
-                if(!report.isSigned)
-                  showToastNotification("Document is not signed!", ToastType.ERROR)
-                else if(isSignatureValid(report))
-                  showToastNotification("Document has valid signature!", ToastType.SUCCESS)
-                else
-                  showToastNotification("Document has invalid signature!", ToastType.ERROR)
+              if (!report.isSigned)
+                showToastNotification("Document is not signed!", ToastType.ERROR)
+              else if (isSignatureValid(report))
+                showToastNotification("Document has valid signature!", ToastType.SUCCESS)
+              else
+                showToastNotification("Document has invalid signature!", ToastType.ERROR)
 
               signatureVerificationReport.value = report.isSigned ? report : undefined;
-          })
-          .catch(e => showToastNotification("Error: " + e.message, ToastType.ERROR))
+            })
+            .catch(e => showToastNotification("Error: " + e.message, ToastType.ERROR))
+      }
       break;
     }
     case Operation.GET_RSS_SIG : {
