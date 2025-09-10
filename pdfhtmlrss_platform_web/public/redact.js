@@ -29,6 +29,13 @@ allowedRedactableElems.forEach(elem => {
     elem.setAttribute("redactable", "")
 })
 
+window.onload = function() {
+    const anchors = document.getElementsByTagName("a");
+    for (let i = 0; i < anchors.length; i++) {
+        anchors[i].onclick = function() { return false;};
+    }
+};
+
 window.onclick = function (e) {
     let selectedElem = e.target;
 
@@ -42,6 +49,7 @@ window.onclick = function (e) {
 
     let elementsToRedact = JSON.parse(localStorage.getItem("elementsToRedact"))
     let elementXpath = getElementXPath(selectedElem);
+    console.log(elementXpath);
     elementsToRedact = elementsToRedact.filter(a => a !== elementXpath)
     localStorage.setItem("elementsToRedact", JSON.stringify(elementsToRedact));
 }
@@ -64,7 +72,11 @@ window.ondblclick = function(e) {
     window.getSelection().empty();
 
     let elementsToRedact = JSON.parse(localStorage.getItem("elementsToRedact"))
-    elementsToRedact.push(getElementXPath(selectedElem));
+
+    let elementXpath = getElementXPath(selectedElem);
+    console.log(elementXpath);
+
+    elementsToRedact.push(elementXpath);
     localStorage.setItem("elementsToRedact", JSON.stringify(elementsToRedact));
 }
 

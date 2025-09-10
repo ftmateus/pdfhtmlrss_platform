@@ -1,0 +1,5 @@
+#xpath(/html[1]/body[1]/div[1]/p[8])
+#xpath(/html[1]/body[1]/div[1]/p[21]/i[1])
+#xpath(/html[1]/body[1]/div[1]/p[23]/i[1])
+#xpath(/html[1]/body[1]/div[1]/p[29]/i[1])
+#xpath(/html[1]/body[1]/div[1]/p[62])

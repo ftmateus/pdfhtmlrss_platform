@@ -9,6 +9,9 @@ import org.springframework.security.test.context.support.WithUserDetails
 import pt.unl.fct.di.pdf_html_rss_core.data.PDFFileWrapper
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.PAdESService
+import pt.unl.fct.di.pdf_html_rss_core.services.PDFManipulationService
+import java.io.File
+import kotlin.test.BeforeTest
 import kotlin.test.assertTrue
 
 @SpringBootTest
@@ -21,15 +24,33 @@ class PAdESTests {
     @Autowired
     private lateinit var temporaryFilesRepository: TemporaryFilesRepository;
 
+    @Autowired
+    private lateinit var pdfManipulationService: PDFManipulationService;
+
+    lateinit var testResultsSubFolder : File;
+
+    @BeforeTest
+    fun createSubFolder() {
+        testResultsSubFolder = temporaryFilesRepository.makeTempSubFolder("pades-tests")
+    }
+
     @ParameterizedTest
     @MethodSource(value = ["pt.unl.fct.di.pdf_html_rss_core.TestUtils#allPdfTestFiles"])
-    fun signAndVerifyPdfFiles(pdfFile : PDFFileWrapper) {
-        val signedFile = temporaryFilesRepository.writeToTempFile("${pdfFile.name}_signed.pdf", false) { out ->
-            pAdESService.signDocument(pdfFile, out)
-        }
+    fun `Sign and verify PDF files`(pdfFile : PDFFileWrapper) {
+        val signedFilePath = "${testResultsSubFolder.name}/${pdfFile.name}_signed.pdf"
 
-        pAdESService.verifyDocument(PDFFileWrapper(signedFile))
-            .also { assertTrue(it) }
+        val signedFile = temporaryFilesRepository.writeToTempFile(signedFilePath, false) { out ->
+            pAdESService.signDocument(pdfFile, out)
+        }.let { PDFFileWrapper(it) }
+
+        pdfManipulationService.verifyPdfDocumentSignatures(signedFile)
+            .also {
+                assertTrue(it.isSigned)
+                assertTrue(it.hasRSSPAdESSignature)
+                assertFalse(it.hasExternalSignatures)
+                assertFalse(it.hasRSSXMLSignature)
+                assertFalse(it.isViolated())
+            }
     }
 
     @ParameterizedTest

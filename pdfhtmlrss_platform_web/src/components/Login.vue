@@ -63,7 +63,8 @@ export default class Login extends Vue {
       Wrong credentials!
     </ToastNotification>
     <div>
-      <button type="submit" style="width: 50px" :disabled="!username || !password">
+      <button type="submit" :disabled="!username || !password">
+        <i class="pi pi-sign-in" style="font-size: 0.8rem"></i>
         Login
       </button>
     </div>

@@ -33,7 +33,10 @@ function handleFileDrop(e : DragEvent) {
       @dragleave.prevent
       @dragover.prevent
   >
-    <p>Drag file to this <i>drop zone</i>.</p>
+    <p>
+      <i class="pi pi-file-import" style="font-size: 1.0rem"></i>
+      Drag file to this <i>drop zone</i>.
+    </p>
     <input
         type="file"
         id="fileElem"

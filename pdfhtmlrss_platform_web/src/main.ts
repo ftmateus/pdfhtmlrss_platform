@@ -10,6 +10,8 @@ import {checkAuthStatus} from "@/api";
 import ToastNotification from "@/components/ToastNotification.vue";
 import {ToastType} from "@/components/ToastNotificationType";
 
+import 'primeicons/primeicons.css'
+
 const routes = [
     {
         path: '/',

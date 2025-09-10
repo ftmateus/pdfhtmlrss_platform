@@ -215,7 +215,9 @@ class RedactionProcessService {
         ) ?: throw ResourceNotFoundException(process.tmpPdfFile ?: "")
 
         val pdf = if(process.action == RedactionProcessAction.REDACT) {
-            fileConversionService.generatePDFFromHTML(processedSignedDoc)
+            val clonedDomDoc = processedSignedDoc.cloneNode(true) as Document
+            domService.removeRSSData(clonedDomDoc)
+            fileConversionService.generatePDFFromHTML(clonedDomDoc)
         } else PDFFileWrapper(tmpPdfFile)
 
         val compressedHtml = ByteArrayOutputStream().use {
