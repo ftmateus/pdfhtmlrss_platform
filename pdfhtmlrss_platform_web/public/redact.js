@@ -28,9 +28,10 @@ fetch(`${apiPrefix}/sign/${redactionProcessId}`, {
     method : 'GET'
 })
 .then(r => r.json())
-.then(j => {
-    redactionProcess =  j;
+.then(rp => {
+    redactionProcess = rp
     console.log(redactionProcess)
+
     if(!signatureNode || redactionProcess.action !== "REDACT")
         return;
 
@@ -48,7 +49,6 @@ fetch(`${apiPrefix}/sign/${redactionProcessId}`, {
 
         allowedRedactableElems.push(elem)
     }
-}
 
     if (allowedRedactableElems.length === 0 && redactionProcess.action === "REDACT")
         allowedRedactableElems = null;
@@ -56,7 +56,7 @@ fetch(`${apiPrefix}/sign/${redactionProcessId}`, {
     allowedRedactableElems?.forEach(elem => {
         elem.setAttribute("redactable", "")
     })
-})
+});
 
 window.onload = function() {
     const anchors = document.getElementsByTagName("a");

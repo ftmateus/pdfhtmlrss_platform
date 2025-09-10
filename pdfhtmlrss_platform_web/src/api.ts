@@ -72,25 +72,22 @@ export async function signOnly(file : File) : Promise<Blob | undefined> {
     })
 }
 
-export function verifyDocumentDerivation(originalFile : File, redactedFile : File)
-    : Promise<SignatureDerivationCheckReport>
-{
+export async function verifyDocumentDerivation(originalFile: File, redactedFile: File)
+    : Promise<SignatureDerivationCheckReport> {
     const formData = new FormData()
 
     formData.set("originalFile", originalFile)
     formData.set("redactedFile", redactedFile)
 
-    return fetch(`${apiPrefix}/verify/derivative`, {
-        method : 'POST',
+    const r = await fetch(`${apiPrefix}/verify/derivative`, {
+        method: 'POST',
         // contentType : "multipart/form-data",
-        body : formData
-    }).then(r => {
-        return r.json().then(j => {
-            if(!r.ok)
-                throw Error(j.message)
-            return j;
-        })
-    })
+        body: formData
+    });
+    const j = await r.json();
+    if (!r.ok)
+        throw Error(j.message)
+    return j;
 }
 
 export async function verifyDocument(file : File) : Promise<SignatureVerificationReport>  {
@@ -103,12 +100,6 @@ export async function verifyDocument(file : File) : Promise<SignatureVerificatio
         method : 'POST',
         // contentType : "multipart/form-data",
         body : formData
-    }).then(r => {
-        return r.json().then(j => {
-            if(!r.ok)
-                throw Error(j.message)
-            return j;
-        })
     })
 
     const json = await res.json()
@@ -118,26 +109,23 @@ export async function verifyDocument(file : File) : Promise<SignatureVerificatio
     throw Error(json.message)
 }
 
-export function submitRedactionProcess(
-    file : File,
-    operation : Operation
-) : Promise<RedactionProcess> {
+export async function submitRedactionProcess(
+    file: File,
+    operation: Operation
+): Promise<RedactionProcess> {
     const formData = new FormData()
     formData.set("file", file)
     formData.set("redactionTask", operation.toString())
 
-    return fetch(`${apiPrefix}/sign/prepare`, {
-        method : 'POST',
-        body : formData
-    })
-    .then(r => {
-        return r.json().then(j => {
-            if(!r.ok)
-                throw Error(j.message)
-            return j;
-        })
-    })
-    .then(j => j as RedactionProcess)
+    const res = await fetch(`${apiPrefix}/sign/prepare`, {
+        method: 'POST',
+        body: formData
+    });
+    const j = await res.json();
+    if (!res.ok)
+        throw Error(j.message)
+
+    return j as RedactionProcess;
 }
 
 export function getRedactionProcess(
