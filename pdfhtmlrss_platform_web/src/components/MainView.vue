@@ -79,7 +79,7 @@ import {Operation, opToButtonTitle} from "@/components/Operations";
 import UserArea from "@/components/UserArea.vue";
 import {
   cancelRedactionProcess,
-  finishRedactionProcess,
+  finishRedactionProcess, getRSSSignatureDebug,
   getTemporaryFileURL,
   signOnly,
   submitRedactionProcess,
@@ -147,7 +147,7 @@ function checkFile() : boolean {
     return false;
   }
 
-  if(file.value.size > 1024 * 1024) {
+  if(file.value.size > 5 * 1024 * 1024) {
     showToastNotification("File is too big!", ToastType.ERROR);
     return false;
   }
@@ -155,11 +155,11 @@ function checkFile() : boolean {
   return true;
 }
 
-function downloadBlobRequest(blob : Blob) {
+function downloadBlobRequest(blob : Blob, filename? : string) {
   let fileUrl = window.URL.createObjectURL(blob);
   let a = document.createElement('a');
   a.href = fileUrl;
-  a.download = file.value?.name ?? "";
+  a.download = filename ?? (file.value?.name ?? "");
   document.body.appendChild(a); // we need to append the element to the dom -> otherwise it will not work in firefox
   a.click();
   a.remove();
@@ -173,7 +173,8 @@ async function handleOpenDocumentView() {
   && operation.value != Operation.REDACT)
     return;
 
-  showToastNotification("Opening document view...", ToastType.INFO)
+  showToastNotification("Generating and opening document view...", ToastType.INFO);
+  
   try {
     if(!redactionProcess.value)
       redactionProcess.value = await submitRedactionProcess(file.value, operation.value)
@@ -298,6 +299,29 @@ function handleOperationButtonClick() {
     }
     case Operation.VERIFY : {
       handleVerifyDocument()
+      break;
+    }
+    case Operation.GET_RSS_SIG : {
+      await getRSSSignatureDebug(file.value)
+          .then(res =>  {
+            if(!res.ok)
+            {
+              res.json()
+                  .then(j => showToastNotification(`Error: ${j?.message}`, ToastType.ERROR))
+              return
+            }
+
+            return res?.blob()
+          })
+          .then(blob => {
+            if(!blob)
+              return
+
+            downloadBlobRequest(blob, file.value?.name + ".rss.xml")
+            toastNotificationMessage.value = "RSS signature was downloaded!"
+            toastNotificationType.value = ToastType.SUCCESS
+            clearForm()
+          })
       break;
     }
   }

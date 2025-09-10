@@ -4,7 +4,8 @@ export enum Operation {
     SIGN_ONLY = "SIGN_ONLY",
     SIGN_SELECT_REDACTABLE_ELEMS = "SELECT_REDACTABLE_ELEMS",
     REDACT = "REDACT",
-    VERIFY = "VERIFY"
+    VERIFY = "VERIFY",
+    GET_RSS_SIG = "GET_RSS_SIG"
 }
 
 export function opToTitle(operation : Operation) : string {
@@ -17,6 +18,8 @@ export function opToTitle(operation : Operation) : string {
             return "Sign and select redactable elements"
         case Operation.VERIFY :
             return  "Verify signature"
+        case Operation.GET_RSS_SIG:
+            return "Get RSS signature (Debug)"
         default : return ""
     }
 }
@@ -31,6 +34,8 @@ export function opToButtonTitle(operation : Operation | String) {
             return "Submit"
         case Operation.VERIFY :
             return  "Verify"
+        case Operation.GET_RSS_SIG :
+            return "Download"
         default : return ""
     }
 }

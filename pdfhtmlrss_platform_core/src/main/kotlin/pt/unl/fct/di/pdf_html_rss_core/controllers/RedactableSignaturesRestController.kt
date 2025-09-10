@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
 import pt.unl.fct.di.pdf_html_rss_core.data.*
+import pt.unl.fct.di.pdf_html_rss_core.exceptions.PDFHTMLRSSException
 import pt.unl.fct.di.pdf_html_rss_core.repositories.TemporaryFilesRepository
 import pt.unl.fct.di.pdf_html_rss_core.services.*
 import java.io.*
@@ -162,6 +163,26 @@ class RedactableSignaturesRestController {
                 docBytes.inputStream().copyTo(it)
             }
         }
+    }
+
+    @PostMapping("/debug/rss")
+    fun getDocumentRSS(
+        @RequestParam("file") file: MultipartFile,
+        response : HttpServletResponse
+    ) {
+        val type = MediaType.parseMediaType(file.contentType?: "")
+        if(!type.equals(MediaType.APPLICATION_PDF))
+            throw ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+
+        val rss = pdfManipulationService
+            .getRedactableSignature(PDFFileWrapper(file.resource))
+
+        response.contentType = MediaType.TEXT_HTML.toString()
+        domService.writeDocumentToStream(
+            document = rss,
+            response.outputStream,
+            indentation = true
+        )
     }
 
     @DeleteMapping("/sign/{processId}")
