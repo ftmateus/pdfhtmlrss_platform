@@ -302,7 +302,7 @@ function handleOperationButtonClick() {
       break;
     }
     case Operation.GET_RSS_SIG : {
-      await getRSSSignatureDebug(file.value)
+      getRSSSignatureDebug(file.value)
           .then(res =>  {
             if(!res.ok)
             {
